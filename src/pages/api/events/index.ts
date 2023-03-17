@@ -33,7 +33,7 @@ const createEventHandler = createHandler(createEvent, async (req, res) => {
 
   if (req.body.calculator) {
     try {
-      new Function("records", req.body.calculator);
+      new Function("state", req.body.calculator);
     } catch (error) {
       res.status(400).end();
     }

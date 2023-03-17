@@ -69,7 +69,7 @@ export default function EventWrapper() {
 
 function isValidCalculator(calculator: string) {
   try {
-    new Function("records", calculator);
+    new Function("state", calculator);
     return true;
   } catch {
     return false;
@@ -212,14 +212,19 @@ function UpdateEvent(event: Static<typeof EventSchema>) {
 
 function playground(items: Static<typeof ItemSchema>[]) {
   return `\
-interface ReceiptRecord {
-    itemcode: ${items.map(({ code }) => `"${code}"`).join(" | ") || "string"};
-    count: number;
-    dedication: boolean;
+type Itemcode = ${items.map((item) => `"${item.code}"`).join(" | ")};
+
+interface RecordState {
+  count: number;
+  dedication?: boolean;
 }
 
-function calculate(records: ReceiptRecord[]): number {
-    return 0;
+type State = {
+  [K in Itemcode]?: RecordState;
+}
+
+function calculate(state: State): number {
+  return 0;
 }
 `;
 }
@@ -296,7 +301,6 @@ function UpdateCalculator(event: Static<typeof EventSchema>) {
           }}
         />
         {"}"}
-        <Box>{calculator}</Box>
       </Box>
     </>
   );

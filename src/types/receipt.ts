@@ -1,17 +1,18 @@
 import { Type } from "@sinclair/typebox";
 import type { Route } from "./route";
+import { Code, Date } from "./common";
 
 export const Record = Type.Object({
-  itemcode: Type.String(),
+  itemcode: Code,
   count: Type.Integer(),
   dedication: Type.Boolean(),
 });
 
 export const Receipt = Type.Object({
   id: Type.String(),
-  createdAt: Type.Date(),
+  createdAt: Date,
   total: Type.Integer(),
-  eventcode: Type.String(),
+  eventcode: Code,
   records: Type.Array(Record),
 });
 
