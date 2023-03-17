@@ -1,0 +1,83 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:../db.sqlite3"
+}
+
+model Invite {
+  email String @id
+}
+
+model User {
+  sub     String  @id
+  email   String  @unique
+  name    String
+  picture String?
+
+  receipts Receipt[]
+}
+
+model Item {
+  code    String  @id
+  name    String
+  picture String?
+
+  displays Display[]
+}
+
+model Event {
+  code String   @id
+  name String
+  date DateTime
+
+  // passed to new Function()
+  // must be a JavaScript pure function
+  // (records: { itemcode: string; count: number }[]) => number
+  calculator String
+
+  displays Display[]
+  receipts Receipt[]
+}
+
+model Display {
+  event     Event  @relation(fields: [eventcode], references: [code])
+  eventcode String
+  item      Item   @relation(fields: [itemcode], references: [code])
+  itemcode  String
+
+  Record Record[]
+
+  @@id([eventcode, itemcode])
+}
+
+model Receipt {
+  id        String   @id // client-generated uuid
+  createdAt DateTime
+  total     Int
+
+  event     Event  @relation(fields: [eventcode], references: [code])
+  eventcode String
+  user      User   @relation(fields: [usersub], references: [sub])
+  usersub   String
+
+  records Record[]
+}
+
+model Record {
+  receipt   Receipt @relation(fields: [receiptId], references: [id])
+  receiptId String  @map("receipt_id")
+  display   Display @relation(fields: [eventcode, itemcode], references: [eventcode, itemcode])
+  eventcode String
+  itemcode  String
+
+  index Int
+  count Int
+
+  @@id([receiptId, index])
+}
