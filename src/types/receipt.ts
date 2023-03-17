@@ -4,6 +4,7 @@ import type { Route } from "./route";
 export const Record = Type.Object({
   itemcode: Type.String(),
   count: Type.Integer(),
+  dedication: Type.Boolean(),
 });
 
 export const Receipt = Type.Object({

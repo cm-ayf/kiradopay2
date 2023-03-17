@@ -48,7 +48,7 @@ model Event {
 
   // passed to new Function()
   // must be a JavaScript pure function
-  // (records: { itemcode: string; count: number }[]) => number
+  // (records: { itemcode: string; count: number, dedication: boolean }[]) => number
   calculator String @default("return 0")
 
   displays Display[]
@@ -86,8 +86,9 @@ model Record {
   eventcode String
   itemcode  String
 
-  index Int
-  count Int
+  index      Int
+  count      Int
+  dedication Boolean
 
   @@id([receiptId, index])
 }
