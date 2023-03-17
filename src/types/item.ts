@@ -24,3 +24,16 @@ export const createItem = {
   body: CreateItem,
   response: Item,
 } satisfies Route;
+
+export const updateItem = {
+  method: "PUT",
+  path: "/api/items/[itemcode]",
+  body: UpdateItem,
+  response: Item,
+} satisfies Route;
+
+export const deleteItem = {
+  method: "DELETE",
+  path: "/api/items/[itemcode]",
+  response: Type.Null(),
+} satisfies Route;

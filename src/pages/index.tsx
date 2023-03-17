@@ -1,11 +1,18 @@
 import Layout from "@/components/Layout";
 import { createUseRoute, createUseRouteMutation } from "@/lib/swr";
 import { createEvent, readEvents } from "@/types/event";
-import { createItem, readItems } from "@/types/item";
+import {
+  Item,
+  createItem,
+  deleteItem,
+  readItems,
+  updateItem,
+} from "@/types/item";
 import {
   Box,
   Button,
   Card,
+  CardActionArea,
   CardContent,
   CardMedia,
   Dialog,
@@ -20,7 +27,8 @@ import { Add } from "@mui/icons-material";
 import { TypeCompiler } from "@sinclair/typebox/compiler";
 import { useState } from "react";
 import { prisma } from "@/lib/prisma";
-import Link from "next/link";
+import { useRouter } from "next/router";
+import type { Static } from "@sinclair/typebox";
 
 export async function getServerSideProps() {
   const [events, items] = await prisma.$transaction([
@@ -54,6 +62,9 @@ const useItems = createUseRoute(readItems);
 export default function Home() {
   const { data: events } = useEvents();
   const { data: items } = useItems();
+  const router = useRouter();
+
+  const [openItem, setOpenItem] = useState<Static<typeof Item>>();
 
   return (
     <Layout
@@ -84,15 +95,20 @@ export default function Home() {
         }}
       >
         {events?.map((event) => (
-          <Link key={event.code} href={`/events/${event.code}`}>
-            <Card key={event.code}>
-              <CardContent sx={{ textAlign: "center", textTransform: "none" }}>
-                <Box sx={{ fontSize: "1.5em", fontWeight: "bold" }}>
-                  {event.name}
-                </Box>
+          <Card key={event.code}>
+            <CardActionArea onClick={() => router.push(`/${event.code}`)}>
+              <CardContent
+                sx={{
+                  textAlign: "center",
+                  textTransform: "none",
+                  fontSize: "1.5em",
+                  fontWeight: "bold",
+                }}
+              >
+                {event.name}
               </CardContent>
-            </Card>
-          </Link>
+            </CardActionArea>
+          </Card>
         ))}
       </Box>
       <Box sx={{ display: "flex", flexDirection: "row" }}>
@@ -112,16 +128,8 @@ export default function Home() {
         }}
       >
         {items?.map((item) => (
-          <Link key={item.code} href={`/items/${item.code}`}>
-            <Card
-              key={item.code}
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                p: 2,
-              }}
-            >
+          <Card key={item.code}>
+            <CardActionArea onClick={() => setOpenItem(item)} sx={{ p: 2 }}>
               <CardMedia
                 component="img"
                 image={item.picture}
@@ -133,10 +141,11 @@ export default function Home() {
                   {item.name}
                 </Box>
               </CardContent>
-            </Card>
-          </Link>
+            </CardActionArea>
+          </Card>
         ))}
       </Box>
+      <MutateItem item={openItem} onClose={() => setOpenItem(undefined)} />
     </Layout>
   );
 }
@@ -283,5 +292,89 @@ function CreateItem() {
         </DialogActions>
       </Dialog>
     </>
+  );
+}
+
+const useUpdateItem = createUseRouteMutation(updateItem);
+const updateItemBody = TypeCompiler.Compile(updateItem.body);
+
+const useDeleteItem = createUseRouteMutation(deleteItem);
+
+function MutateItem({
+  item,
+  onClose,
+}: {
+  item: Static<typeof Item> | undefined;
+  onClose: () => void;
+}) {
+  const { trigger: triggerUpdate, isMutating: isUpdating } = useUpdateItem();
+  const { trigger: triggerDelete, isMutating: isDeleting } = useDeleteItem();
+
+  const [code, setCode] = useState<string>();
+  const [name, setName] = useState<string>();
+  const [picture, setPicture] = useState<string>();
+
+  const body = { code, name, picture };
+  const isValid = updateItemBody.Check(body);
+
+  return (
+    <Dialog open={Boolean(item)} onClose={onClose}>
+      <DialogTitle>商品を編集</DialogTitle>
+      <DialogContent
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "stretch",
+          rowGap: 2,
+        }}
+      >
+        <DialogContentText></DialogContentText>
+        <TextField
+          label="商品コード"
+          variant="standard"
+          value={code ?? item?.code}
+          onChange={(e) => setCode(e.target.value)}
+        />
+        <TextField
+          label="商品名"
+          variant="standard"
+          value={name ?? item?.name}
+          onChange={(e) => setName(e.target.value)}
+        />
+        <TextField
+          label="画像URL"
+          variant="standard"
+          value={picture ?? item?.picture}
+          onChange={(e) => setPicture(e.target.value)}
+        />
+      </DialogContent>
+      <DialogActions>
+        <Button
+          type="submit"
+          variant="contained"
+          disabled={isUpdating || isDeleting || !isValid}
+          onClick={async (e) => {
+            e.preventDefault();
+            if (!isValid) return;
+            await triggerUpdate(body);
+            onClose();
+          }}
+        >
+          更新
+        </Button>
+        <Button
+          type="submit"
+          variant="contained"
+          disabled={isUpdating || isDeleting}
+          onClick={async (e) => {
+            e.preventDefault();
+            await triggerDelete(null);
+            onClose();
+          }}
+        >
+          削除
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 }
