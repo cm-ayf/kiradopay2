@@ -68,14 +68,15 @@ const deleteDisplayHandler = createHandler(deleteDisplay, async (req, res) => {
     return;
   }
 
-  await prisma.display.delete({
+  const { item } = await prisma.display.delete({
     where: {
       eventcode_itemcode: {
         eventcode: req.query.eventcode,
         itemcode: req.query.itemcode,
       },
     },
+    include: { item: true },
   });
 
-  res.status(200).end();
+  res.status(200).json(item);
 });

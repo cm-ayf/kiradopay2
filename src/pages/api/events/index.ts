@@ -57,6 +57,7 @@ const readEventsHandler = createHandler(readEvents, async (req, res) => {
     include: {
       displays: {
         include: { item: true },
+        orderBy: { itemcode: "asc" },
       },
     },
   });

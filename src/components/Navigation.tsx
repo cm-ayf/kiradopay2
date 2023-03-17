@@ -3,18 +3,11 @@ import { AppBar, AppBarProps, Toolbar, Typography } from "@mui/material";
 
 type NavigationProps = {
   title?: string;
-  menuItems: MenuItems;
 } & AppBarProps;
-
-export type MenuItems = {
-  href: string;
-  textContent: string;
-}[];
 
 const Navigation: React.FC<NavigationProps> = ({
   children,
   title,
-  menuItems,
   ...props
 }) => {
   const anchorEl = useRef(null);

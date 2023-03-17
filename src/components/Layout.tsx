@@ -1,12 +1,11 @@
 import Head from "next/head";
 import { Box, Container, ContainerProps } from "@mui/material";
-import Navigation, { MenuItems } from "./Navigation";
+import Navigation from "./Navigation";
 import type { PropsWithChildren } from "react";
 
 type LayoutProps = PropsWithChildren<{
   headTitle: string;
   bodyTitle: string;
-  menuItems: MenuItems;
   containerProps?: Omit<ContainerProps, "children">;
   bottom?: React.ReactNode;
 }>;
@@ -16,7 +15,7 @@ const Layout: React.FC<LayoutProps> = ({ children, ...props }) => (
     <Head>
       <title>{props.headTitle}</title>
     </Head>
-    <Navigation title={props.bodyTitle} menuItems={props.menuItems} />
+    <Navigation title={props.bodyTitle} />
     <Container
       {...props.containerProps}
       sx={{

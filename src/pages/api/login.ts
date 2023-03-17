@@ -74,16 +74,24 @@ export default async function handler(
   await prisma.session.deleteMany({
     where: { usersub: user.sub },
   });
+  const until = Date.now() + 1000 * 60 * 60 * 24;
   const session = await prisma.session.create({
     data: {
       usersub: user.sub,
-      until: new Date(Date.now() + 1000 * 60 * 60 * 24),
+      until: new Date(until),
     },
   });
+
+  const gState = {
+    i_l: 1,
+    i_p: until,
+  };
 
   res
     .setHeader("Set-Cookie", [
       `sid=${session.id}; Path=/; HttpOnly; SameSite=Strict; Max-Age=86400`,
+      `g_state=${JSON.stringify(gState)}; Path=/; SameSite=None; Max-Age=86400`,
     ])
+    .setHeader("Clear-Site-Data", '"g_csrf_token"')
     .redirect("/");
 }

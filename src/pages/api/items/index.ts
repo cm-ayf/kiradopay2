@@ -45,7 +45,9 @@ const readItemsHandler = createHandler(readItems, async (req, res) => {
     return;
   }
 
-  const items = await prisma.item.findMany({});
+  const items = await prisma.item.findMany({
+    orderBy: { code: "asc" },
+  });
 
   res.status(200).json(items);
 });

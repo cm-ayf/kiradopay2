@@ -3,7 +3,7 @@ import { Item } from "./item";
 import type { Route } from "./route";
 import { Code, Date, Name } from "./common";
 
-const Event = Type.Object({
+export const Event = Type.Object({
   code: Code,
   name: Name,
   date: Date,

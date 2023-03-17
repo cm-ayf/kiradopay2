@@ -2,12 +2,25 @@ import Layout from "@/components/Layout";
 import { createUseRoute, createUseRouteMutation } from "@/lib/swr";
 import { createEvent, readEvents } from "@/types/event";
 import { createItem, readItems } from "@/types/item";
-import { Box, Button, Dialog, TextField, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  Card,
+  CardContent,
+  CardMedia,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  TextField,
+  Typography,
+} from "@mui/material";
 import { Add } from "@mui/icons-material";
 import { TypeCompiler } from "@sinclair/typebox/compiler";
 import { useState } from "react";
 import { prisma } from "@/lib/prisma";
-import { Item } from "@/components/Item";
+import Link from "next/link";
 
 export async function getServerSideProps() {
   const [events, items] = await prisma.$transaction([
@@ -46,7 +59,6 @@ export default function Home() {
     <Layout
       headTitle="Kiradopay - トップ"
       bodyTitle="Kiradopay"
-      menuItems={[{ href: "/profile", textContent: "名前の変更" }]}
       containerProps={{
         sx: {
           display: "flex",
@@ -69,18 +81,18 @@ export default function Home() {
           alignItems: "center",
           rowGap: 2,
           columnGap: 2,
-          padding: 2,
         }}
       >
         {events?.map((event) => (
-          <Button
-            key={event.code}
-            variant="contained"
-            href={`/events/${event.code}`}
-            sx={{ fontSize: "1.5em", lineHeight: "normal", py: 1 }}
-          >
-            {event.name}
-          </Button>
+          <Link key={event.code} href={`/events/${event.code}`}>
+            <Card key={event.code}>
+              <CardContent sx={{ textAlign: "center", textTransform: "none" }}>
+                <Box sx={{ fontSize: "1.5em", fontWeight: "bold" }}>
+                  {event.name}
+                </Box>
+              </CardContent>
+            </Card>
+          </Link>
         ))}
       </Box>
       <Box sx={{ display: "flex", flexDirection: "row" }}>
@@ -92,7 +104,7 @@ export default function Home() {
       <Box
         sx={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
+          gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
           alignItems: "center",
           rowGap: 2,
           columnGap: 2,
@@ -100,13 +112,29 @@ export default function Home() {
         }}
       >
         {items?.map((item) => (
-          <Button
-            key={item.code}
-            href={`/items/${item.code}`}
-            sx={{ fontSize: "1.5em", lineHeight: "normal", py: 1 }}
-          >
-            <Item {...item} />
-          </Button>
+          <Link key={item.code} href={`/items/${item.code}`}>
+            <Card
+              key={item.code}
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                p: 2,
+              }}
+            >
+              <CardMedia
+                component="img"
+                image={item.picture}
+                alt={item.name}
+                sx={{ maxWidth: 200 }}
+              />
+              <CardContent sx={{ textAlign: "center", textTransform: "none" }}>
+                <Box sx={{ fontSize: "1.5em", fontWeight: "bold" }}>
+                  {item.name}
+                </Box>
+              </CardContent>
+            </Card>
+          </Link>
         ))}
       </Box>
     </Layout>
@@ -135,49 +163,52 @@ function CreateEvent() {
       >
         <Add />
       </Button>
-      <Dialog
-        open={open}
-        onClose={() => setOpen(false)}
-        PaperProps={{
-          sx: {
+      <Dialog open={open} onClose={() => setOpen(false)}>
+        <DialogTitle>イベントを作成</DialogTitle>
+        <DialogContent
+          sx={{
             display: "flex",
             flexDirection: "column",
+            alignItems: "stretch",
             rowGap: 2,
-            p: 2,
-          },
-        }}
-      >
-        <TextField
-          label="イベントコード"
-          variant="outlined"
-          value={code}
-          onChange={(e) => setCode(e.target.value)}
-        />
-        <TextField
-          label="イベント名"
-          variant="outlined"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
-        <TextField
-          label="日付"
-          type="date"
-          variant="outlined"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-        />
-        <Button
-          type="submit"
-          variant="contained"
-          disabled={isMutating || !isValid}
-          onClick={async (e) => {
-            e.preventDefault();
-            await trigger(body);
-            setOpen(false);
           }}
         >
-          作成
-        </Button>
+          <DialogContentText></DialogContentText>
+          <TextField
+            label="イベントコード"
+            variant="standard"
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+          />
+          <TextField
+            label="イベント名"
+            variant="standard"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+          <TextField
+            label="日付"
+            type="date"
+            variant="standard"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button
+            type="submit"
+            variant="contained"
+            disabled={isMutating || !isValid}
+            onClick={async (e) => {
+              e.preventDefault();
+              if (!isValid) return;
+              await trigger(body);
+              setOpen(false);
+            }}
+          >
+            作成
+          </Button>
+        </DialogActions>
       </Dialog>
     </>
   );
@@ -205,48 +236,51 @@ function CreateItem() {
       >
         <Add />
       </Button>
-      <Dialog
-        open={open}
-        onClose={() => setOpen(false)}
-        PaperProps={{
-          sx: {
+      <Dialog open={open} onClose={() => setOpen(false)}>
+        <DialogTitle>商品を作成</DialogTitle>
+        <DialogContent
+          sx={{
             display: "flex",
             flexDirection: "column",
+            alignItems: "stretch",
             rowGap: 2,
-            p: 2,
-          },
-        }}
-      >
-        <TextField
-          label="商品コード"
-          variant="outlined"
-          value={code}
-          onChange={(e) => setCode(e.target.value)}
-        />
-        <TextField
-          label="商品名"
-          variant="outlined"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
-        <TextField
-          label="画像URL"
-          variant="outlined"
-          value={picture}
-          onChange={(e) => setPicture(e.target.value)}
-        />
-        <Button
-          type="submit"
-          variant="contained"
-          disabled={isMutating || !isValid}
-          onClick={async (e) => {
-            e.preventDefault();
-            await trigger(body);
-            setOpen(false);
           }}
         >
-          作成
-        </Button>
+          <DialogContentText></DialogContentText>
+          <TextField
+            label="商品コード"
+            variant="standard"
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+          />
+          <TextField
+            label="商品名"
+            variant="standard"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+          <TextField
+            label="画像URL"
+            variant="standard"
+            value={picture}
+            onChange={(e) => setPicture(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button
+            type="submit"
+            variant="contained"
+            disabled={isMutating || !isValid}
+            onClick={async (e) => {
+              e.preventDefault();
+              if (!isValid) return;
+              await trigger(body);
+              setOpen(false);
+            }}
+          >
+            作成
+          </Button>
+        </DialogActions>
       </Dialog>
     </>
   );
