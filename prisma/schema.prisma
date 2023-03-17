@@ -21,12 +21,22 @@ model User {
   picture String?
 
   receipts Receipt[]
+  Session  Session[]
+}
+
+model Session {
+  id String @id @default(uuid())
+
+  user    User   @relation(fields: [usersub], references: [sub])
+  usersub String
+
+  until DateTime
 }
 
 model Item {
-  code    String  @id
+  code    String @id
   name    String
-  picture String?
+  picture String
 
   displays Display[]
 }
@@ -39,7 +49,7 @@ model Event {
   // passed to new Function()
   // must be a JavaScript pure function
   // (records: { itemcode: string; count: number }[]) => number
-  calculator String
+  calculator String @default("return 0")
 
   displays Display[]
   receipts Receipt[]
