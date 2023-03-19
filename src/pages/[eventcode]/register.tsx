@@ -24,7 +24,6 @@ import {
   ToggleButtonGroup,
   Typography,
 } from "@mui/material";
-import type { Static } from "@sinclair/typebox";
 import type { GetServerSidePropsContext } from "next";
 import { useRouter } from "next/router";
 import { useCallback, useMemo, useReducer, useState } from "react";
@@ -160,7 +159,7 @@ function Bottom({
   state,
   dispatch,
 }: {
-  event: Static<typeof Event>;
+  event: Event;
   state: State;
   dispatch: React.Dispatch<Action>;
 }) {
@@ -268,7 +267,7 @@ function ItemCard({
   record,
   dispatch,
 }: {
-  item: Static<typeof Item>;
+  item: Item;
   record: RecordState | undefined;
   dispatch: React.Dispatch<Action>;
 }) {
@@ -362,7 +361,7 @@ const useIDBReceipts = ({ eventcode }: { eventcode: string }) =>
     return idb.getReceipts(eventcode!);
   });
 
-function Receipts({ event }: { event: Static<typeof Event> }) {
+function Receipts({ event }: { event: Event }) {
   const { data: onServer } = useReceipts({ eventcode: event.code });
   const { data: onBrowser } = useIDBReceipts({ eventcode: event.code });
 
@@ -410,8 +409,8 @@ function Receipt({
   receipt,
   items,
 }: {
-  receipt: Static<typeof ReceiptSchema>;
-  items: Static<typeof Item>[];
+  receipt: ReceiptSchema;
+  items: Item[];
 }) {
   return (
     <Card

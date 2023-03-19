@@ -2,7 +2,12 @@ import Layout from "@/components/Layout";
 import { prisma } from "@/lib/prisma";
 import { createUseRoute, createUseRouteMutation } from "@/lib/swr";
 import { createDisplay, deleteDisplay } from "@/types/display";
-import { readEvent, updateEvent, Event as EventSchema } from "@/types/event";
+import {
+  readEvent,
+  updateEvent,
+  Event as EventSchema,
+  UpdateEvent,
+} from "@/types/event";
 import { readItems, Item as ItemSchema } from "@/types/item";
 import { Edit } from "@mui/icons-material";
 import {
@@ -20,7 +25,6 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import type { Static } from "@sinclair/typebox";
 import { TypeCompiler } from "@sinclair/typebox/compiler";
 import { compressToEncodedURIComponent } from "lz-string";
 import type { GetServerSidePropsContext } from "next";
@@ -102,18 +106,17 @@ function Event({ eventcode }: { eventcode: string }) {
         <Typography variant="h2" sx={{ fontSize: "2em" }}>
           {title}
         </Typography>
-        {event && <UpdateEvent {...event} />}
+        {event && <UpdateEvent event={event} />}
       </Box>
-      {event && <UpdateCalculator {...event} />}
+      {event && <UpdateCalculator event={event} />}
       {event && <DisplayArray event={event} />}
     </Layout>
   );
 }
 
 const useUpdateEvent = createUseRouteMutation(updateEvent);
-const updateEventBody = TypeCompiler.Compile(updateEvent.body);
 
-function UpdateEvent(event: Static<typeof EventSchema>) {
+function UpdateEvent({ event }: { event: EventSchema }) {
   const { trigger, isMutating } = useUpdateEvent({ eventcode: event.code });
 
   const [open, setOpen] = useState(false);
@@ -121,8 +124,11 @@ function UpdateEvent(event: Static<typeof EventSchema>) {
   const [name, setName] = useState<string>();
   const [date, setDate] = useState<string>();
 
-  const body = { code, name, date };
-  const isValid = updateEventBody.Check(body);
+  const body = {
+    ...(code && { code }),
+    ...(name && { name }),
+    ...(date && { date }),
+  };
 
   return (
     <>
@@ -188,13 +194,10 @@ function UpdateEvent(event: Static<typeof EventSchema>) {
           type="submit"
           variant="contained"
           disabled={
-            isMutating ||
-            !isValid ||
-            [code, name, date].every((v) => v === undefined)
+            isMutating || [code, name, date].every((v) => v === undefined)
           }
           onClick={async (e) => {
             e.preventDefault();
-            if (!isValid) return;
             await trigger(body);
             setOpen(false);
             setName(undefined);
@@ -209,7 +212,7 @@ function UpdateEvent(event: Static<typeof EventSchema>) {
   );
 }
 
-function playground(items: Static<typeof ItemSchema>[]) {
+function playground(items: ItemSchema[]) {
   return `\
 type Itemcode = ${items.map((item) => `"${item.code}"`).join(" | ")};
 
@@ -228,7 +231,7 @@ function calculate(state: State): number {
 `;
 }
 
-function UpdateCalculator(event: Static<typeof EventSchema>) {
+function UpdateCalculator({ event }: { event: EventSchema }) {
   const { trigger, isMutating } = useUpdateEvent({ eventcode: event.code });
   const [calculator, setCalculator] = useState<string>();
 
@@ -283,7 +286,7 @@ function UpdateCalculator(event: Static<typeof EventSchema>) {
           alignItems: "flex-start",
         }}
       >
-        {"function calculate(records) {"}
+        {"function calculate(state) {"}
         <TextField
           variant="outlined"
           sx={{ m: "1em", width: "100%" }}
@@ -305,7 +308,7 @@ function UpdateCalculator(event: Static<typeof EventSchema>) {
   );
 }
 
-function DisplayArray({ event }: { event: Static<typeof EventSchema> }) {
+function DisplayArray({ event }: { event: EventSchema }) {
   return (
     <>
       <Box
@@ -362,7 +365,7 @@ const useItems = createUseRoute(readItems);
 const useCreateDisplay = createUseRouteMutation(createDisplay);
 const useDeleteDisplay = createUseRouteMutation(deleteDisplay);
 
-function DisplayDialog({ event }: { event: Static<typeof EventSchema> }) {
+function DisplayDialog({ event }: { event: EventSchema }) {
   const [open, setOpen] = useState(false);
   const { data: items } = useItems();
 
@@ -398,7 +401,7 @@ function DisplaySwitch({
   included,
 }: {
   eventcode: string;
-  item: Static<typeof ItemSchema>;
+  item: ItemSchema;
   included: boolean;
 }) {
   const { trigger: triggerCreate, isMutating: isCreating } = useCreateDisplay({

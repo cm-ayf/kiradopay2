@@ -1,4 +1,4 @@
-import { Type } from "@sinclair/typebox";
+import { Static, Type } from "@sinclair/typebox";
 import type { Route } from "./route";
 
 export const User = Type.Object({
@@ -7,6 +7,8 @@ export const User = Type.Object({
   name: Type.String(),
   picture: Type.String(),
 });
+
+export type User = Static<typeof User>;
 
 export const readUsersMe = {
   method: "GET",

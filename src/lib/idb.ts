@@ -1,11 +1,10 @@
 import type { Receipt, Record } from "@/types/receipt";
-import type { Static } from "@sinclair/typebox";
 import { DBSchema, IDBPDatabase, openDB } from "idb";
 
 interface DB extends DBSchema {
   receipts: {
     key: string;
-    value: Static<typeof Receipt>;
+    value: Receipt;
     indexes: {
       eventcode: string;
     };
@@ -45,11 +44,7 @@ export class IDB {
     }));
   }
 
-  async addReceipt(
-    eventcode: string,
-    total: number,
-    records: Static<typeof Record>[]
-  ) {
+  async addReceipt(eventcode: string, total: number, records: Record[]) {
     const db = await this.ensureDB();
     const receipt = {
       id: crypto.randomUUID(),

@@ -6,18 +6,35 @@ import {
   Button,
   CircularProgress,
   Menu,
+  MenuItem,
   Toolbar,
   Typography,
 } from "@mui/material";
-import { createUseRoute } from "@/lib/swr";
-import { readUsersMe } from "@/types/user";
+import { createUseRoute, UnauthorizedError } from "@/lib/swr";
+import { readUsersMe, User } from "@/types/user";
+import { useRouter } from "next/router";
+import { CloudOff } from "@mui/icons-material";
 
-const useUser = createUseRoute(readUsersMe);
+const useUser = createUseRoute(readUsersMe, {
+  refreshInterval: 1000,
+});
+
+type ConnectionState =
+  | {
+      variant: "connecting";
+    }
+  | {
+      variant: "authorized";
+      user: User;
+    };
 
 export default function Navigation({ title }: { title: string }) {
-  const { data: user, isLoading } = useUser();
+  const { data: user, error } = useUser();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+
+  const unauthorized = error instanceof UnauthorizedError;
 
   return (
     <AppBar position="static" ref={ref}>
@@ -26,18 +43,38 @@ export default function Navigation({ title }: { title: string }) {
         <Box sx={{ flexGrow: 1 }} />
         <Button
           color="inherit"
-          {...(user
-            ? { onClick: () => setOpen(true) }
-            : { href: "/api/auth/signin" })}
+          onClick={() =>
+            error
+              ? unauthorized && router.push("/api/auth/signin")
+              : user && setOpen(true)
+          }
           endIcon={
-            isLoading ? (
-              <CircularProgress />
+            error ? (
+              !unauthorized && <CloudOff />
+            ) : user ? (
+              <Avatar src={user.picture} />
             ) : (
-              user && <Avatar src={user.picture} alt={user.name} />
+              <CircularProgress />
             )
           }
         >
-          {user?.name ?? "サインイン"}
+          {error
+            ? unauthorized
+              ? "サインイン"
+              : "接続されていません"
+            : user && (
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "flex-start",
+                    textTransform: "none",
+                  }}
+                >
+                  <Typography variant="body2">{user.name}</Typography>
+                  <Typography variant="caption">{user.email}</Typography>
+                </Box>
+              )}
         </Button>
         <Menu
           anchorEl={ref.current}
@@ -46,7 +83,9 @@ export default function Navigation({ title }: { title: string }) {
           anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
           transformOrigin={{ vertical: "top", horizontal: "right" }}
         >
-          <Button href="/api/auth/signout">サインアウト</Button>
+          <MenuItem onClick={() => router.push("/api/auth/signout")}>
+            サインアウト
+          </MenuItem>
         </Menu>
       </Toolbar>
     </AppBar>

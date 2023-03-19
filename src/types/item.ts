@@ -1,4 +1,4 @@
-import { Type } from "@sinclair/typebox";
+import { Static, Type } from "@sinclair/typebox";
 import type { Route } from "./route";
 import { Code, Name } from "./common";
 
@@ -8,9 +8,15 @@ export const Item = Type.Object({
   picture: Type.String(),
 });
 
+export type Item = Static<typeof Item>;
+
 export const CreateItem = Item;
 
+export type CreateItem = Static<typeof CreateItem>;
+
 export const UpdateItem = Type.Partial(CreateItem);
+
+export type UpdateItem = Static<typeof UpdateItem>;
 
 export const readItems = {
   method: "GET",

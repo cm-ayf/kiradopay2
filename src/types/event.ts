@@ -1,4 +1,4 @@
-import { Type } from "@sinclair/typebox";
+import { Static, Type } from "@sinclair/typebox";
 import { Item } from "./item";
 import type { Route } from "./route";
 import { Code, Date, Name } from "./common";
@@ -11,6 +11,8 @@ export const Event = Type.Object({
   items: Type.Array(Item),
 });
 
+export type Event = Static<typeof Event>;
+
 const CreateEvent = Type.Object({
   code: Code,
   name: Name,
@@ -18,7 +20,11 @@ const CreateEvent = Type.Object({
   calculator: Type.Optional(Type.String()),
 });
 
+export type CreateEvent = Static<typeof CreateEvent>;
+
 const UpdateEvent = Type.Partial(CreateEvent);
+
+export type UpdateEvent = Static<typeof UpdateEvent>;
 
 export const readEvents = {
   method: "GET",

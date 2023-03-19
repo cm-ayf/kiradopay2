@@ -28,7 +28,6 @@ import { TypeCompiler } from "@sinclair/typebox/compiler";
 import { useState } from "react";
 import { prisma } from "@/lib/prisma";
 import { useRouter } from "next/router";
-import type { Static } from "@sinclair/typebox";
 
 export async function getServerSideProps() {
   const [events, items] = await prisma.$transaction([
@@ -64,7 +63,7 @@ export default function Home() {
   const { data: items } = useItems();
   const router = useRouter();
 
-  const [openItem, setOpenItem] = useState<Static<typeof Item>>();
+  const [openItem, setOpenItem] = useState<Item>();
 
   return (
     <Layout
@@ -304,7 +303,7 @@ function MutateItem({
   item,
   onClose,
 }: {
-  item: Static<typeof Item> | undefined;
+  item: Item | undefined;
   onClose: () => void;
 }) {
   const { trigger: triggerUpdate, isMutating: isUpdating } = useUpdateItem();

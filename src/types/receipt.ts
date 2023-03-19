@@ -1,4 +1,4 @@
-import { Type } from "@sinclair/typebox";
+import { Static, Type } from "@sinclair/typebox";
 import type { Route } from "./route";
 import { Code, Date } from "./common";
 
@@ -8,6 +8,8 @@ export const Record = Type.Object({
   dedication: Type.Boolean(),
 });
 
+export type Record = Static<typeof Record>;
+
 export const Receipt = Type.Object({
   id: Type.String(),
   createdAt: Date,
@@ -15,6 +17,8 @@ export const Receipt = Type.Object({
   eventcode: Code,
   records: Type.Array(Record),
 });
+
+export type Receipt = Static<typeof Receipt>;
 
 export const createReceipts = {
   method: "POST",

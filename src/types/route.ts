@@ -1,10 +1,4 @@
-import type {
-  Static,
-  TAnySchema,
-  TObject,
-  TSchema,
-  TString,
-} from "@sinclair/typebox";
+import type { Static, TObject, TSchema, TString } from "@sinclair/typebox";
 
 export type TParams = TObject<{ [param: string]: TString }>;
 
@@ -12,8 +6,8 @@ export interface Route {
   method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   path: string;
   params?: TParams;
-  body?: TAnySchema;
-  response: TAnySchema;
+  body?: TSchema;
+  response: TSchema;
 }
 
 export namespace Route {
