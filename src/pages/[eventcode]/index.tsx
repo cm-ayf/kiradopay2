@@ -4,12 +4,11 @@ import { createUseRoute, createUseRouteMutation } from "@/lib/swr";
 import { createDisplay, deleteDisplay } from "@/types/display";
 import { readEvent, updateEvent, Event as EventSchema } from "@/types/event";
 import { readItems, Item as ItemSchema } from "@/types/item";
-import { Add, Delete, Edit } from "@mui/icons-material";
+import { Edit } from "@mui/icons-material";
 import {
   Box,
   Button,
   Card,
-  CardActions,
   CardContent,
   CardMedia,
   Dialog,
@@ -17,7 +16,7 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
-  IconButton,
+  Switch,
   TextField,
   Typography,
 } from "@mui/material";
@@ -306,10 +305,6 @@ function UpdateCalculator(event: Static<typeof EventSchema>) {
   );
 }
 
-const useItems = createUseRoute(readItems);
-const useCreateDisplay = createUseRouteMutation(createDisplay);
-const useDeleteDisplay = createUseRouteMutation(deleteDisplay);
-
 function DisplayArray({ event }: { event: Static<typeof EventSchema> }) {
   return (
     <>
@@ -323,7 +318,7 @@ function DisplayArray({ event }: { event: Static<typeof EventSchema> }) {
         <Typography variant="h3" sx={{ fontSize: "1.5em" }}>
           お品書き
         </Typography>
-        <CreateDisplayDialog event={event} />
+        <DisplayDialog event={event} />
       </Box>
       <Box
         sx={{
@@ -356,15 +351,6 @@ function DisplayArray({ event }: { event: Static<typeof EventSchema> }) {
                 {item.name}
               </Box>
             </CardContent>
-            <CardActions
-              sx={{
-                width: "100%",
-                display: "flex",
-                justifyContent: "flex-end",
-              }}
-            >
-              <DeleteDisplayDialog eventcode={event.code} item={item} />
-            </CardActions>
           </Card>
         ))}
       </Box>
@@ -372,29 +358,31 @@ function DisplayArray({ event }: { event: Static<typeof EventSchema> }) {
   );
 }
 
-function CreateDisplayDialog({ event }: { event: Static<typeof EventSchema> }) {
+const useItems = createUseRoute(readItems);
+const useCreateDisplay = createUseRouteMutation(createDisplay);
+const useDeleteDisplay = createUseRouteMutation(deleteDisplay);
+
+function DisplayDialog({ event }: { event: Static<typeof EventSchema> }) {
   const [open, setOpen] = useState(false);
   const { data: items } = useItems();
 
   return (
     <>
       <Button sx={{ m: "1em" }} onClick={() => setOpen(true)}>
-        <Add />
+        <Edit />
       </Button>
       <Dialog open={open} onClose={() => setOpen(false)}>
-        <DialogTitle>お品書きを追加</DialogTitle>
+        <DialogTitle>お品書きを編集</DialogTitle>
         <DialogContent>
           <DialogContentText></DialogContentText>
-          {items
-            ?.filter((item) => !event.items.some((i) => i.code === item.code))
-            .map((item) => (
-              <CreateDisplay
-                key={item.code}
-                eventcode={event.code}
-                item={item}
-                onClose={() => setOpen(false)}
-              />
-            ))}
+          {items?.map((item) => (
+            <DisplaySwitch
+              key={item.code}
+              eventcode={event.code}
+              item={item}
+              included={event.items.some((i) => i.code === item.code)}
+            />
+          ))}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpen(false)}>閉じる</Button>
@@ -404,100 +392,79 @@ function CreateDisplayDialog({ event }: { event: Static<typeof EventSchema> }) {
   );
 }
 
-function CreateDisplay({
+function DisplaySwitch({
   eventcode,
   item,
-  onClose,
+  included,
 }: {
   eventcode: string;
   item: Static<typeof ItemSchema>;
-  onClose: () => void;
+  included: boolean;
 }) {
-  const { trigger, isMutating } = useCreateDisplay({
+  const { trigger: triggerCreate, isMutating: isCreating } = useCreateDisplay({
+    eventcode,
+    itemcode: item.code,
+  });
+  const { trigger: triggerDelete, isMutating: isDeleting } = useDeleteDisplay({
     eventcode,
     itemcode: item.code,
   });
   const { mutate } = useSWRConfig();
 
+  async function onCreate() {
+    await triggerCreate(null);
+    await mutate(
+      `/api/events/${eventcode}`,
+      (event) =>
+        event && {
+          ...event,
+          items: [...event.items, item].sort((a, b) =>
+            a.code.localeCompare(b.code)
+          ),
+        },
+      false
+    );
+  }
+
+  async function onDelete() {
+    await triggerDelete(null);
+    await mutate(
+      `/api/events/${eventcode}`,
+      (event) =>
+        event && {
+          ...event,
+          items: event.items.filter((i: any) => i.code !== item.code),
+        },
+      false
+    );
+  }
+
   return (
-    <Button
-      variant="contained"
-      sx={{ m: "1em" }}
-      disabled={isMutating}
-      onClick={async (e) => {
-        const shift = e.shiftKey;
-        e.preventDefault();
-        await trigger(null);
-        await mutate(
-          `/api/events/${eventcode}`,
-          (event) =>
-            event && {
-              ...event,
-              items: [...event.items, item].sort((a, b) =>
-                a.name.localeCompare(b.name)
-              ),
-            },
-          { revalidate: false }
-        );
-        if (!shift) onClose();
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "row",
+        alignItems: "center",
       }}
     >
-      {item.name}
-    </Button>
-  );
-}
-
-function DeleteDisplayDialog({
-  eventcode,
-  item,
-}: {
-  eventcode: string;
-  item: Static<typeof ItemSchema>;
-}) {
-  const { trigger, isMutating } = useDeleteDisplay({
-    eventcode,
-    itemcode: item.code,
-  });
-  const { mutate } = useSWRConfig();
-
-  const [open, setOpen] = useState(false);
-  return (
-    <>
-      <IconButton onClick={() => setOpen(true)}>
-        <Delete />
-      </IconButton>
-      <Dialog open={open} onClose={() => setOpen(false)}>
-        <DialogTitle>お品書きを削除</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            {item.name}をお品書きから削除しますか？
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            disabled={isMutating}
-            onClick={async (e) => {
-              e.preventDefault();
-              await trigger(null);
-              await mutate(
-                `/api/events/${eventcode}`,
-                (event) =>
-                  event && {
-                    ...event,
-                    items: event.items.filter((i: any) => i.code !== item.code),
-                  },
-                { revalidate: false }
-              );
-              setOpen(false);
-            }}
-          >
-            削除する
-          </Button>
-          <Button disabled={isMutating} onClick={() => setOpen(false)}>
-            閉じる
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </>
+      <Typography
+        variant="caption"
+        sx={{ fontSize: "1.5em", fontWeight: "bold" }}
+      >
+        {item.name}
+      </Typography>
+      <Switch
+        sx={{ m: "1em" }}
+        checked={included}
+        onChange={(e) => {
+          if (e.target.checked) {
+            onCreate();
+          } else {
+            onDelete();
+          }
+        }}
+        disabled={isCreating || isDeleting}
+      />
+    </Box>
   );
 }
