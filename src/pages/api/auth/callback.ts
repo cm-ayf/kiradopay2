@@ -1,5 +1,6 @@
 import { options, setCredentials } from "@/lib/oauth2";
 import { prisma } from "@/lib/prisma";
+import type { Prisma } from "@prisma/client";
 import { OAuth2Client } from "google-auth-library";
 import type { NextApiRequest, NextApiResponse } from "next";
 
@@ -47,13 +48,28 @@ export default async function handler(
     res.status(400).end();
     return;
   }
-  const update = { email, name, picture };
 
-  await prisma.user.upsert({
-    where: { sub },
-    update,
-    create: { sub, ...update },
-  });
+  const [user, invite] = await prisma.$transaction([
+    prisma.user.findUnique({
+      where: { sub },
+    }),
+    prisma.invite.findUnique({
+      where: { email },
+    }),
+  ]);
+  if (!user && !invite) {
+    res.status(400).end();
+    return;
+  }
+
+  const promises: Prisma.PrismaPromise<any>[] = [];
+  if (!user) {
+    promises.push(prisma.user.create({ data: { sub } }));
+  }
+  if (invite) {
+    promises.push(prisma.invite.delete({ where: { email } }));
+  }
+  await prisma.$transaction(promises);
 
   setCredentials(res, tokens).redirect("/");
 }
