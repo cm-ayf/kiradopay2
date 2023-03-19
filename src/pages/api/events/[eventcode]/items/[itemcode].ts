@@ -1,6 +1,6 @@
 import { createHandler } from "@/lib/handler";
+import { verify } from "@/lib/oauth2";
 import { prisma } from "@/lib/prisma";
-import { getSession } from "@/lib/session";
 import { createDisplay, deleteDisplay } from "@/types/display";
 import type { NextApiRequest, NextApiResponse } from "next";
 
@@ -26,8 +26,8 @@ export default async function handler(
 }
 
 const createDisplayHandler = createHandler(createDisplay, async (req, res) => {
-  const session = await getSession(req);
-  if (!session) {
+  const token = await verify(req);
+  if (!token) {
     res.status(401).end();
     return;
   }
@@ -62,8 +62,8 @@ const createDisplayHandler = createHandler(createDisplay, async (req, res) => {
 });
 
 const deleteDisplayHandler = createHandler(deleteDisplay, async (req, res) => {
-  const session = await getSession(req);
-  if (!session) {
+  const token = await verify(req);
+  if (!token) {
     res.status(401).end();
     return;
   }

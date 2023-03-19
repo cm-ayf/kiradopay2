@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { createEvent, readEvents } from "@/types/event";
 import { createHandler } from "@/lib/handler";
 import { prisma } from "@/lib/prisma";
-import { getSession } from "@/lib/session";
+import { verify } from "@/lib/oauth2";
 
 export default async function handler(
   req: NextApiRequest,
@@ -25,8 +25,8 @@ export default async function handler(
 }
 
 const createEventHandler = createHandler(createEvent, async (req, res) => {
-  const session = await getSession(req);
-  if (!session) {
+  const token = await verify(req);
+  if (!token) {
     res.status(401).end();
     return;
   }
@@ -47,8 +47,8 @@ const createEventHandler = createHandler(createEvent, async (req, res) => {
 });
 
 const readEventsHandler = createHandler(readEvents, async (req, res) => {
-  const session = await getSession(req);
-  if (!session) {
+  const token = await verify(req);
+  if (!token) {
     res.status(401).end();
     return;
   }

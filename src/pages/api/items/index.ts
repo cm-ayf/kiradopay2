@@ -1,6 +1,6 @@
 import { createHandler } from "@/lib/handler";
+import { verify } from "@/lib/oauth2";
 import { prisma } from "@/lib/prisma";
-import { getSession } from "@/lib/session";
 import { createItem, readItems } from "@/types/item";
 import type { NextApiRequest, NextApiResponse } from "next";
 
@@ -25,8 +25,8 @@ export default async function handler(
 }
 
 const createItemHandler = createHandler(createItem, async (req, res) => {
-  const session = await getSession(req);
-  if (!session) {
+  const token = await verify(req);
+  if (!token) {
     res.status(401).end();
     return;
   }
@@ -39,8 +39,8 @@ const createItemHandler = createHandler(createItem, async (req, res) => {
 });
 
 const readItemsHandler = createHandler(readItems, async (req, res) => {
-  const session = await getSession(req);
-  if (!session) {
+  const token = await verify(req);
+  if (!token) {
     res.status(401).end();
     return;
   }

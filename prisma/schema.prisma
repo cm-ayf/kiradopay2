@@ -15,22 +15,9 @@ model Invite {
 }
 
 model User {
-  sub     String  @id
-  email   String  @unique
-  name    String
-  picture String?
+  sub String @id
 
   receipts Receipt[]
-  Session  Session[]
-}
-
-model Session {
-  id String @id @default(uuid())
-
-  user    User   @relation(fields: [usersub], references: [sub])
-  usersub String
-
-  until DateTime
 }
 
 model Item {

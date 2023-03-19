@@ -1,6 +1,6 @@
 import { createHandler } from "@/lib/handler";
+import { verify } from "@/lib/oauth2";
 import { prisma } from "@/lib/prisma";
-import { getSession } from "@/lib/session";
 import { createReceipts, readReceipts } from "@/types/receipt";
 import type { NextApiRequest, NextApiResponse } from "next";
 
@@ -25,8 +25,8 @@ export default async function handler(
 }
 
 const readReceiptsHandler = createHandler(readReceipts, async (req, res) => {
-  const session = await getSession(req);
-  if (!session) {
+  const token = await verify(req);
+  if (!token) {
     res.status(401).end();
     return;
   }
@@ -42,8 +42,8 @@ const readReceiptsHandler = createHandler(readReceipts, async (req, res) => {
 const createReceiptsHandler = createHandler(
   createReceipts,
   async (req, res) => {
-    const session = await getSession(req);
-    if (!session) {
+    const token = await verify(req);
+    if (!token) {
       res.status(401).end();
       return;
     }
@@ -54,7 +54,7 @@ const createReceiptsHandler = createHandler(
           data: {
             ...rest,
             eventcode: req.query.eventcode,
-            usersub: session.user.sub,
+            usersub: token.sub,
             records: {
               create: records.map(({ itemcode, ...rest }, index) => ({
                 ...rest,

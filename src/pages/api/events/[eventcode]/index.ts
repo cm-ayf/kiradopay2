@@ -1,6 +1,6 @@
 import { createHandler } from "@/lib/handler";
+import { verify } from "@/lib/oauth2";
 import { prisma } from "@/lib/prisma";
-import { getSession } from "@/lib/session";
 import { readEvent, updateEvent } from "@/types/event";
 import type { NextApiRequest, NextApiResponse } from "next";
 
@@ -25,8 +25,8 @@ export default async function handler(
 }
 
 const readEventHandler = createHandler(readEvent, async (req, res) => {
-  const session = await getSession(req);
-  if (!session) {
+  const token = await verify(req);
+  if (!token) {
     res.status(401).end();
     return;
   }
@@ -53,8 +53,8 @@ const readEventHandler = createHandler(readEvent, async (req, res) => {
 });
 
 const updateEventHandler = createHandler(updateEvent, async (req, res) => {
-  const session = await getSession(req);
-  if (!session) {
+  const token = await verify(req);
+  if (!token) {
     res.status(401).end();
     return;
   }
