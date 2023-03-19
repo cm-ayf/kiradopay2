@@ -39,8 +39,9 @@ const createEventHandler = createHandler(createEvent, async (req, res) => {
     }
   }
 
+  const { date, ...rest } = req.body;
   const event = await prisma.event.create({
-    data: req.body,
+    data: { date: new Date(date), ...rest },
   });
 
   res.status(200).json({ ...event, items: [] });

@@ -9,25 +9,19 @@ import {
   updateItem,
 } from "@/types/item";
 import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
-import Card from "@mui/material/Card";
-import CardActionArea from "@mui/material/CardActionArea";
-import CardContent from "@mui/material/CardContent";
-import CardMedia from "@mui/material/CardMedia";
-import Dialog from "@mui/material/Dialog";
-import DialogActions from "@mui/material/DialogActions";
-import DialogContent from "@mui/material/DialogContent";
-import DialogContentText from "@mui/material/DialogContentText";
-import DialogTitle from "@mui/material/DialogTitle";
-import TextField from "@mui/material/TextField";
+import Grid from "@mui/material/Grid";
+import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
 import Add from "@mui/icons-material/Add";
-import { TypeCompiler } from "@sinclair/typebox/compiler";
 import { useState } from "react";
 import { eventInclude, prisma, toEvent } from "@/lib/prisma";
 import { useRouter } from "next/router";
 import type { GetServerSidePropsContext } from "next";
 import { verify } from "@/lib/auth";
+import EventCard from "@/components/EventCard";
+import EventDialog from "@/components/EventDialog";
+import ItemCard from "@/components/ItemCard";
+import ItemDialog from "@/components/ItemDialog";
 
 export async function getServerSideProps({ req }: GetServerSidePropsContext) {
   const token = await verify(req);
@@ -49,236 +43,117 @@ export async function getServerSideProps({ req }: GetServerSidePropsContext) {
   };
 }
 
-const useEvents = createUseRoute(readEvents);
-const useItems = createUseRoute(readItems);
-
 export default function Home() {
-  const { data: events } = useEvents();
-  const { data: items } = useItems();
-  const router = useRouter();
-
-  const [openItem, setOpenItem] = useState<Item>();
-
   return (
-    <Layout headTitle="Kiradopay - トップ" bodyTitle="Kiradopay">
-      <Box sx={{ display: "flex", flexDirection: "row", my: 2 }}>
-        <Typography variant="h2" sx={{ fontSize: "2em" }}>
-          イベント
-        </Typography>
-        <CreateEvent />
-      </Box>
-      <Box
-        sx={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
-          alignItems: "center",
-          rowGap: 2,
-          columnGap: 2,
-          mx: 2,
-        }}
-      >
-        {events?.map((event) => (
-          <Card key={event.code}>
-            <CardActionArea onClick={() => router.push(`/${event.code}`)}>
-              <CardContent
-                sx={{
-                  textAlign: "center",
-                  textTransform: "none",
-                  fontSize: "1.5em",
-                  fontWeight: "bold",
-                }}
-              >
-                {event.name}
-              </CardContent>
-            </CardActionArea>
-          </Card>
-        ))}
-      </Box>
-      <Box sx={{ display: "flex", flexDirection: "row", my: 2 }}>
-        <Typography variant="h2" sx={{ fontSize: "2em" }}>
-          商品
-        </Typography>
-        <CreateItem />
-      </Box>
-      <Box
-        sx={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
-          alignItems: "center",
-          rowGap: 2,
-          columnGap: 2,
-          mx: 2,
-        }}
-      >
-        {items?.map((item) => (
-          <Card key={item.code}>
-            <CardActionArea onClick={() => setOpenItem(item)} sx={{ p: 2 }}>
-              <CardMedia
-                component="img"
-                image={item.picture}
-                alt={item.name}
-                sx={{ maxWidth: 200 }}
-              />
-              <CardContent sx={{ textAlign: "center", textTransform: "none" }}>
-                <Box sx={{ fontSize: "1.5em", fontWeight: "bold" }}>
-                  {item.name}
-                </Box>
-              </CardContent>
-            </CardActionArea>
-          </Card>
-        ))}
-      </Box>
-      {openItem && (
-        <MutateItem item={openItem} onClose={() => setOpenItem(undefined)} />
-      )}
+    <Layout headTitle="Kiradopay" bodyTitle="Kiradopay">
+      <Events />
+      <Items />
     </Layout>
   );
 }
 
+const useEvents = createUseRoute(readEvents);
 const useCreateEvent = createUseRouteMutation(createEvent);
-const createEventBody = TypeCompiler.Compile(createEvent.body);
 
-function CreateEvent() {
+function Events() {
+  const { data: events } = useEvents();
   const { trigger, isMutating } = useCreateEvent();
-
+  const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [code, setCode] = useState("");
-  const [name, setName] = useState("");
-  const [date, setDate] = useState(new Date().toISOString());
-
-  const body = { code, name, date: new Date(date) };
-  const isValid = createEventBody.Check(body);
 
   return (
     <>
-      <Button onClick={() => setOpen(true)}>
-        <Add />
-      </Button>
-      <Dialog open={open} onClose={() => setOpen(false)}>
-        <DialogTitle>イベントを作成</DialogTitle>
-        <DialogContent
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "stretch",
-            rowGap: 1,
-          }}
-        >
-          <TextField
-            label="イベントコード"
-            variant="standard"
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-          />
-          <TextField
-            label="イベント名"
-            variant="standard"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-          <TextField
-            label="日付"
-            type="date"
-            variant="standard"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button
-            type="submit"
-            variant="contained"
-            disabled={isMutating || !isValid}
-            onClick={async (e) => {
-              e.preventDefault();
-              if (!isValid) return;
+      <Box sx={{ display: "flex", flexDirection: "row", my: 2 }}>
+        <Typography variant="h2" sx={{ fontSize: "2em" }}>
+          イベント
+        </Typography>
+        <IconButton color="primary" onClick={() => setOpen(true)}>
+          <Add />
+        </IconButton>
+      </Box>
+      <Grid container spacing={2} sx={{ mx: 2 }}>
+        {events?.map((event) => (
+          <Grid item key={event.code}>
+            <EventCard
+              event={event}
+              width={250}
+              onClick={() => router.push(`/${event.code}`)}
+            />
+          </Grid>
+        ))}
+      </Grid>
+      <EventDialog
+        schema={createEvent.body}
+        title="イベントを作成"
+        open={open}
+        onClose={() => setOpen(false)}
+        isMutating={isMutating}
+        buttons={[
+          {
+            label: "作成",
+            needsValidation: true,
+            onClick: async (body) => {
               await trigger(body);
-              setOpen(false);
-            }}
-          >
-            作成
-          </Button>
-        </DialogActions>
-      </Dialog>
+              router.push(`/${body.code}`);
+            },
+          },
+        ]}
+      />
     </>
   );
 }
 
+const useItems = createUseRoute(readItems);
 const useCreateItem = createUseRouteMutation(createItem);
-const createItemBody = TypeCompiler.Compile(createItem.body);
 
-function CreateItem() {
-  const { trigger, isMutating } = useCreateItem();
-
+function Items() {
+  const { data: items } = useItems();
   const [open, setOpen] = useState(false);
-  const [code, setCode] = useState("");
-  const [name, setName] = useState("");
-  const [picture, setPicture] = useState("");
-
-  const body = { code, name, picture };
-  const isValid = createItemBody.Check(body);
+  const { trigger, isMutating } = useCreateItem();
 
   return (
     <>
-      <Button onClick={() => setOpen(true)}>
-        <Add />
-      </Button>
-      <Dialog open={open} onClose={() => setOpen(false)}>
-        <DialogTitle>商品を作成</DialogTitle>
-        <DialogContent
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "stretch",
-            rowGap: 2,
-          }}
-        >
-          <DialogContentText></DialogContentText>
-          <TextField
-            label="商品コード"
-            variant="standard"
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-          />
-          <TextField
-            label="商品名"
-            variant="standard"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-          <TextField
-            label="画像URL"
-            variant="standard"
-            value={picture}
-            onChange={(e) => setPicture(e.target.value)}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button
-            type="submit"
-            variant="contained"
-            disabled={isMutating || !isValid}
-            onClick={async (e) => {
-              e.preventDefault();
-              if (!isValid) return;
+      <Box sx={{ display: "flex", flexDirection: "row", my: 2 }}>
+        <Typography variant="h2" sx={{ fontSize: "2em" }}>
+          商品
+        </Typography>
+        <IconButton color="primary" onClick={() => setOpen(true)}>
+          <Add />
+        </IconButton>
+      </Box>
+      <Grid container spacing={2} sx={{ mx: 2 }}>
+        {items?.map((item) => (
+          <Grid item key={item.code}>
+            <ItemWrapper key={item.code} item={item} />
+          </Grid>
+        ))}
+      </Grid>
+      <ItemDialog
+        schema={createItem.body}
+        title="商品を作成"
+        open={open}
+        onClose={() => setOpen(false)}
+        isMutating={isMutating}
+        buttons={[
+          {
+            label: "作成",
+            needsValidation: true,
+            onClick: async (body) => {
               await trigger(body);
               setOpen(false);
-            }}
-          >
-            作成
-          </Button>
-        </DialogActions>
-      </Dialog>
+            },
+          },
+        ]}
+      />
     </>
   );
 }
 
 const useUpdateItem = createUseRouteMutation(updateItem);
-const updateItemBody = TypeCompiler.Compile(updateItem.body);
-
 const useDeleteItem = createUseRouteMutation(deleteItem);
 
-function MutateItem({ item, onClose }: { item: Item; onClose: () => void }) {
+function ItemWrapper({ item }: { item: Item }) {
+  const [open, setOpen] = useState(false);
   const { trigger: triggerUpdate, isMutating: isUpdating } = useUpdateItem({
     itemcode: item.code,
   });
@@ -286,71 +161,35 @@ function MutateItem({ item, onClose }: { item: Item; onClose: () => void }) {
     itemcode: item.code,
   });
 
-  const [code, setCode] = useState<string>();
-  const [name, setName] = useState<string>();
-  const [picture, setPicture] = useState<string>();
-
-  const body = { code, name, picture };
-  const isValid = updateItemBody.Check(body);
-
   return (
-    <Dialog open={Boolean(item)} onClose={onClose}>
-      <DialogTitle>商品を編集</DialogTitle>
-      <DialogContent
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "stretch",
-          rowGap: 2,
-        }}
-      >
-        <DialogContentText></DialogContentText>
-        <TextField
-          label="商品コード"
-          variant="standard"
-          value={code ?? item?.code}
-          onChange={(e) => setCode(e.target.value)}
-        />
-        <TextField
-          label="商品名"
-          variant="standard"
-          value={name ?? item?.name}
-          onChange={(e) => setName(e.target.value)}
-        />
-        <TextField
-          label="画像URL"
-          variant="standard"
-          value={picture ?? item?.picture}
-          onChange={(e) => setPicture(e.target.value)}
-        />
-      </DialogContent>
-      <DialogActions>
-        <Button
-          type="submit"
-          variant="contained"
-          disabled={isUpdating || isDeleting || !isValid}
-          onClick={async (e) => {
-            e.preventDefault();
-            if (!isValid) return;
-            await triggerUpdate(body);
-            onClose();
-          }}
-        >
-          更新
-        </Button>
-        <Button
-          type="submit"
-          variant="contained"
-          disabled={isUpdating || isDeleting}
-          onClick={async (e) => {
-            e.preventDefault();
-            await triggerDelete(null);
-            onClose();
-          }}
-        >
-          削除
-        </Button>
-      </DialogActions>
-    </Dialog>
+    <>
+      <ItemCard item={item} width={250} onClick={() => setOpen(true)} />
+      <ItemDialog
+        schema={updateItem.body}
+        title="商品を編集"
+        item={item}
+        open={open}
+        onClose={() => setOpen(false)}
+        isMutating={isUpdating || isDeleting}
+        buttons={[
+          {
+            label: "更新",
+            needsValidation: true,
+            needsUpdate: true,
+            onClick: async (body) => {
+              await triggerUpdate(body);
+              setOpen(false);
+            },
+          },
+          {
+            label: "削除",
+            onClick: async () => {
+              await triggerDelete(null);
+              setOpen(false);
+            },
+          },
+        ]}
+      />
+    </>
   );
 }

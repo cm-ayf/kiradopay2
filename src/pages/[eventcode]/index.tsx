@@ -1,3 +1,6 @@
+import EventCard from "@/components/EventCard";
+import EventDialog from "@/components/EventDialog";
+import ItemCard from "@/components/ItemCard";
 import Layout from "@/components/Layout";
 import { verify } from "@/lib/auth";
 import { eventInclude, prisma, toEvent } from "@/lib/prisma";
@@ -8,14 +11,13 @@ import { readItems, Item as ItemSchema } from "@/types/item";
 import Edit from "@mui/icons-material/Edit";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import Card from "@mui/material/Card";
-import CardContent from "@mui/material/CardContent";
-import CardMedia from "@mui/material/CardMedia";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
+import Grid from "@mui/material/Grid";
+import IconButton from "@mui/material/IconButton";
 import Switch from "@mui/material/Switch";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
@@ -23,7 +25,6 @@ import { compressToEncodedURIComponent } from "lz-string";
 import type { GetServerSidePropsContext } from "next";
 import { useRouter } from "next/router";
 import { useMemo, useState } from "react";
-import { useSWRConfig } from "swr";
 
 export async function getServerSideProps({
   req,
@@ -75,119 +76,49 @@ function Event({ eventcode }: { eventcode: string }) {
 
   return (
     <Layout headTitle={`${title} | Kiradopay`} bodyTitle={title} back="/">
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "row",
-          justifyContent: "flex-end",
-        }}
-      >
-        <Typography variant="h2" sx={{ fontSize: "2em" }}>
-          {title}
-        </Typography>
-        {event && <UpdateEvent event={event} />}
-      </Box>
+      {event && <About event={event} />}
       {event && <UpdateCalculator event={event} />}
-      {event && <DisplayArray event={event} />}
+      {event && <Display event={event} />}
     </Layout>
   );
 }
 
 const useUpdateEvent = createUseRouteMutation(updateEvent);
 
-function UpdateEvent({ event }: { event: EventSchema }) {
+function About({ event }: { event: EventSchema }) {
   const { trigger, isMutating } = useUpdateEvent({ eventcode: event.code });
-
+  const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [code, setCode] = useState<string>();
-  const [name, setName] = useState<string>();
-  const [date, setDate] = useState<string>();
-
-  const body = {
-    ...(code && { code }),
-    ...(name && { name }),
-    ...(date && { date }),
-  };
 
   return (
-    <>
-      <Button
-        onClick={() => setOpen(true)}
-        sx={{ fontSize: "1.5em", lineHeight: "normal", py: 1 }}
-      >
-        <Edit />
-      </Button>
-      <Dialog
+    <Box sx={{ display: "flex", flexDirection: "row", columnGap: 2, m: 2 }}>
+      <EventCard width={500} event={event} onClick={() => setOpen(true)} />
+      <EventDialog
+        schema={updateEvent.body}
+        title="イベントを更新"
+        event={event}
         open={open}
         onClose={() => setOpen(false)}
-        PaperProps={{
-          sx: {
-            display: "flex",
-            flexDirection: "column",
-            rowGap: 2,
-            p: 2,
+        isMutating={isMutating}
+        buttons={[
+          {
+            label: "更新",
+            needsValidation: true,
+            needsUpdate: true,
+            onClick: async (body) => {
+              await trigger(body);
+              setOpen(false);
+            },
           },
-        }}
+        ]}
+      />
+      <Button
+        variant="contained"
+        onClick={() => router.push(`/${event.code}/register`)}
       >
-        <TextField
-          label="イベントコード"
-          variant="outlined"
-          value={code ?? event.code}
-          onChange={(e) => {
-            const value = e.target.value;
-            if (value === event.code) {
-              setCode(undefined);
-            } else {
-              setCode(value);
-            }
-          }}
-        />
-        <TextField
-          label="イベント名"
-          variant="outlined"
-          value={name ?? event.name}
-          onChange={(e) => {
-            const value = e.target.value;
-            if (value === event.name) {
-              setName(undefined);
-            } else {
-              setName(value);
-            }
-          }}
-        />
-        <TextField
-          label="日付"
-          type="date"
-          variant="outlined"
-          value={date ?? event.date}
-          onChange={(e) => {
-            const value = e.target.value;
-            if (Date.parse(value) === new Date(event.date).getTime()) {
-              setDate(undefined);
-            } else {
-              setDate(value);
-            }
-          }}
-        />
-        <Button
-          type="submit"
-          variant="contained"
-          disabled={
-            isMutating || [code, name, date].every((v) => v === undefined)
-          }
-          onClick={async (e) => {
-            e.preventDefault();
-            await trigger(body);
-            setOpen(false);
-            setName(undefined);
-            setCode(undefined);
-            setDate(undefined);
-          }}
-        >
-          更新
-        </Button>
-      </Dialog>
-    </>
+        レジを起動
+      </Button>
+    </Box>
   );
 }
 
@@ -225,10 +156,10 @@ function UpdateCalculator({ event }: { event: EventSchema }) {
           display: "flex",
           flexDirection: "row",
           alignItems: "center",
-          columnGap: "1em",
+          columnGap: 2,
         }}
       >
-        <Typography variant="h3" sx={{ fontSize: "1.5em" }}>
+        <Typography variant="h2" sx={{ fontSize: "2em" }}>
           計算機
         </Typography>
         <Button
@@ -287,7 +218,9 @@ function UpdateCalculator({ event }: { event: EventSchema }) {
   );
 }
 
-function DisplayArray({ event }: { event: EventSchema }) {
+function Display({ event }: { event: EventSchema }) {
+  const [open, setOpen] = useState(false);
+
   return (
     <>
       <Box
@@ -297,82 +230,65 @@ function DisplayArray({ event }: { event: EventSchema }) {
           alignItems: "center",
         }}
       >
-        <Typography variant="h3" sx={{ fontSize: "1.5em" }}>
+        <Typography variant="h2" sx={{ fontSize: "2em" }}>
           お品書き
         </Typography>
-        <DisplayDialog event={event} />
+        <IconButton
+          color="primary"
+          sx={{ m: "1em" }}
+          onClick={() => setOpen(true)}
+        >
+          <Edit />
+        </IconButton>
       </Box>
-      <Box
-        sx={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
-          alignItems: "center",
-          rowGap: 2,
-          columnGap: 2,
-          padding: 2,
-        }}
-      >
+      <Grid container spacing={2} sx={{ mx: 2 }}>
         {event.items.map((item) => (
-          <Card
-            key={item.code}
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              p: 2,
-            }}
-          >
-            <CardMedia
-              component="img"
-              image={item.picture}
-              alt={item.name}
-              sx={{ maxWidth: 200 }}
-            />
-            <CardContent sx={{ textAlign: "center", textTransform: "none" }}>
-              <Box sx={{ fontSize: "1.5em", fontWeight: "bold" }}>
-                {item.name}
-              </Box>
-            </CardContent>
-          </Card>
+          <Grid item key={item.code}>
+            <ItemCard item={item} width={250} />
+          </Grid>
         ))}
-      </Box>
+      </Grid>
+      <DisplayDialog event={event} open={open} onClose={() => setOpen(false)} />
     </>
   );
 }
 
 const useItems = createUseRoute(readItems);
-const useCreateDisplay = createUseRouteMutation(createDisplay);
-const useDeleteDisplay = createUseRouteMutation(deleteDisplay);
 
-function DisplayDialog({ event }: { event: EventSchema }) {
-  const [open, setOpen] = useState(false);
+function DisplayDialog({
+  event,
+  open,
+  onClose,
+}: {
+  event: EventSchema;
+  open: boolean;
+  onClose: () => void;
+}) {
   const { data: items } = useItems();
 
   return (
-    <>
-      <Button sx={{ m: "1em" }} onClick={() => setOpen(true)}>
-        <Edit />
-      </Button>
-      <Dialog open={open} onClose={() => setOpen(false)}>
-        <DialogTitle>お品書きを編集</DialogTitle>
-        <DialogContent>
-          <DialogContentText></DialogContentText>
-          {items?.map((item) => (
-            <DisplaySwitch
-              key={item.code}
-              eventcode={event.code}
-              item={item}
-              included={event.items.some((i) => i.code === item.code)}
-            />
-          ))}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpen(false)}>閉じる</Button>
-        </DialogActions>
-      </Dialog>
-    </>
+    <Dialog open={open} onClose={onClose}>
+      <DialogTitle>お品書きを編集</DialogTitle>
+      <DialogContent>
+        <DialogContentText></DialogContentText>
+        {items?.map((item) => (
+          <DisplaySwitch
+            key={item.code}
+            eventcode={event.code}
+            item={item}
+            included={event.items.some((i) => i.code === item.code)}
+          />
+        ))}
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>閉じる</Button>
+      </DialogActions>
+    </Dialog>
   );
 }
+
+const useCreateDisplay = createUseRouteMutation(createDisplay);
+const useDeleteDisplay = createUseRouteMutation(deleteDisplay);
 
 function DisplaySwitch({
   eventcode,
@@ -383,6 +299,7 @@ function DisplaySwitch({
   item: ItemSchema;
   included: boolean;
 }) {
+  const { mutate } = useEvent({ eventcode });
   const { trigger: triggerCreate, isMutating: isCreating } = useCreateDisplay({
     eventcode,
     itemcode: item.code,
@@ -391,12 +308,10 @@ function DisplaySwitch({
     eventcode,
     itemcode: item.code,
   });
-  const { mutate } = useSWRConfig();
 
   async function onCreate() {
     await triggerCreate(null);
     await mutate(
-      `/api/events/${eventcode}`,
       (event) =>
         event && {
           ...event,
@@ -404,20 +319,19 @@ function DisplaySwitch({
             a.code.localeCompare(b.code)
           ),
         },
-      false
+      { revalidate: false }
     );
   }
 
   async function onDelete() {
     await triggerDelete(null);
     await mutate(
-      `/api/events/${eventcode}`,
       (event) =>
         event && {
           ...event,
           items: event.items.filter((i: any) => i.code !== item.code),
         },
-      false
+      { revalidate: false }
     );
   }
 
@@ -431,12 +345,12 @@ function DisplaySwitch({
     >
       <Typography
         variant="caption"
-        sx={{ fontSize: "1.5em", fontWeight: "bold" }}
+        sx={{ fontSize: "1em", fontWeight: "bold" }}
       >
         {item.name}
       </Typography>
+      <Box sx={{ flexGrow: 1 }} />
       <Switch
-        sx={{ m: "1em" }}
         checked={included}
         onChange={(e) => {
           if (e.target.checked) {
