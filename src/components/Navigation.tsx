@@ -1,20 +1,19 @@
 import { useRef, useState } from "react";
-import {
-  AppBar,
-  Avatar,
-  Box,
-  Button,
-  CircularProgress,
-  IconButton,
-  Menu,
-  MenuItem,
-  Toolbar,
-  Typography,
-} from "@mui/material";
+import AppBar from "@mui/material/AppBar";
+import Avatar from "@mui/material/Avatar";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import CircularProgress from "@mui/material/CircularProgress";
+import IconButton from "@mui/material/IconButton";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
+import Toolbar from "@mui/material/Toolbar";
+import Typography from "@mui/material/Typography";
 import { createUseRoute, UnauthorizedError } from "@/lib/swr";
 import { readUsersMe } from "@/types/user";
 import { useRouter } from "next/router";
-import { ArrowBack, CloudOff } from "@mui/icons-material";
+import ArrowBack from "@mui/icons-material/ArrowBack";
+import CloudOff from "@mui/icons-material/CloudOff";
 
 const useUser = createUseRoute(readUsersMe, {
   refreshInterval: 10000,

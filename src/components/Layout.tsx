@@ -1,5 +1,6 @@
 import Head from "next/head";
-import { Box, Container } from "@mui/material";
+import Box from "@mui/material/Box";
+import Container from "@mui/material/Container";
 import Navigation, { NavigationProps } from "./Navigation";
 import type { PropsWithChildren } from "react";
 

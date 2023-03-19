@@ -5,22 +5,20 @@ import { createUseRoute, createUseRouteMutation } from "@/lib/swr";
 import { createDisplay, deleteDisplay } from "@/types/display";
 import { readEvent, updateEvent, Event as EventSchema } from "@/types/event";
 import { readItems, Item as ItemSchema } from "@/types/item";
-import { Edit } from "@mui/icons-material";
-import {
-  Box,
-  Button,
-  Card,
-  CardContent,
-  CardMedia,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
-  Switch,
-  TextField,
-  Typography,
-} from "@mui/material";
+import Edit from "@mui/icons-material/Edit";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import CardMedia from "@mui/material/CardMedia";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogContentText from "@mui/material/DialogContentText";
+import DialogTitle from "@mui/material/DialogTitle";
+import Switch from "@mui/material/Switch";
+import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
 import { compressToEncodedURIComponent } from "lz-string";
 import type { GetServerSidePropsContext } from "next";
 import { useRouter } from "next/router";
