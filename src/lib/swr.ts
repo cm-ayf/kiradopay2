@@ -5,6 +5,8 @@ import type { SWRMutationResponse } from "swr/mutation";
 import type { Route, TParams } from "@/types/route";
 import { TypeCompiler } from "@sinclair/typebox/compiler";
 import type { Static } from "@sinclair/typebox";
+import { useAlert } from "@/components/Alert";
+import { useEffect } from "react";
 
 type ParamsArg<P> = Static<TParams> extends P ? [params?: P] : [params: P];
 
@@ -37,7 +39,9 @@ export function createUseRoute<R extends GetRoute>(
 
   async function fetcher(path: string) {
     const res = await fetch(path);
-    if (res.status === 401) throw new UnauthorizedError();
+    if (res.status === 401) {
+      throw new UnauthorizedError();
+    }
     if (!res.ok) throw new Error(res.statusText);
 
     const json = await res.json();
@@ -46,7 +50,18 @@ export function createUseRoute<R extends GetRoute>(
     return json;
   }
 
-  return (...args) => useSWR(pathGenerator(...args), fetcher, options);
+  return (...args) => {
+    const response = useSWR(pathGenerator(...args), fetcher, options);
+    const { dispatch } = useAlert();
+
+    const isUnauthorized = response.error instanceof UnauthorizedError;
+
+    useEffect(() => {
+      if (isUnauthorized) dispatch("unauthorized");
+    }, [isUnauthorized, dispatch]);
+
+    return response;
+  };
 }
 
 export type UseRouteMutation<R extends Route> = (
@@ -78,5 +93,16 @@ export function createUseRouteMutation<R extends Route>(
     return json;
   }
 
-  return (...args) => useSWRMutation(pathGenerator(...args), fetcher, options);
+  return (...args) => {
+    const response = useSWRMutation(pathGenerator(...args), fetcher, options);
+    const { dispatch } = useAlert();
+
+    const isUnauthorized = response.error instanceof UnauthorizedError;
+
+    useEffect(() => {
+      if (isUnauthorized) dispatch("unauthorized");
+    }, [isUnauthorized, dispatch]);
+
+    return response;
+  };
 }
