@@ -32,8 +32,9 @@ export const createItem = {
 } satisfies Route;
 
 export const updateItem = {
-  method: "PUT",
+  method: "PATCH",
   path: "/api/items/[itemcode]",
+  params: Type.Object({ itemcode: Code }),
   body: UpdateItem,
   response: Item,
 } satisfies Route;
@@ -41,5 +42,6 @@ export const updateItem = {
 export const deleteItem = {
   method: "DELETE",
   path: "/api/items/[itemcode]",
+  params: Type.Object({ itemcode: Code }),
   response: Type.Null(),
 } satisfies Route;

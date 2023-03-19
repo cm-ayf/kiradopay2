@@ -122,14 +122,7 @@ function Register({ eventcode }: { eventcode: string }) {
     <Layout
       headTitle={`${title} | Kiradopay`}
       bodyTitle={title}
-      containerProps={{
-        sx: {
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "stretch",
-          rowGap: 2,
-        },
-      }}
+      back={`/${eventcode}`}
       bottom={
         event && <Bottom event={event} state={state} dispatch={dispatch} />
       }

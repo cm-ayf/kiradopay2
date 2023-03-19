@@ -66,19 +66,8 @@ export default function Home() {
   const [openItem, setOpenItem] = useState<Item>();
 
   return (
-    <Layout
-      headTitle="Kiradopay - トップ"
-      bodyTitle="Kiradopay"
-      containerProps={{
-        sx: {
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "stretch",
-          rowGap: 2,
-        },
-      }}
-    >
-      <Box sx={{ display: "flex", flexDirection: "row" }}>
+    <Layout headTitle="Kiradopay - トップ" bodyTitle="Kiradopay">
+      <Box sx={{ display: "flex", flexDirection: "row", my: 2 }}>
         <Typography variant="h2" sx={{ fontSize: "2em" }}>
           イベント
         </Typography>
@@ -91,6 +80,7 @@ export default function Home() {
           alignItems: "center",
           rowGap: 2,
           columnGap: 2,
+          mx: 2,
         }}
       >
         {events?.map((event) => (
@@ -110,7 +100,7 @@ export default function Home() {
           </Card>
         ))}
       </Box>
-      <Box sx={{ display: "flex", flexDirection: "row" }}>
+      <Box sx={{ display: "flex", flexDirection: "row", my: 2 }}>
         <Typography variant="h2" sx={{ fontSize: "2em" }}>
           商品
         </Typography>
@@ -123,7 +113,7 @@ export default function Home() {
           alignItems: "center",
           rowGap: 2,
           columnGap: 2,
-          padding: 2,
+          mx: 2,
         }}
       >
         {items?.map((item) => (
@@ -144,7 +134,9 @@ export default function Home() {
           </Card>
         ))}
       </Box>
-      <MutateItem item={openItem} onClose={() => setOpenItem(undefined)} />
+      {openItem && (
+        <MutateItem item={openItem} onClose={() => setOpenItem(undefined)} />
+      )}
     </Layout>
   );
 }
@@ -165,10 +157,7 @@ function CreateEvent() {
 
   return (
     <>
-      <Button
-        onClick={() => setOpen(true)}
-        sx={{ fontSize: "1.5em", lineHeight: "normal", py: 1 }}
-      >
+      <Button onClick={() => setOpen(true)}>
         <Add />
       </Button>
       <Dialog open={open} onClose={() => setOpen(false)}>
@@ -178,10 +167,9 @@ function CreateEvent() {
             display: "flex",
             flexDirection: "column",
             alignItems: "stretch",
-            rowGap: 2,
+            rowGap: 1,
           }}
         >
-          <DialogContentText></DialogContentText>
           <TextField
             label="イベントコード"
             variant="standard"
@@ -238,10 +226,7 @@ function CreateItem() {
 
   return (
     <>
-      <Button
-        onClick={() => setOpen(true)}
-        sx={{ fontSize: "1.5em", lineHeight: "normal", py: 1 }}
-      >
+      <Button onClick={() => setOpen(true)}>
         <Add />
       </Button>
       <Dialog open={open} onClose={() => setOpen(false)}>
@@ -299,15 +284,13 @@ const updateItemBody = TypeCompiler.Compile(updateItem.body);
 
 const useDeleteItem = createUseRouteMutation(deleteItem);
 
-function MutateItem({
-  item,
-  onClose,
-}: {
-  item: Item | undefined;
-  onClose: () => void;
-}) {
-  const { trigger: triggerUpdate, isMutating: isUpdating } = useUpdateItem();
-  const { trigger: triggerDelete, isMutating: isDeleting } = useDeleteItem();
+function MutateItem({ item, onClose }: { item: Item; onClose: () => void }) {
+  const { trigger: triggerUpdate, isMutating: isUpdating } = useUpdateItem({
+    itemcode: item.code,
+  });
+  const { trigger: triggerDelete, isMutating: isDeleting } = useDeleteItem({
+    itemcode: item.code,
+  });
 
   const [code, setCode] = useState<string>();
   const [name, setName] = useState<string>();

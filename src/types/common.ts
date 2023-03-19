@@ -3,7 +3,7 @@ import { Format } from "@sinclair/typebox/format";
 
 export const Code = Type.String({
   pattern: /^[a-z0-9-]+$/i.source,
-  minLength: 5,
+  minLength: 4,
 });
 export const Name = Type.String({ minLength: 1 });
 export const Date = Type.Union([

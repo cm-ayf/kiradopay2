@@ -5,30 +5,27 @@ import {
   Box,
   Button,
   CircularProgress,
+  IconButton,
   Menu,
   MenuItem,
   Toolbar,
   Typography,
 } from "@mui/material";
 import { createUseRoute, UnauthorizedError } from "@/lib/swr";
-import { readUsersMe, User } from "@/types/user";
+import { readUsersMe } from "@/types/user";
 import { useRouter } from "next/router";
-import { CloudOff } from "@mui/icons-material";
+import { ArrowBack, CloudOff } from "@mui/icons-material";
 
 const useUser = createUseRoute(readUsersMe, {
   refreshInterval: 1000,
 });
 
-type ConnectionState =
-  | {
-      variant: "connecting";
-    }
-  | {
-      variant: "authorized";
-      user: User;
-    };
+export interface NavigationProps {
+  bodyTitle: string;
+  back?: string;
+}
 
-export default function Navigation({ title }: { title: string }) {
+export default function Navigation({ bodyTitle, back }: NavigationProps) {
   const { data: user, error } = useUser();
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -39,7 +36,12 @@ export default function Navigation({ title }: { title: string }) {
   return (
     <AppBar position="static" ref={ref}>
       <Toolbar variant="dense">
-        <Typography component="h1">{title}</Typography>
+        {back && (
+          <IconButton color="inherit" onClick={() => router.push(back)}>
+            <ArrowBack />
+          </IconButton>
+        )}
+        <Typography component="h1">{bodyTitle}</Typography>
         <Box sx={{ flexGrow: 1 }} />
         <Button
           color="inherit"

@@ -2,12 +2,7 @@ import Layout from "@/components/Layout";
 import { prisma } from "@/lib/prisma";
 import { createUseRoute, createUseRouteMutation } from "@/lib/swr";
 import { createDisplay, deleteDisplay } from "@/types/display";
-import {
-  readEvent,
-  updateEvent,
-  Event as EventSchema,
-  UpdateEvent,
-} from "@/types/event";
+import { readEvent, updateEvent, Event as EventSchema } from "@/types/event";
 import { readItems, Item as ItemSchema } from "@/types/item";
 import { Edit } from "@mui/icons-material";
 import {
@@ -25,7 +20,6 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { TypeCompiler } from "@sinclair/typebox/compiler";
 import { compressToEncodedURIComponent } from "lz-string";
 import type { GetServerSidePropsContext } from "next";
 import { useRouter } from "next/router";
@@ -84,18 +78,7 @@ function Event({ eventcode }: { eventcode: string }) {
   const title = event ? event.name : eventcode;
 
   return (
-    <Layout
-      headTitle={`${title} | Kiradopay`}
-      bodyTitle={title}
-      containerProps={{
-        sx: {
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "stretch",
-          rowGap: 2,
-        },
-      }}
-    >
+    <Layout headTitle={`${title} | Kiradopay`} bodyTitle={title} back="/">
       <Box
         sx={{
           display: "flex",
@@ -214,7 +197,7 @@ function UpdateEvent({ event }: { event: EventSchema }) {
 
 function playground(items: ItemSchema[]) {
   return `\
-type Itemcode = ${items.map((item) => `"${item.code}"`).join(" | ")};
+type Itemcode = ${items.map((item) => `"${item.code}"`).join(" | ") || "never"};
 
 interface RecordState {
   count: number;
@@ -246,6 +229,7 @@ function UpdateCalculator({ event }: { event: EventSchema }) {
           display: "flex",
           flexDirection: "row",
           alignItems: "center",
+          columnGap: "1em",
         }}
       >
         <Typography variant="h3" sx={{ fontSize: "1.5em" }}>
@@ -253,16 +237,15 @@ function UpdateCalculator({ event }: { event: EventSchema }) {
         </Typography>
         <Button
           variant="outlined"
-          sx={{ m: "1em" }}
+          sx={{ textTransform: "none" }}
           href={`https://www.typescriptlang.org/play?#code/${hash}`}
           target="_blank"
           rel="noopener noreferrer"
         >
-          TypeScript Playground
+          TS Playground
         </Button>
         <Button
           variant="contained"
-          sx={{ m: "1em" }}
           disabled={
             isMutating ||
             calculator === undefined ||
