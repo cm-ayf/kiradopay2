@@ -1,5 +1,6 @@
 import Layout from "@/components/Layout";
-import { prisma } from "@/lib/prisma";
+import { verify } from "@/lib/auth";
+import { eventInclude, prisma, toEvent } from "@/lib/prisma";
 import { createUseRoute, createUseRouteMutation } from "@/lib/swr";
 import { createDisplay, deleteDisplay } from "@/types/display";
 import { readEvent, updateEvent, Event as EventSchema } from "@/types/event";
@@ -26,17 +27,17 @@ import { useRouter } from "next/router";
 import { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 
-export async function getServerSideProps(
-  context: GetServerSidePropsContext<{ eventcode: string }>
-) {
-  const { eventcode } = context.params!;
+export async function getServerSideProps({
+  req,
+  params,
+}: GetServerSidePropsContext<{ eventcode: string }>) {
+  const token = await verify(req);
+  if (!token) return { props: {} };
+
+  const { eventcode } = params!;
   const event = await prisma.event.findUnique({
     where: { code: eventcode },
-    include: {
-      displays: {
-        include: { item: true },
-      },
-    },
+    include: eventInclude,
   });
 
   if (!event) return { notFound: true };
@@ -44,11 +45,8 @@ export async function getServerSideProps(
   return {
     props: {
       fallback: {
-        [`/api/events/${eventcode}`]: {
-          ...event,
-          date: event.date.toISOString(),
-          items: event.displays.map(({ item }) => item),
-        },
+        "/api/users/me": token,
+        [`/api/events/${eventcode}`]: toEvent(event),
       },
     },
   };

@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { createEvent, readEvents } from "@/types/event";
 import { createHandler } from "@/lib/handler";
-import { prisma } from "@/lib/prisma";
+import { eventInclude, prisma, toEvent } from "@/lib/prisma";
 import { verify } from "@/lib/auth";
 
 export default async function handler(
@@ -53,19 +53,7 @@ const readEventsHandler = createHandler(readEvents, async (req, res) => {
     return;
   }
 
-  const events = await prisma.event.findMany({
-    include: {
-      displays: {
-        include: { item: true },
-        orderBy: { itemcode: "asc" },
-      },
-    },
-  });
+  const events = await prisma.event.findMany({ include: eventInclude });
 
-  res.status(200).json(
-    events.map(({ displays, ...event }) => ({
-      ...event,
-      items: displays.map(({ item }) => item),
-    }))
-  );
+  res.status(200).json(events.map(toEvent));
 });

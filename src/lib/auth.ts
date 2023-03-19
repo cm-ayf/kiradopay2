@@ -5,7 +5,8 @@ import {
   TokenPayload,
 } from "google-auth-library";
 import { CookieSerializeOptions, serialize } from "cookie";
-import type { NextApiRequest, NextApiResponse } from "next";
+import type { NextApiResponse } from "next";
+import type { NextApiRequestCookies } from "next/dist/server/api-utils";
 
 const clientId = process.env["GOOGLE_CLIENT_ID"];
 if (!clientId) {
@@ -28,7 +29,7 @@ export const options = {
   redirectUri: `${host}/api/auth/callback`,
 } satisfies OAuth2ClientOptions;
 
-export async function verify(req: NextApiRequest) {
+export async function verify(req: { cookies: NextApiRequestCookies }) {
   const { id_token } = req.cookies;
   if (!id_token) return;
 

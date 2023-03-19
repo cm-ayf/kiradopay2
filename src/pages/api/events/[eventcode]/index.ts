@@ -1,6 +1,6 @@
 import { createHandler } from "@/lib/handler";
 import { verify } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { eventInclude, prisma, toEvent } from "@/lib/prisma";
 import { readEvent, updateEvent } from "@/types/event";
 import type { NextApiRequest, NextApiResponse } from "next";
 
@@ -33,12 +33,7 @@ const readEventHandler = createHandler(readEvent, async (req, res) => {
 
   const event = await prisma.event.findUnique({
     where: { code: req.query.eventcode },
-    include: {
-      displays: {
-        include: { item: true },
-        orderBy: { itemcode: "asc" },
-      },
-    },
+    include: eventInclude,
   });
 
   if (!event) {
@@ -46,10 +41,7 @@ const readEventHandler = createHandler(readEvent, async (req, res) => {
     return;
   }
 
-  res.status(200).json({
-    ...event,
-    items: event.displays.map((display) => display.item),
-  });
+  res.status(200).json(toEvent(event));
 });
 
 const updateEventHandler = createHandler(updateEvent, async (req, res) => {
@@ -70,16 +62,8 @@ const updateEventHandler = createHandler(updateEvent, async (req, res) => {
   const event = await prisma.event.update({
     where: { code: req.query.eventcode },
     data: req.body,
-    include: {
-      displays: {
-        include: { item: true },
-        orderBy: { itemcode: "asc" },
-      },
-    },
+    include: eventInclude,
   });
 
-  res.status(200).json({
-    ...event,
-    items: event.displays.map((display) => display.item),
-  });
+  res.status(200).json(toEvent(event));
 });

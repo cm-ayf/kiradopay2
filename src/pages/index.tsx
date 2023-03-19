@@ -26,29 +26,25 @@ import {
 import { Add } from "@mui/icons-material";
 import { TypeCompiler } from "@sinclair/typebox/compiler";
 import { useState } from "react";
-import { prisma } from "@/lib/prisma";
+import { eventInclude, prisma, toEvent } from "@/lib/prisma";
 import { useRouter } from "next/router";
+import type { GetServerSidePropsContext } from "next";
+import { verify } from "@/lib/auth";
 
-export async function getServerSideProps() {
+export async function getServerSideProps({ req }: GetServerSidePropsContext) {
+  const token = await verify(req);
+  if (!token) return { props: {} };
+
   const [events, items] = await prisma.$transaction([
-    prisma.event.findMany({
-      include: {
-        displays: {
-          include: { item: true },
-        },
-      },
-    }),
-    prisma.item.findMany(),
+    prisma.event.findMany({ include: eventInclude }),
+    prisma.item.findMany({ orderBy: { code: "asc" } }),
   ]);
 
   return {
     props: {
       fallback: {
-        "/api/events": events.map(({ displays, ...event }) => ({
-          ...event,
-          date: event.date.toISOString(),
-          displays: displays.map(({ item }) => item),
-        })),
+        "/api/users/me": token,
+        "/api/events": events.map(toEvent),
         "/api/items": items,
       },
     },

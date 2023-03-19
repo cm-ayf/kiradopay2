@@ -17,7 +17,13 @@ import { useRouter } from "next/router";
 import { ArrowBack, CloudOff } from "@mui/icons-material";
 
 const useUser = createUseRoute(readUsersMe, {
-  refreshInterval: 1000,
+  refreshInterval: 10000,
+  revalidateOnFocus: false,
+  onSuccess: ({ exp }) => {
+    if (exp - Date.now() / 1000 < 300) {
+      fetch("/api/auth/refresh", { method: "POST" });
+    }
+  },
 });
 
 export interface NavigationProps {
