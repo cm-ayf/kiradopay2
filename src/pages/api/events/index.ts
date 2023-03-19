@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { createEvent, readEvents } from "@/types/event";
 import { createHandler } from "@/lib/handler";
 import { prisma } from "@/lib/prisma";
-import { verify } from "@/lib/oauth2";
+import { verify } from "@/lib/auth";
 
 export default async function handler(
   req: NextApiRequest,

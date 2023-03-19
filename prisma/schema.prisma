@@ -52,6 +52,8 @@ model Display {
   Record Record[]
 
   @@id([eventcode, itemcode])
+  @@index([eventcode])
+  @@index([itemcode])
 }
 
 model Receipt {
@@ -65,6 +67,9 @@ model Receipt {
   usersub   String
 
   records Record[]
+
+  @@index([eventcode])
+  @@index([usersub])
 }
 
 model Record {
@@ -79,4 +84,8 @@ model Record {
   dedication Boolean
 
   @@id([receiptId, index])
+  @@index([receiptId])
+  @@index([eventcode])
+  @@index([itemcode])
+  @@index([eventcode, itemcode])
 }

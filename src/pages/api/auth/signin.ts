@@ -1,4 +1,4 @@
-import { options, setCodeVerifier } from "@/lib/oauth2";
+import { options, setCodeVerifier } from "@/lib/auth";
 import { CodeChallengeMethod, OAuth2Client } from "google-auth-library";
 import type { NextApiRequest, NextApiResponse } from "next";
 
@@ -33,5 +33,7 @@ export default async function handler(
     code_challenge: codeChallenge!,
     code_challenge_method: CodeChallengeMethod.S256,
   });
-  setCodeVerifier(res, codeVerifier).redirect(url);
+
+  setCodeVerifier(res, codeVerifier);
+  res.redirect(url);
 }

@@ -1,5 +1,5 @@
 import { createHandler } from "@/lib/handler";
-import { verify } from "@/lib/oauth2";
+import { verify } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { createItem, readItems } from "@/types/item";
 import type { NextApiRequest, NextApiResponse } from "next";

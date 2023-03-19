@@ -1,4 +1,4 @@
-import { options, setCredentials } from "@/lib/oauth2";
+import { clearCodeVerifier, options, setCredentials } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@prisma/client";
 import { OAuth2Client } from "google-auth-library";
@@ -35,6 +35,7 @@ export default async function handler(
   const { tokens } = await client.getToken({
     code,
     codeVerifier,
+    redirect_uri: options.redirectUri,
   });
 
   if (!tokens.id_token) {
@@ -42,7 +43,10 @@ export default async function handler(
     return;
   }
 
-  const ticket = await client.verifyIdToken({ idToken: tokens.id_token });
+  const ticket = await client.verifyIdToken({
+    idToken: tokens.id_token,
+    audience: options.clientId,
+  });
   const { sub, email, name, picture } = ticket.getPayload()!;
   if (!email || !name || !picture) {
     res.status(400).end();
@@ -71,5 +75,7 @@ export default async function handler(
   }
   await prisma.$transaction(promises);
 
-  setCredentials(res, tokens).redirect("/");
+  clearCodeVerifier(res);
+  setCredentials(res, tokens);
+  res.redirect("/");
 }
