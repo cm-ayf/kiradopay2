@@ -1,0 +1,11 @@
+{
+  "theme_color": "#42a5f5",
+  "background_color": "#42a5f5",
+  "display": "standalone",
+  "scope": "/",
+  "start_url": "/",
+  "name": "Kirado Pay 2",
+  "short_name": "kiradopay2",
+  "description": "This is a demo to create PWA with next",
+  "icons": []
+}
