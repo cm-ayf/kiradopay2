@@ -242,11 +242,14 @@ function Price({ total }: { total: number }) {
 
 type Calculator = (state: State) => number;
 
-function useCalculator({ calculator }: { calculator: string }): Calculator {
-  return useMemo(
-    () => new Function("state", calculator) as Calculator,
-    [calculator]
-  );
+function useCalculator({ calculator, items }: Event): Calculator {
+  return useMemo(() => {
+    const raw = new Function("state", calculator) as Calculator;
+    const defaults = Object.fromEntries(
+      items.map((item) => [item.code, { count: 0 }])
+    );
+    return (state) => raw({ ...defaults, ...state });
+  }, [calculator, items]);
 }
 
 type Value = 0 | 1 | "+";

@@ -132,7 +132,7 @@ interface RecordState {
 }
 
 type State = {
-  [K in Itemcode]?: RecordState;
+  [K in Itemcode]: RecordState;
 }
 
 function calculate(state: State): number {
