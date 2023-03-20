@@ -1,3 +1,4 @@
+import { useAlert } from "@/components/Alert";
 import Layout from "@/components/Layout";
 import { verify } from "@/lib/auth";
 import {
@@ -33,7 +34,7 @@ import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Typography from "@mui/material/Typography";
 import type { GetServerSidePropsContext } from "next";
 import { useRouter } from "next/router";
-import { useCallback, useMemo, useReducer } from "react";
+import { useCallback, useEffect, useMemo, useReducer } from "react";
 
 export async function getServerSideProps({
   req,
@@ -186,6 +187,17 @@ function Bottom({
     isMutating: isSyncing,
     pending,
   } = useSync(event.code);
+  const pending10 = Boolean(pending && pending >= 10);
+  const { dispatch: dispatchAlert } = useAlert();
+
+  useEffect(() => {
+    if (pending10) {
+      dispatchAlert({
+        severity: "info",
+        message: "同期されていないデータがあります",
+      });
+    }
+  }, [pending10, dispatchAlert]);
 
   return (
     <Paper variant="outlined" square sx={{ height: 144 }}>
@@ -261,7 +273,7 @@ function useSync(eventcode: string) {
     useIDBDeleteReceipts(eventcode);
 
   return {
-    pending: receipts && receipts.length > 0,
+    pending: receipts?.length,
     trigger: useCallback(async () => {
       if (!receipts) return;
       const created = await triggerCreate(receipts);
