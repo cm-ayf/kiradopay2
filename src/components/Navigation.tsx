@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import AppBar from "@mui/material/AppBar";
 import Avatar from "@mui/material/Avatar";
 import Box from "@mui/material/Box";
@@ -45,6 +45,7 @@ export default function Navigation({ bodyTitle, back }: NavigationProps) {
   const { data: user, error } = useUser();
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   const state: ConnectionState = user
@@ -55,6 +56,15 @@ export default function Navigation({ bodyTitle, back }: NavigationProps) {
       : { type: "error" }
     : { type: "loading" };
 
+  useEffect(() => {
+    router.events.on("routeChangeStart", () => setIsLoading(true));
+    router.events.on("routeChangeComplete", () => setIsLoading(false));
+    return () => {
+      router.events.off("routeChangeStart", () => setIsLoading(true));
+      router.events.off("routeChangeComplete", () => setIsLoading(false));
+    };
+  }, [router]);
+
   return (
     <AppBar position="static" ref={ref}>
       <Toolbar variant="dense">
@@ -64,6 +74,7 @@ export default function Navigation({ bodyTitle, back }: NavigationProps) {
           </IconButton>
         )}
         <Typography component="h1">{bodyTitle}</Typography>
+        {isLoading && <CircularProgress color="info" />}
         <Box sx={{ flexGrow: 1 }} />
         <MenuButton state={state} setOpen={setOpen} />
         <Menu
