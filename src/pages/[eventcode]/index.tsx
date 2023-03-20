@@ -9,6 +9,7 @@ import { createDisplay, deleteDisplay } from "@/types/display";
 import { readEvent, updateEvent, Event as EventSchema } from "@/types/event";
 import { readItems, Item as ItemSchema } from "@/types/item";
 import Edit from "@mui/icons-material/Edit";
+import LoadingButton from "@mui/lab/LoadingButton";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Dialog from "@mui/material/Dialog";
@@ -177,13 +178,10 @@ function UpdateCalculator({ event }: { event: EventSchema }) {
         >
           TS Playground
         </Button>
-        <Button
+        <LoadingButton
           variant="contained"
-          disabled={
-            isMutating ||
-            calculator === undefined ||
-            !isValidCalculator(calculator)
-          }
+          loading={isMutating}
+          disabled={calculator === undefined || !isValidCalculator(calculator)}
           onClick={async (e) => {
             e.preventDefault();
             if (!calculator || !isValidCalculator(calculator)) return;
@@ -192,7 +190,7 @@ function UpdateCalculator({ event }: { event: EventSchema }) {
           }}
         >
           更新
-        </Button>
+        </LoadingButton>
       </Box>
       <Box
         sx={{

@@ -1,6 +1,6 @@
 import type { DialogButton } from "@/types/dialog";
 import type { Event } from "@/types/event";
-import Button from "@mui/material/Button";
+import LoadingButton from "@mui/lab/LoadingButton";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
@@ -74,10 +74,10 @@ export default function EventDialog<T extends TSchema>({
       <DialogActions>
         {buttons.map(
           ({ onClick, label, needsValidation, needsUpdate }, index) => (
-            <Button
+            <LoadingButton
               key={index}
+              loading={isMutating}
               disabled={
-                isMutating ||
                 Boolean(needsValidation && !isValid) ||
                 Boolean(needsUpdate && !isUpdated)
               }
@@ -92,7 +92,7 @@ export default function EventDialog<T extends TSchema>({
               }}
             >
               {label}
-            </Button>
+            </LoadingButton>
           )
         )}
       </DialogActions>

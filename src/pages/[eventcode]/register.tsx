@@ -12,14 +12,13 @@ import type { Item } from "@/types/item";
 import { createReceipts } from "@/types/receipt";
 import CloudDone from "@mui/icons-material/CloudDone";
 import CloudUpload from "@mui/icons-material/CloudUpload";
+import LoadingButton from "@mui/lab/LoadingButton";
 import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
 import CardActions from "@mui/material/CardActions";
 import CardContent from "@mui/material/CardContent";
 import CardMedia from "@mui/material/CardMedia";
 import Checkbox from "@mui/material/Checkbox";
-import CircularProgress from "@mui/material/CircularProgress";
 import Container from "@mui/material/Container";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Grid from "@mui/material/Grid";
@@ -161,7 +160,8 @@ function Bottom({
   state: State;
   dispatch: React.Dispatch<Action>;
 }) {
-  const { trigger: triggerCreate } = useIDBCreateReceipt(event.code);
+  const { trigger: triggerCreate, isMutating: isCreating } =
+    useIDBCreateReceipt(event.code);
   const calculator = useCalculator(event);
   const total = calculator(state);
   const hints =
@@ -199,23 +199,16 @@ function Bottom({
           columnGap: 2,
         }}
       >
-        <Button
+        <LoadingButton
           size="large"
           variant="outlined"
-          startIcon={
-            isSyncing ? (
-              <CircularProgress size={22} />
-            ) : pending ? (
-              <CloudUpload />
-            ) : (
-              <CloudDone />
-            )
-          }
-          disabled={isSyncing || !pending}
-          onClick={() => triggerSync()}
+          loading={isSyncing}
+          startIcon={pending ? <CloudUpload /> : <CloudDone />}
+          disabled={!pending}
+          onClick={triggerSync}
         >
           同期
-        </Button>
+        </LoadingButton>
         <Box sx={{ flex: 1 }} />
         <Table size="small" sx={{ flex: 0 }}>
           <TableBody sx={{ rowGap: 0 }}>
@@ -231,14 +224,15 @@ function Bottom({
         <Typography variant="caption" fontSize="3em" sx={{ p: 2, width: 192 }}>
           ¥{total}
         </Typography>
-        <Button
+        <LoadingButton
           size="large"
           variant="contained"
+          loading={isCreating}
           disabled={Object.keys(state).length === 0}
           onClick={onClick}
         >
           登録
-        </Button>
+        </LoadingButton>
       </Container>
     </Paper>
   );
