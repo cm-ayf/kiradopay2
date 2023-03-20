@@ -82,17 +82,14 @@ export function useIDBReceipts(eventcode: string) {
   return useSWR(key(eventcode), readReceipts);
 }
 
-async function deleteReceipts(key: string) {
+type DeleteReceipts = { id: string }[];
+
+async function deleteReceipts(_: string, { arg }: { arg: DeleteReceipts }) {
   const db = await ensureDB();
-  const keys = await db.getAllKeysFromIndex(
-    "receipts",
-    "eventcode",
-    eventcode(key)
-  );
 
   const tx = db.transaction("receipts", "readwrite");
   const store = tx.objectStore("receipts");
-  await Promise.all(keys.map((key) => store.delete(key)));
+  await Promise.all(arg.map(({ id }) => store.delete(id)));
   await tx.done;
 
   return [];

@@ -1,10 +1,17 @@
 import Layout from "@/components/Layout";
 import { verify } from "@/lib/auth";
-import { useIDBCreateReceipt } from "@/lib/idb";
+import {
+  useIDBCreateReceipt,
+  useIDBDeleteReceipts,
+  useIDBReceipts,
+} from "@/lib/idb";
 import { eventInclude, prisma, toEvent } from "@/lib/prisma";
-import { createUseRoute } from "@/lib/swr";
+import { createUseRoute, createUseRouteMutation } from "@/lib/swr";
 import { Event, readEvent } from "@/types/event";
 import type { Item } from "@/types/item";
+import { createReceipts } from "@/types/receipt";
+import CloudDone from "@mui/icons-material/CloudDone";
+import CloudUpload from "@mui/icons-material/CloudUpload";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
@@ -12,6 +19,7 @@ import CardActions from "@mui/material/CardActions";
 import CardContent from "@mui/material/CardContent";
 import CardMedia from "@mui/material/CardMedia";
 import Checkbox from "@mui/material/Checkbox";
+import CircularProgress from "@mui/material/CircularProgress";
 import Container from "@mui/material/Container";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Grid from "@mui/material/Grid";
@@ -153,7 +161,7 @@ function Bottom({
   state: State;
   dispatch: React.Dispatch<Action>;
 }) {
-  const { trigger } = useIDBCreateReceipt(event.code);
+  const { trigger: triggerCreate } = useIDBCreateReceipt(event.code);
   const calculator = useCalculator(event);
   const total = calculator(state);
   const hints =
@@ -169,9 +177,15 @@ function Bottom({
       count: record.count,
       dedication: record.dedication ?? false,
     }));
-    await trigger({ total, records });
+    await triggerCreate({ total, records });
     dispatch({ type: "reset" });
   }
+
+  const {
+    trigger: triggerSync,
+    isMutating: isSyncing,
+    pending,
+  } = useSync(event.code);
 
   return (
     <Paper variant="outlined" square sx={{ height: 144 }}>
@@ -185,6 +199,23 @@ function Bottom({
           columnGap: 2,
         }}
       >
+        <Button
+          size="large"
+          variant="outlined"
+          startIcon={
+            isSyncing ? (
+              <CircularProgress size={22} />
+            ) : pending ? (
+              <CloudUpload />
+            ) : (
+              <CloudDone />
+            )
+          }
+          disabled={isSyncing || !pending}
+          onClick={() => triggerSync()}
+        >
+          同期
+        </Button>
         <Box sx={{ flex: 1 }} />
         <Table size="small" sx={{ flex: 0 }}>
           <TableBody sx={{ rowGap: 0 }}>
@@ -223,6 +254,28 @@ function useCalculator({ calculator, items }: Event): Calculator {
     );
     return (state) => raw({ ...defaults, ...state });
   }, [calculator, items]);
+}
+
+const useCreateReceipts = createUseRouteMutation(createReceipts);
+
+function useSync(eventcode: string) {
+  const { data: receipts } = useIDBReceipts(eventcode);
+  const { trigger: triggerCreate, isMutating: isCreating } = useCreateReceipts({
+    eventcode,
+  });
+  const { trigger: triggerDelete, isMutating: isDeleting } =
+    useIDBDeleteReceipts(eventcode);
+
+  return {
+    pending: receipts && receipts.length > 0,
+    trigger: useCallback(async () => {
+      if (!receipts) return;
+      const created = await triggerCreate(receipts);
+      if (!created) return;
+      await triggerDelete(receipts);
+    }, [triggerCreate, triggerDelete, receipts]),
+    isMutating: isCreating || isDeleting,
+  };
 }
 
 function ItemPanel({

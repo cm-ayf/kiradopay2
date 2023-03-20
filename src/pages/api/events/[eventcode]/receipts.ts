@@ -48,13 +48,14 @@ const createReceiptsHandler = createHandler(
       return;
     }
 
+    const { eventcode } = req.query;
     const receipts = await prisma.$transaction(
       req.body.map(({ records, ...rest }) =>
         prisma.receipt.create({
           data: {
             ...rest,
-            eventcode: req.query.eventcode,
-            usersub: token.sub,
+            eventcode,
+            userId: token.id,
             records: {
               create: records.map(({ itemcode, ...rest }, index) => ({
                 ...rest,
@@ -62,7 +63,7 @@ const createReceiptsHandler = createHandler(
                 display: {
                   connect: {
                     eventcode_itemcode: {
-                      eventcode: req.query.eventcode,
+                      eventcode,
                       itemcode,
                     },
                   },

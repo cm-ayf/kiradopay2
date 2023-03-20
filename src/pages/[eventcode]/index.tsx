@@ -92,7 +92,7 @@ function About({ event }: { event: EventSchema }) {
 
   return (
     <Box sx={{ display: "flex", flexDirection: "row", columnGap: 2, m: 2 }}>
-      <EventCard width={500} event={event} onClick={() => setOpen(true)} />
+      <EventCard width={300} event={event} onClick={() => setOpen(true)} />
       <EventDialog
         schema={updateEvent.body}
         title="イベントを更新"
@@ -117,6 +117,12 @@ function About({ event }: { event: EventSchema }) {
         onClick={() => router.push(`/${event.code}/register`)}
       >
         レジを起動
+      </Button>
+      <Button
+        variant="contained"
+        onClick={() => router.push(`/${event.code}/receipts`)}
+      >
+        購入履歴
       </Button>
     </Box>
   );
