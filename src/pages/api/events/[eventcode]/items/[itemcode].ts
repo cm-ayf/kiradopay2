@@ -26,7 +26,7 @@ export default async function handler(
 }
 
 const createDisplayHandler = createHandler(createDisplay, async (req, res) => {
-  const token = await verify(req);
+  const token = verify(req);
   if (!token) {
     res.status(401).end();
     return;
@@ -62,7 +62,7 @@ const createDisplayHandler = createHandler(createDisplay, async (req, res) => {
 });
 
 const deleteDisplayHandler = createHandler(deleteDisplay, async (req, res) => {
-  const token = await verify(req);
+  const token = verify(req);
   if (!token) {
     res.status(401).end();
     return;

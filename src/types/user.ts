@@ -2,10 +2,10 @@ import { Static, Type } from "@sinclair/typebox";
 import type { Route } from "./route";
 
 export const Token = Type.Object({
-  sub: Type.String(),
-  email: Type.String(),
-  name: Type.String(),
-  picture: Type.String(),
+  id: Type.String(),
+  username: Type.String(),
+  nick: Type.Union([Type.String(), Type.Null()]),
+  avatar: Type.Union([Type.String(), Type.Null()]),
   exp: Type.Integer(),
 });
 

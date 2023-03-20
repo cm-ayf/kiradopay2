@@ -21,7 +21,7 @@ export default async function handler(
 }
 
 const readUsersMeHandler = createHandler(readUsersMe, async (req, res) => {
-  const token = await verify(req);
+  const token = verify(req);
   if (!token) {
     res.status(401).end();
     return;

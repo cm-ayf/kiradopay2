@@ -24,7 +24,7 @@ import ItemCard from "@/components/ItemCard";
 import ItemDialog from "@/components/ItemDialog";
 
 export async function getServerSideProps({ req }: GetServerSidePropsContext) {
-  const token = await verify(req);
+  const token = verify(req);
   if (!token) return { props: {} };
 
   const [events, items] = await prisma.$transaction([

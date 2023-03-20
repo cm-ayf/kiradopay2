@@ -26,7 +26,7 @@ export default async function handler(
 }
 
 const updateItemHandler = createHandler(updateItem, async (req, res) => {
-  const token = await verify(req);
+  const token = verify(req);
   if (!token) {
     res.status(401).end();
     return;
@@ -41,7 +41,7 @@ const updateItemHandler = createHandler(updateItem, async (req, res) => {
 });
 
 const deleteItemHandler = createHandler(deleteItem, async (req, res) => {
-  const token = await verify(req);
+  const token = verify(req);
   if (!token) {
     res.status(401).end();
     return;

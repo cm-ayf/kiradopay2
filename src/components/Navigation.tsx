@@ -10,7 +10,7 @@ import MenuItem from "@mui/material/MenuItem";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import { createUseRoute, UnauthorizedError } from "@/lib/swr";
-import { readUsersMe } from "@/types/user";
+import { readUsersMe, Token } from "@/types/user";
 import { useRouter } from "next/router";
 import ArrowBack from "@mui/icons-material/ArrowBack";
 import CloudOff from "@mui/icons-material/CloudOff";
@@ -28,6 +28,13 @@ const useUser = createUseRoute(readUsersMe, {
 export interface NavigationProps {
   bodyTitle: string;
   back?: string;
+}
+
+function UserAvatar({ user }: { user: Token }) {
+  if (!user.avatar) return <Avatar />;
+
+  const url = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.webp`;
+  return <Avatar src={url} />;
 }
 
 export default function Navigation({ bodyTitle, back }: NavigationProps) {
@@ -59,7 +66,7 @@ export default function Navigation({ bodyTitle, back }: NavigationProps) {
             error ? (
               !unauthorized && <CloudOff />
             ) : user ? (
-              <Avatar src={user.picture} />
+              <UserAvatar user={user} />
             ) : (
               <CircularProgress />
             )
@@ -78,8 +85,20 @@ export default function Navigation({ bodyTitle, back }: NavigationProps) {
                     textTransform: "none",
                   }}
                 >
-                  <Typography variant="body2">{user.name}</Typography>
-                  <Typography variant="caption">{user.email}</Typography>
+                  {user.nick ? (
+                    <>
+                      <Typography variant="body2" component="span">
+                        {user.nick}
+                      </Typography>
+                      <Typography variant="caption" component="span">
+                        {user.username}
+                      </Typography>
+                    </>
+                  ) : (
+                    <Typography variant="body2" component="span">
+                      {user.username}
+                    </Typography>
+                  )}
                 </Box>
               )}
         </Button>

@@ -1,5 +1,5 @@
-import { options, setCodeVerifier } from "@/lib/auth";
-import { CodeChallengeMethod, OAuth2Client } from "google-auth-library";
+import { client, scope, setState } from "@/lib/auth";
+import { randomUUID } from "crypto";
 import type { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handler(
@@ -16,24 +16,15 @@ export default async function handler(
       res.status(405).end();
   }
 
-  const client = new OAuth2Client(options);
-
   const { refresh_token } = req.cookies;
   if (refresh_token) {
     res.redirect("/api/auth/refresh");
     return;
   }
 
-  const { codeVerifier, codeChallenge } =
-    await client.generateCodeVerifierAsync();
-  const url = client.generateAuthUrl({
-    access_type: "offline",
-    scope: "openid email profile",
-    state: codeVerifier,
-    code_challenge: codeChallenge!,
-    code_challenge_method: CodeChallengeMethod.S256,
-  });
+  const state = randomUUID();
+  const url = client.generateAuthUrl({ scope, state });
 
-  setCodeVerifier(res, codeVerifier);
+  setState(res, state);
   res.redirect(url);
 }

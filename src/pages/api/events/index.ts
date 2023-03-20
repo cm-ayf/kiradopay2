@@ -25,7 +25,7 @@ export default async function handler(
 }
 
 const createEventHandler = createHandler(createEvent, async (req, res) => {
-  const token = await verify(req);
+  const token = verify(req);
   if (!token) {
     res.status(401).end();
     return;
@@ -48,7 +48,7 @@ const createEventHandler = createHandler(createEvent, async (req, res) => {
 });
 
 const readEventsHandler = createHandler(readEvents, async (req, res) => {
-  const token = await verify(req);
+  const token = verify(req);
   if (!token) {
     res.status(401).end();
     return;

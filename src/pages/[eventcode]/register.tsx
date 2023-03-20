@@ -33,7 +33,7 @@ export async function getServerSideProps({
   req,
   params,
 }: GetServerSidePropsContext<{ eventcode: string }>) {
-  const token = await verify(req);
+  const token = verify(req);
   if (!token) return { props: {} };
 
   const { eventcode } = params!;

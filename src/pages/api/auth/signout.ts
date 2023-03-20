@@ -1,5 +1,4 @@
-import { clearCredentials, options } from "@/lib/auth";
-import { OAuth2Client } from "google-auth-library";
+import { client, clearCredentials } from "@/lib/auth";
 import type { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handler(
@@ -16,11 +15,9 @@ export default async function handler(
       res.status(405).end();
   }
 
-  const client = new OAuth2Client(options);
-
-  const { refresh_token } = req.cookies;
-  if (refresh_token) {
-    await client.revokeToken(refresh_token);
+  const { access_token } = req.cookies;
+  if (access_token) {
+    await client.revokeToken(access_token);
   }
 
   clearCredentials(res);

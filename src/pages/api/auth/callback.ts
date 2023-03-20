@@ -1,7 +1,10 @@
-import { clearCodeVerifier, options, setCredentials } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
-import type { Prisma } from "@prisma/client";
-import { OAuth2Client } from "google-auth-library";
+import {
+  clearState,
+  client,
+  createCredentials,
+  scope,
+  setCredentials,
+} from "@/lib/auth";
 import type { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handler(
@@ -18,64 +21,31 @@ export default async function handler(
       res.status(405).end();
   }
 
-  const client = new OAuth2Client(options);
-
-  const { code, state } = req.query;
-  if (typeof code !== "string" || typeof state !== "string") {
+  const { code, state: stateFromQuery } = req.query;
+  if (typeof code !== "string" || typeof stateFromQuery !== "string") {
     res.status(400).end();
     return;
   }
 
-  const { code_verifier: codeVerifier } = req.cookies;
-  if (!codeVerifier || codeVerifier !== state) {
+  const { state: stateFromCookie } = req.cookies;
+  if (stateFromCookie !== stateFromQuery) {
     res.status(400).end();
     return;
   }
 
-  const { tokens } = await client.getToken({
+  const response = await client.tokenRequest({
+    grantType: "authorization_code",
     code,
-    codeVerifier,
-    redirect_uri: options.redirectUri,
+    scope,
   });
 
-  if (!tokens.id_token) {
-    res.status(400).end();
+  const credentials = await createCredentials(response, true);
+  if (!credentials) {
+    res.status(403).end();
     return;
   }
 
-  const ticket = await client.verifyIdToken({
-    idToken: tokens.id_token,
-    audience: options.clientId,
-  });
-  const { sub, email, name, picture } = ticket.getPayload()!;
-  if (!email || !name || !picture) {
-    res.status(400).end();
-    return;
-  }
-
-  const [user, invite] = await prisma.$transaction([
-    prisma.user.findUnique({
-      where: { sub },
-    }),
-    prisma.invite.findUnique({
-      where: { email },
-    }),
-  ]);
-  if (!user && !invite) {
-    res.status(400).end();
-    return;
-  }
-
-  const promises: Prisma.PrismaPromise<any>[] = [];
-  if (!user) {
-    promises.push(prisma.user.create({ data: { sub } }));
-  }
-  if (invite) {
-    promises.push(prisma.invite.delete({ where: { email } }));
-  }
-  await prisma.$transaction(promises);
-
-  clearCodeVerifier(res);
-  setCredentials(res, tokens);
+  clearState(res);
+  setCredentials(res, credentials);
   res.redirect("/");
 }
