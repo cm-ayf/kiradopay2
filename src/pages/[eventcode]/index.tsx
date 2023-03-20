@@ -349,15 +349,12 @@ function DisplaySwitch({
       >
         {item.name}
       </Typography>
-      <Box sx={{ flexGrow: 1 }} />
+      <Box sx={{ flex: 1 }} />
       <Switch
         checked={included}
         onChange={(e) => {
-          if (e.target.checked) {
-            onCreate();
-          } else {
-            onDelete();
-          }
+          if (e.target.checked) onCreate();
+          else onDelete();
         }}
         disabled={isCreating || isDeleting}
       />

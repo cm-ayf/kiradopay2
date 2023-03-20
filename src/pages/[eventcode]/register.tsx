@@ -1,33 +1,32 @@
 import Layout from "@/components/Layout";
 import { verify } from "@/lib/auth";
-import { idb } from "@/lib/idb";
+import { useIDBCreateReceipt } from "@/lib/idb";
 import { eventInclude, prisma, toEvent } from "@/lib/prisma";
-import { createUseRoute, createUseRouteMutation } from "@/lib/swr";
+import { createUseRoute } from "@/lib/swr";
 import { Event, readEvent } from "@/types/event";
 import type { Item } from "@/types/item";
-import { Receipt as ReceiptSchema, createReceipts } from "@/types/receipt";
-import { readReceipts } from "@/types/receipt";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
+import CardActions from "@mui/material/CardActions";
 import CardContent from "@mui/material/CardContent";
 import CardMedia from "@mui/material/CardMedia";
+import Checkbox from "@mui/material/Checkbox";
 import Container from "@mui/material/Container";
-import Dialog from "@mui/material/Dialog";
-import DialogActions from "@mui/material/DialogActions";
-import DialogContent from "@mui/material/DialogContent";
-import DialogTitle from "@mui/material/DialogTitle";
-import Divider from "@mui/material/Divider";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import Grid from "@mui/material/Grid";
 import Paper from "@mui/material/Paper";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableRow from "@mui/material/TableRow";
 import TextField from "@mui/material/TextField";
 import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Typography from "@mui/material/Typography";
 import type { GetServerSidePropsContext } from "next";
 import { useRouter } from "next/router";
-import { useCallback, useMemo, useReducer, useState } from "react";
-import useSWR from "swr";
-import useSWRMutation from "swr/mutation";
+import { useCallback, useMemo, useReducer } from "react";
 
 export async function getServerSideProps({
   req,
@@ -62,23 +61,23 @@ export default function RegisterWrapper() {
   return <Register eventcode={eventcode} />;
 }
 
-interface UpsertRecord {
-  type: "upsert";
+interface RecordSetCount {
+  type: "setCount";
   itemcode: string;
-  create: RecordState;
-  update: Partial<RecordState>;
+  count: number;
 }
 
-interface DeleteRecord {
-  type: "delete";
+interface RecordSetDedication {
+  type: "setDedication";
   itemcode: string;
+  dedication: boolean;
 }
 
 interface Reset {
   type: "reset";
 }
 
-type Action = UpsertRecord | DeleteRecord | Reset;
+type Action = RecordSetCount | RecordSetDedication | Reset;
 
 interface RecordState {
   count: number;
@@ -91,19 +90,26 @@ type State = {
 
 function reducer(state: State, action: Action): State {
   switch (action.type) {
-    case "upsert":
-      const existing = state[action.itemcode];
-      return {
-        ...state,
-        [action.itemcode]: existing
-          ? { ...existing, ...action.update }
-          : action.create,
-      };
-    case "delete":
-      const { [action.itemcode]: _, ...rest } = state;
-      return rest;
-    case "reset":
+    case "setCount": {
+      const { itemcode, count } = action;
+      if (count > 0) {
+        const updated: RecordState = { ...state[itemcode], count };
+        return { ...state, [itemcode]: updated };
+      } else if (count === 0) {
+        const { [itemcode]: _, ...rest } = state;
+        return rest;
+      } else {
+        return state;
+      }
+    }
+    case "setDedication": {
+      const { itemcode, dedication } = action;
+      const updated: RecordState = { count: 1, ...state[itemcode], dedication };
+      return { ...state, [itemcode]: updated };
+    }
+    case "reset": {
       return {};
+    }
   }
 }
 
@@ -123,22 +129,17 @@ function Register({ eventcode }: { eventcode: string }) {
         event && <Bottom event={event} state={state} dispatch={dispatch} />
       }
     >
-      <Container
-        sx={{
-          display: "grid",
-          gridTemplateColumns: "repeat(3, 1fr)",
-          gridGap: 2,
-        }}
-      >
+      <Grid container spacing={2} sx={{ flex: 1 }}>
         {event?.items.map((item) => (
-          <ItemCard
-            key={item.code}
-            item={item}
-            record={state[item.code]}
-            dispatch={dispatch}
-          />
+          <Grid item flex={1} key={item.code} sx={{ alignItems: "center" }}>
+            <ItemPanel
+              item={item}
+              record={state[item.code]}
+              dispatch={dispatch}
+            />
+          </Grid>
         ))}
-      </Container>
+      </Grid>
     </Layout>
   );
 }
@@ -152,91 +153,63 @@ function Bottom({
   state: State;
   dispatch: React.Dispatch<Action>;
 }) {
+  const { trigger } = useIDBCreateReceipt(event.code);
   const calculator = useCalculator(event);
   const total = calculator(state);
+  const hints =
+    total > 0
+      ? [500, 1000, 5000, 10000]
+          .filter((r) => r >= total)
+          .map((r) => ({ receive: r, change: r - total }))
+      : [];
 
-  const { trigger } = useSWRMutation("idb:receipts", register);
-
-  function register(_: string, { arg }: { arg: State }) {
-    const records = Object.entries(arg).map(([itemcode, record]) => ({
+  async function onClick() {
+    const records = Object.entries(state).map(([itemcode, record]) => ({
       itemcode,
       count: record.count,
       dedication: record.dedication ?? false,
     }));
-    return idb.addReceipt(event.code, total, records);
-  }
-
-  async function onClick() {
-    await trigger(state);
+    await trigger({ total, records });
     dispatch({ type: "reset" });
   }
 
   return (
-    <Paper variant="outlined" square sx={{ py: 1 }}>
+    <Paper variant="outlined" square sx={{ height: 144 }}>
       <Container
         sx={{
+          height: "100%",
           display: "flex",
           flexDirection: "row",
           justifyContent: "flex-end",
-          rowGap: 1,
+          alignItems: "center",
+          columnGap: 2,
         }}
       >
-        <Receipts event={event} />
-        <Box sx={{ flexGrow: 1 }} />
-        <Price total={total} />
+        <Box sx={{ flex: 1 }} />
+        <Table size="small" sx={{ flex: 0 }}>
+          <TableBody sx={{ rowGap: 0 }}>
+            {hints.map(({ receive, change }) => (
+              <TableRow key={receive}>
+                <TableCell>¥{receive}</TableCell>
+                <TableCell>→</TableCell>
+                <TableCell>¥{change}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+        <Typography variant="caption" fontSize="3em" sx={{ p: 2, width: 192 }}>
+          ¥{total}
+        </Typography>
         <Button
+          size="large"
           variant="contained"
           disabled={Object.keys(state).length === 0}
           onClick={onClick}
-          sx={{ px: 4, my: 0.5 }}
         >
           登録
         </Button>
       </Container>
     </Paper>
-  );
-}
-
-function Price({ total }: { total: number }) {
-  const hints =
-    total > 0
-      ? [10000, 5000, 1000, 500]
-          .filter((r) => r >= total)
-          .map((r) => ({ receive: r, change: r - total }))
-      : [];
-
-  return (
-    <>
-      <Box
-        sx={{
-          display: "grid",
-          gridTemplateColumns: "repeat(2, 1fr)",
-          gridGap: 1,
-        }}
-      >
-        {hints.map((hint) => (
-          <Box
-            key={hint.receive}
-            sx={{ display: "flex", alignItems: "center" }}
-          >
-            <Typography variant="caption">
-              ¥{hint.receive} → ¥{hint.change}
-            </Typography>
-          </Box>
-        ))}
-      </Box>
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          rowGap: 0.5,
-        }}
-      >
-        <Typography variant="caption">合計金額</Typography>
-        <Typography variant="caption">¥ {total}</Typography>
-      </Box>
-    </>
   );
 }
 
@@ -252,9 +225,7 @@ function useCalculator({ calculator, items }: Event): Calculator {
   }, [calculator, items]);
 }
 
-type Value = 0 | 1 | "+";
-
-function ItemCard({
+function ItemPanel({
   item,
   record,
   dispatch,
@@ -263,198 +234,107 @@ function ItemCard({
   record: RecordState | undefined;
   dispatch: React.Dispatch<Action>;
 }) {
-  const count = record?.count ?? 0;
-  const value: Value = count === 0 || count === 1 ? count : "+";
-
-  const set = useCallback(
+  const setCount = useCallback(
     (count: number) =>
-      dispatch({
-        type: "upsert",
-        itemcode: item.code,
-        create: { count },
-        update: { count },
-      }),
+      dispatch({ type: "setCount", itemcode: item.code, count }),
     [dispatch, item.code]
   );
 
-  function onChange(_: unknown, value: Value) {
-    switch (value) {
-      case 0:
-        dispatch({ type: "delete", itemcode: item.code });
-        break;
-      case 1:
-        set(1);
-        break;
-      case "+":
-        set(2);
-        break;
-    }
-  }
-
-  function onPlus() {
-    if (value === "+") set(count + 1);
-  }
+  const setDedication = useCallback(
+    (dedication: boolean) =>
+      dispatch({ type: "setDedication", itemcode: item.code, dedication }),
+    [dispatch, item.code]
+  );
 
   return (
-    <Card key={item.code} sx={{ display: "flex" }}>
+    <Card key={item.code} sx={{ display: "flex", width: 450 }}>
       <CardMedia
         component="img"
-        sx={{ width: 151 }}
         image={item.picture}
         alt={item.name}
+        sx={{ width: 150 }}
       />
       <Box sx={{ display: "flex", flexDirection: "column", width: "100%" }}>
-        <CardContent>
-          <Typography component="div" variant="h5">
-            {item.name}
-          </Typography>
-        </CardContent>
-        <Box
+        <CardContent sx={{ fontSize: "1.5em" }}>{item.name}</CardContent>
+        <Box sx={{ flex: 1 }} />
+        <CardActions
           sx={{
+            m: 0,
             display: "flex",
-            mt: "auto",
-            mb: "auto",
-            ml: 2,
-            mr: 2,
-            columnGap: 2,
-            height: 54,
+            flexDirection: "column",
+            alignItems: "flex-start",
           }}
         >
-          <ToggleButtonGroup
-            value={value}
-            exclusive
-            onChange={onChange}
-            sx={{ height: "100%" }}
-          >
-            <ToggleButton value={0}>0</ToggleButton>
-            <ToggleButton value={1}>1</ToggleButton>
-            <ToggleButton value={"+"} onClick={onPlus}>
-              +
-            </ToggleButton>
-          </ToggleButtonGroup>
-          {value === "+" && (
-            <TextField
-              type="number"
-              value={count}
-              onChange={(e) => set(parseInt(e.target.value))}
-              sx={{ height: "100%" }}
-            />
-          )}
-        </Box>
+          <DedicationCheck
+            selected={record?.dedication ?? false}
+            onChange={setDedication}
+          />
+          <Counter count={record?.count ?? 0} onChange={setCount} />
+        </CardActions>
       </Box>
     </Card>
   );
 }
 
-const useReceipts = createUseRoute(readReceipts);
-const useIDBReceipts = ({ eventcode }: { eventcode: string }) =>
-  useSWR(`idb:receipts:${eventcode}`, (key) => {
-    const [, , eventcode] = key.split(":");
-    return idb.getReceipts(eventcode!);
-  });
-
-function Receipts({ event }: { event: Event }) {
-  const { data: onServer } = useReceipts({ eventcode: event.code });
-  const { data: onBrowser } = useIDBReceipts({ eventcode: event.code });
-
-  const [open, setOpen] = useState(false);
-
-  return (
-    <>
-      <Button onClick={() => setOpen(true)}>購入履歴</Button>
-      <Dialog
-        open={open}
-        onClose={() => setOpen(false)}
-        scroll="paper"
-        sx={{
-          "& .MuiDialog-paper": {
-            width: "30%",
-            maxWidth: "none",
-          },
-        }}
-      >
-        <DialogTitle>購入履歴</DialogTitle>
-        <DialogContent dividers>
-          <Typography variant="caption">ブラウザの履歴</Typography>
-          {onBrowser &&
-            sorted(onBrowser).map((receipt) => (
-              <Receipt key={receipt.id} receipt={receipt} items={event.items} />
-            ))}
-          <Divider />
-          <Typography variant="caption">サーバーの履歴</Typography>
-          {onServer &&
-            sorted(onServer).map((receipt) => (
-              <Receipt key={receipt.id} receipt={receipt} items={event.items} />
-            ))}
-        </DialogContent>
-        <DialogActions sx={{ display: "flex" }}>
-          <Dump eventcode={event.code} />
-          <Box sx={{ flexGrow: 1 }} />
-          <Button onClick={() => setOpen(false)}>閉じる</Button>
-        </DialogActions>
-      </Dialog>
-    </>
-  );
-}
-
-function Receipt({
-  receipt,
-  items,
+function DedicationCheck({
+  selected,
+  onChange,
 }: {
-  receipt: ReceiptSchema;
-  items: Item[];
+  selected: boolean;
+  onChange: (selected: boolean) => void;
 }) {
   return (
-    <Card
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        rowGap: 1,
-        p: 1,
-      }}
-    >
-      <Typography variant="caption">
-        {receipt.createdAt.toLocaleString()}
-      </Typography>
-      <Typography variant="caption">¥ {receipt.total}</Typography>
-      <Box sx={{ display: "flex", flexDirection: "column", rowGap: 1 }}>
-        {receipt.records.map((record) => {
-          const item = items.find((i) => i.code === record.itemcode);
-
-          return (
-            <Typography variant="caption" key={record.itemcode}>
-              {record.count} × {item?.name ?? record.itemcode}
-            </Typography>
-          );
-        })}
-      </Box>
-    </Card>
+    <FormControlLabel
+      sx={{ mx: 2 }}
+      control={
+        <Checkbox
+          checked={selected}
+          onChange={(e) => onChange(e.target.checked)}
+        />
+      }
+      label="献本"
+    />
   );
 }
 
-function sorted<T extends { createdAt: string | Date }>([...items]: T[]): T[] {
-  return items.sort((a, b) => getTime(b.createdAt) - getTime(a.createdAt));
-}
+type Value = 0 | 1 | "+";
 
-function getTime(date: string | Date) {
-  return typeof date === "string" ? Date.parse(date) : date.getTime();
-}
-
-const useCreateReceipts = createUseRouteMutation(createReceipts);
-
-function Dump({ eventcode }: { eventcode: string }) {
-  const { trigger } = useCreateReceipts({ eventcode });
-  const { data: receipts, mutate } = useIDBReceipts({ eventcode });
-
-  async function onClick() {
-    if (!receipts) return;
-    await trigger(receipts);
-    await mutate(idb.deleteReceipts(eventcode), false);
-  }
+function Counter({
+  count,
+  onChange,
+}: {
+  count: number;
+  onChange: (count: number) => void;
+}) {
+  const value = count === 0 || count === 1 ? count : "+";
 
   return (
-    <Button onClick={onClick} disabled={!receipts}>
-      アップロード
-    </Button>
+    <Box sx={{ height: 56, mx: 2, mb: 2, display: "flex", columnGap: 2 }}>
+      <ToggleButtonGroup
+        value={value}
+        exclusive
+        onChange={(_, v: Value | null) => {
+          if (v !== null) onChange({ 0: 0, 1: 1, "+": 2 }[v]);
+          else if (value === "+") onChange(count + 1);
+        }}
+        sx={{ height: "100%", display: "flex", flexDirection: "row" }}
+      >
+        <ToggleButton size="large" value={0}>
+          0
+        </ToggleButton>
+        <ToggleButton size="large" value={1}>
+          1
+        </ToggleButton>
+        <ToggleButton size="large" value={"+"}>
+          +
+        </ToggleButton>
+      </ToggleButtonGroup>
+      <TextField
+        type="number"
+        value={count}
+        onChange={(e) => onChange(parseInt(e.target.value))}
+        sx={{ height: "100%", width: 56 }}
+      />
+    </Box>
   );
 }

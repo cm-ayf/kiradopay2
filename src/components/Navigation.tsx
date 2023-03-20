@@ -75,7 +75,7 @@ export default function Navigation({ bodyTitle, back }: NavigationProps) {
         )}
         <Typography component="h1">{bodyTitle}</Typography>
         {isLoading && <CircularProgress color="info" />}
-        <Box sx={{ flexGrow: 1 }} />
+        <Box sx={{ flex: 1 }} />
         <MenuButton state={state} setOpen={setOpen} />
         <Menu
           anchorEl={ref.current}

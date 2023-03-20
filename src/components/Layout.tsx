@@ -4,29 +4,27 @@ import Container from "@mui/material/Container";
 import Navigation, { NavigationProps } from "./Navigation";
 import type { PropsWithChildren } from "react";
 
-type LayoutProps = PropsWithChildren<
-  NavigationProps & {
-    headTitle: string;
-    bottom?: React.ReactNode;
-  }
->;
+export interface LayoutProps extends NavigationProps {
+  headTitle: string;
+  bottom?: React.ReactNode;
+}
 
-const Layout: React.FC<LayoutProps> = ({
+export default function Layout({
   children,
-  bottom,
   headTitle,
+  bottom,
   ...navigation
-}) => (
-  <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
-    <Head>
-      <title>{headTitle}</title>
-    </Head>
-    <Navigation {...navigation} />
-    <Container sx={{ flex: "auto", overflowY: "auto", py: 2 }}>
-      {children}
-    </Container>
-    {bottom}
-  </Box>
-);
-
-export default Layout;
+}: PropsWithChildren<LayoutProps>) {
+  return (
+    <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
+      <Head>
+        <title>{headTitle}</title>
+      </Head>
+      <Navigation {...navigation} />
+      <Container sx={{ flex: "auto", overflowY: "auto", py: 2 }}>
+        {children}
+      </Container>
+      {bottom}
+    </Box>
+  );
+}
