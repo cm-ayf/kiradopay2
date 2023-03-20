@@ -4,6 +4,7 @@ import {
   scope,
   setCredentials,
   createCredentials,
+  redirectError,
 } from "@/lib/auth";
 import type { NextApiRequest, NextApiResponse } from "next";
 
@@ -35,21 +36,19 @@ export default async function handler(
     refreshToken,
   });
 
-  const credentials = await createCredentials(response);
-  if (!credentials) {
+  try {
+    const credentials = await createCredentials(response);
+    setCredentials(res, credentials);
+    switch (req.method) {
+      case "GET":
+        res.redirect("/");
+        break;
+      case "POST":
+        res.status(200).end();
+        break;
+    }
+  } catch (error) {
     clearCredentials(res);
-    res.status(403).end();
-    return;
-  }
-
-  setCredentials(res, credentials);
-
-  switch (req.method) {
-    case "GET":
-      res.redirect("/");
-      break;
-    case "POST":
-      res.status(200).end();
-      break;
+    redirectError(res, error);
   }
 }

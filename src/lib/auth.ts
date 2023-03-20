@@ -58,7 +58,7 @@ const jwt = new JWT(secret);
 export async function createCredentials(
   credentials: DiscordOAuth2.TokenRequestResult,
   upsert = false
-): Promise<Credentials | null> {
+): Promise<Credentials> {
   const {
     user,
     roles,
@@ -67,8 +67,12 @@ export async function createCredentials(
     avatar: memberAvatar,
   } = await client.getGuildMember(credentials.access_token, options.guildId);
 
-  if (!user) return null;
-  if (options.roleId && !roles.includes(options.roleId)) return null;
+  if (!user) {
+    throw new Error("Missing user");
+  }
+  if (options.roleId && !roles.includes(options.roleId)) {
+    throw new Error("Missing role");
+  }
 
   const { id, username, avatar: userAvatar = null } = user;
   const avatar: string | null = memberAvatar ?? userAvatar;
@@ -84,6 +88,14 @@ export async function createCredentials(
   }
 
   return { ...credentials, session };
+}
+
+export function redirectError(res: NextApiResponse, error: unknown) {
+  const params = new URLSearchParams("error=invalid_credentials");
+  if (error instanceof Error) {
+    params.append("error_description", error.message);
+  }
+  res.redirect(`/?${params.toString()}`);
 }
 
 export function verify(req: { cookies: NextApiRequestCookies }) {

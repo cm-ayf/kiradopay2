@@ -2,6 +2,7 @@ import {
   clearState,
   client,
   createCredentials,
+  redirectError,
   scope,
   setCredentials,
 } from "@/lib/auth";
@@ -33,19 +34,19 @@ export default async function handler(
     return;
   }
 
+  clearState(res);
   const response = await client.tokenRequest({
     grantType: "authorization_code",
     code,
     scope,
   });
 
-  const credentials = await createCredentials(response, true);
-  if (!credentials) {
-    res.status(403).end();
-    return;
-  }
+  try {
+    const credentials = await createCredentials(response, true);
 
-  clearState(res);
-  setCredentials(res, credentials);
-  res.redirect("/");
+    setCredentials(res, credentials);
+    res.redirect("/");
+  } catch (error) {
+    redirectError(res, error);
+  }
 }
