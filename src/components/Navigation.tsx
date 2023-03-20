@@ -23,6 +23,11 @@ const useUser = createUseRoute(readUsersMe, {
       fetch("/api/auth/refresh", { method: "POST" });
     }
   },
+  onError: (error) => {
+    if (error instanceof UnauthorizedError) {
+      fetch("/api/auth/refresh", { method: "POST" });
+    }
+  },
 });
 
 export interface NavigationProps {
@@ -30,12 +35,11 @@ export interface NavigationProps {
   back?: string;
 }
 
-function UserAvatar({ user }: { user: Token }) {
-  if (!user.avatar) return <Avatar />;
-
-  const url = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.webp`;
-  return <Avatar src={url} />;
-}
+type ConnectionState =
+  | { type: "authorized"; user: Token }
+  | { type: "unauthorized" }
+  | { type: "error" }
+  | { type: "loading" };
 
 export default function Navigation({ bodyTitle, back }: NavigationProps) {
   const { data: user, error } = useUser();
@@ -43,7 +47,13 @@ export default function Navigation({ bodyTitle, back }: NavigationProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  const unauthorized = error instanceof UnauthorizedError;
+  const state: ConnectionState = user
+    ? { type: "authorized", user }
+    : error
+    ? error instanceof UnauthorizedError
+      ? { type: "unauthorized" }
+      : { type: "error" }
+    : { type: "loading" };
 
   return (
     <AppBar position="static" ref={ref}>
@@ -55,53 +65,7 @@ export default function Navigation({ bodyTitle, back }: NavigationProps) {
         )}
         <Typography component="h1">{bodyTitle}</Typography>
         <Box sx={{ flexGrow: 1 }} />
-        <Button
-          color="inherit"
-          onClick={() =>
-            error
-              ? unauthorized && router.push("/api/auth/signin")
-              : user && setOpen(true)
-          }
-          endIcon={
-            error ? (
-              !unauthorized && <CloudOff />
-            ) : user ? (
-              <UserAvatar user={user} />
-            ) : (
-              <CircularProgress />
-            )
-          }
-        >
-          {error
-            ? unauthorized
-              ? "サインイン"
-              : "接続されていません"
-            : user && (
-                <Box
-                  sx={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "flex-start",
-                    textTransform: "none",
-                  }}
-                >
-                  {user.nick ? (
-                    <>
-                      <Typography variant="body2" component="span">
-                        {user.nick}
-                      </Typography>
-                      <Typography variant="caption" component="span">
-                        {user.username}
-                      </Typography>
-                    </>
-                  ) : (
-                    <Typography variant="body2" component="span">
-                      {user.username}
-                    </Typography>
-                  )}
-                </Box>
-              )}
-        </Button>
+        <MenuButton state={state} setOpen={setOpen} />
         <Menu
           anchorEl={ref.current}
           open={open}
@@ -115,5 +79,76 @@ export default function Navigation({ bodyTitle, back }: NavigationProps) {
         </Menu>
       </Toolbar>
     </AppBar>
+  );
+}
+
+function MenuButton({
+  state,
+  setOpen,
+}: {
+  state: ConnectionState;
+  setOpen: (v: boolean) => void;
+}) {
+  const router = useRouter();
+  switch (state.type) {
+    case "authorized":
+      return (
+        <Button
+          color="inherit"
+          onClick={() => setOpen(true)}
+          endIcon={<UserAvatar user={state.user} />}
+        >
+          <UserButton user={state.user} />
+        </Button>
+      );
+    case "unauthorized":
+      return (
+        <Button color="inherit" onClick={() => router.push("/api/auth/signin")}>
+          サインイン
+        </Button>
+      );
+    case "error":
+      return (
+        <Button color="inherit" disabled endIcon={<CloudOff />}>
+          接続されていません
+        </Button>
+      );
+    case "loading":
+      return <Button color="inherit" disabled endIcon={<CircularProgress />} />;
+  }
+}
+
+function UserAvatar({ user }: { user: Token }) {
+  if (!user.avatar) return <Avatar />;
+
+  const url = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.webp`;
+  return <Avatar src={url} />;
+}
+
+function UserButton({ user }: { user: Token }) {
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "flex-start",
+        textTransform: "none",
+      }}
+    >
+      {user.nick ? (
+        <>
+          <Typography variant="body2" component="span">
+            {user.nick}
+          </Typography>
+          <Typography variant="caption" component="span">
+            {user.username}
+          </Typography>
+        </>
+      ) : (
+        <Typography variant="body2" component="span">
+          {user.username}
+        </Typography>
+      )}
+    </Box>
   );
 }
