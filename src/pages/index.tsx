@@ -16,6 +16,7 @@ import EventDialog from "@/components/EventDialog";
 import ItemCard from "@/components/ItemCard";
 import ItemDialog from "@/components/ItemDialog";
 import {
+  ConflictError,
   useCreateEvent,
   useCreateItem,
   useDeleteItem,
@@ -23,6 +24,7 @@ import {
   useItems,
   useUpdateItem,
 } from "@/lib/swr";
+import { useAlert } from "@/components/Alert";
 
 export async function getServerSideProps({ req }: GetServerSidePropsContext) {
   const token = verify(req);
@@ -57,7 +59,18 @@ function Events() {
   const { data: events } = useEvents();
   const { trigger, isMutating } = useCreateEvent();
   const router = useRouter();
+  const { error } = useAlert();
   const [open, setOpen] = useState(false);
+
+  async function onClick(body: CreateEvent) {
+    try {
+      await trigger(body);
+      router.push(`/${body.code}`);
+    } catch (e) {
+      if (e instanceof ConflictError) error("イベントコードが重複しています");
+      else error("イベントの作成に失敗しました");
+    }
+  }
 
   return (
     <>
@@ -85,16 +98,7 @@ function Events() {
         open={open}
         onClose={() => setOpen(false)}
         isMutating={isMutating}
-        buttons={[
-          {
-            label: "作成",
-            needsValidation: true,
-            onClick: async (body) => {
-              await trigger(body);
-              router.push(`/${body.code}`);
-            },
-          },
-        ]}
+        buttons={[{ label: "作成", needsValidation: true, onClick }]}
       />
     </>
   );
@@ -139,6 +143,18 @@ function CreateItemDialog({
   onClose: () => void;
 }) {
   const { trigger, isMutating } = useCreateItem();
+  const { error, success } = useAlert();
+
+  async function onClick(body: CreateItem) {
+    try {
+      await trigger(body);
+      success("商品を作成しました");
+      onClose();
+    } catch (e) {
+      if (e instanceof ConflictError) error("商品コードが重複しています");
+      else error("商品の作成に失敗しました");
+    }
+  }
 
   return (
     <ItemDialog
@@ -147,16 +163,7 @@ function CreateItemDialog({
       open={open}
       onClose={onClose}
       isMutating={isMutating}
-      buttons={[
-        {
-          label: "作成",
-          needsValidation: true,
-          onClick: async (body) => {
-            await trigger(body);
-            onClose();
-          },
-        },
-      ]}
+      buttons={[{ label: "作成", needsValidation: true, onClick }]}
     />
   );
 }
@@ -175,6 +182,30 @@ function MutateItemDialog({
   const { trigger: triggerDelete, isMutating: isDeleting } = useDeleteItem({
     itemcode,
   });
+  const { error, success } = useAlert();
+
+  async function onClickUpdate(body: UpdateItem) {
+    try {
+      await triggerUpdate(body);
+      success("商品を更新しました");
+      onClose();
+    } catch (e) {
+      if (e instanceof ConflictError) error("商品コードが重複しています");
+      else error("商品の更新に失敗しました");
+    }
+  }
+
+  async function onClickDelete() {
+    try {
+      await triggerDelete(null);
+      success("商品を削除しました");
+      onClose();
+    } catch (e) {
+      if (e instanceof ConflictError)
+        error("この商品は1つ以上のイベントのお品書きにあります");
+      else error("商品の削除に失敗しました");
+    }
+  }
 
   return (
     <ItemDialog
@@ -189,18 +220,9 @@ function MutateItemDialog({
           label: "更新",
           needsValidation: true,
           needsUpdate: true,
-          onClick: async (body) => {
-            await triggerUpdate(body);
-            onClose();
-          },
+          onClick: onClickUpdate,
         },
-        {
-          label: "削除",
-          onClick: async () => {
-            await triggerDelete(null);
-            onClose();
-          },
-        },
+        { label: "削除", onClick: onClickDelete },
       ]}
     />
   );

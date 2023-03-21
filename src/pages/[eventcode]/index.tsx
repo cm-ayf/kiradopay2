@@ -1,3 +1,4 @@
+import { useAlert } from "@/components/Alert";
 import EventCard from "@/components/EventCard";
 import EventDialog from "@/components/EventDialog";
 import ItemCard from "@/components/ItemCard";
@@ -5,6 +6,7 @@ import Layout from "@/components/Layout";
 import { verify } from "@/lib/auth";
 import { eventInclude, prisma, toEvent } from "@/lib/prisma";
 import {
+  ConflictError,
   useCreateDisplay,
   useDeleteDisplay,
   useEvent,
@@ -90,7 +92,19 @@ function Event({ eventcode }: { eventcode: string }) {
 function About({ event }: { event: EventSchema }) {
   const { trigger, isMutating } = useUpdateEvent({ eventcode: event.code });
   const router = useRouter();
+  const { error, success } = useAlert();
   const [open, setOpen] = useState(false);
+
+  async function onClick(body: UpdateEvent) {
+    try {
+      await trigger(body);
+      success("イベントを更新しました");
+      setOpen(false);
+    } catch (e) {
+      if (e instanceof ConflictError) error("イベントコードが重複しています");
+      else error("イベントの更新に失敗しました");
+    }
+  }
 
   return (
     <>
@@ -117,15 +131,7 @@ function About({ event }: { event: EventSchema }) {
         onClose={() => setOpen(false)}
         isMutating={isMutating}
         buttons={[
-          {
-            label: "更新",
-            needsValidation: true,
-            needsUpdate: true,
-            onClick: async (body) => {
-              await trigger(body);
-              setOpen(false);
-            },
-          },
+          { label: "更新", needsValidation: true, needsUpdate: true, onClick },
         ]}
       />
     </>
@@ -153,12 +159,23 @@ function calculate(state: State): number {
 
 function UpdateCalculator({ event }: { event: EventSchema }) {
   const { trigger, isMutating } = useUpdateEvent({ eventcode: event.code });
+  const { error, success } = useAlert();
   const [calculator, setCalculator] = useState<string>(event.calculator);
 
   const hash = useMemo(
     () => compressToEncodedURIComponent(playground(event.items)),
     [event.items]
   );
+
+  async function onClick() {
+    try {
+      await trigger({ calculator });
+      success("計算機を更新しました");
+    } catch (e) {
+      error("計算機の更新に失敗しました");
+    }
+  }
+
   return (
     <>
       <Box sx={{ my: 2, display: "flex", flexDirection: "row", columnGap: 2 }}>
@@ -180,11 +197,7 @@ function UpdateCalculator({ event }: { event: EventSchema }) {
           disabled={
             calculator === event.calculator || !isValidCalculator(calculator)
           }
-          onClick={async (e) => {
-            e.preventDefault();
-            if (!calculator || !isValidCalculator(calculator)) return;
-            await trigger({ calculator });
-          }}
+          onClick={onClick}
         >
           更新
         </LoadingButton>
@@ -291,31 +304,41 @@ function DisplaySwitch({
     eventcode,
     itemcode: item.code,
   });
+  const { error } = useAlert();
 
   async function onCreate() {
-    await triggerCreate(null);
-    await mutate(
-      (event) =>
-        event && {
-          ...event,
-          items: [...event.items, item].sort((a, b) =>
-            a.code.localeCompare(b.code)
-          ),
-        },
-      { revalidate: false }
-    );
+    try {
+      await triggerCreate(null);
+      await mutate(
+        (event) =>
+          event && {
+            ...event,
+            items: [...event.items, item].sort((a, b) =>
+              a.code.localeCompare(b.code)
+            ),
+          },
+        { revalidate: false }
+      );
+    } catch (e) {
+      error("お品書きの追加に失敗しました");
+    }
   }
 
   async function onDelete() {
-    await triggerDelete(null);
-    await mutate(
-      (event) =>
-        event && {
-          ...event,
-          items: event.items.filter((i: any) => i.code !== item.code),
-        },
-      { revalidate: false }
-    );
+    try {
+      await triggerDelete(null);
+      await mutate(
+        (event) =>
+          event && {
+            ...event,
+            items: event.items.filter((i: any) => i.code !== item.code),
+          },
+        { revalidate: false }
+      );
+    } catch (e) {
+      if (e instanceof ConflictError) error("この商品はすでに購入されています");
+      else error("お品書きの削除に失敗しました");
+    }
   }
 
   return (

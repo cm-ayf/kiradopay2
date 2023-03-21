@@ -20,6 +20,14 @@ export class InvalidResponseError extends Error {
   code = "INVALID_RESPONSE";
 }
 
+export class NotFoundError extends Error {
+  code = "NOT_FOUND";
+}
+
+export class ConflictError extends Error {
+  code = "CONFLICT";
+}
+
 type ParamsArg<P> = Static<TParams> extends P ? [params?: P] : [params: P];
 
 type GetRoute = Route & { method: "GET" };
@@ -88,6 +96,14 @@ function createUseRouteMutation<R extends Route>(
       body: JSON.stringify(arg),
     });
 
+    switch (res.status) {
+      case 401:
+        throw new UnauthorizedError();
+      case 404:
+        throw new NotFoundError();
+      case 409:
+        throw new ConflictError();
+    }
     if (res.status === 401) throw new UnauthorizedError();
     if (!res.ok) throw new Error(res.statusText);
 

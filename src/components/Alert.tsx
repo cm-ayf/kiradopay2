@@ -67,5 +67,12 @@ export function AlertProvider({ children }: { children: React.ReactNode }) {
 }
 
 export function useAlert() {
-  return useContext(AlertContext);
+  const { dispatch } = useContext(AlertContext);
+  return {
+    dispatch,
+    success: (message: string) => dispatch({ severity: "success", message }),
+    info: (message: string) => dispatch({ severity: "info", message }),
+    warning: (message: string) => dispatch({ severity: "warning", message }),
+    error: (message: string) => dispatch({ severity: "error", message }),
+  };
 }
