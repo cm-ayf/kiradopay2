@@ -3,12 +3,19 @@ import Snackbar from "@mui/material/Snackbar";
 import Stack from "@mui/material/Stack";
 import { createContext, useContext, useReducer } from "react";
 
-export type CommonAlert = "unauthorized";
+export type CommonAlert = keyof typeof commonAlerts;
 
 export interface AlertData {
   severity: AlertColor;
   message: string;
 }
+
+const commonAlerts = {
+  unauthorized: {
+    severity: "error",
+    message: "サインインしてください",
+  },
+} satisfies { [key: string]: AlertData };
 
 interface AlertState extends AlertData {
   id: string;
@@ -20,15 +27,9 @@ type Action = AlertData | CommonAlert | { delete: string };
 function reducer(state: AlertState[], action: Action): AlertState[] {
   const id = Math.random().toString(36).slice(-8);
   if (typeof action === "string") {
-    return [
-      ...state.filter((alert) => alert.is !== action),
-      {
-        id,
-        severity: "warning",
-        message: "サインインしてください。",
-        is: action,
-      },
-    ];
+    const isDuplicate = state.some((alert) => alert.is === action);
+    if (isDuplicate) return state;
+    return [...state, { id, is: action, ...commonAlerts[action] }];
   } else if ("delete" in action) {
     return state.filter((alert) => alert.id !== action.delete);
   } else {
