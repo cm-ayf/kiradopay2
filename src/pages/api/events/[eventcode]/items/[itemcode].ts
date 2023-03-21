@@ -32,27 +32,14 @@ const createDisplayHandler = createHandler(createDisplay, async (req, res) => {
     return;
   }
 
-  const [event, item] = await prisma.$transaction([
-    prisma.event.findUnique({
-      where: { code: req.query.eventcode },
-    }),
-    prisma.item.findUnique({
-      where: { code: req.query.itemcode },
-    }),
-  ]);
-
-  if (!event || !item) {
-    res.status(404).end();
-    return;
-  }
-
+  const { eventcode, itemcode } = req.query;
   const display = await prisma.display.create({
     data: {
       event: {
-        connect: { code: event.code },
+        connect: { code: eventcode },
       },
       item: {
-        connect: { code: item.code },
+        connect: { code: itemcode },
       },
     },
     include: { item: true },
@@ -68,12 +55,10 @@ const deleteDisplayHandler = createHandler(deleteDisplay, async (req, res) => {
     return;
   }
 
+  const { eventcode, itemcode } = req.query;
   const { item } = await prisma.display.delete({
     where: {
-      eventcode_itemcode: {
-        eventcode: req.query.eventcode,
-        itemcode: req.query.itemcode,
-      },
+      eventcode_itemcode: { eventcode, itemcode },
     },
     include: { item: true },
   });

@@ -31,15 +31,10 @@ const readEventHandler = createHandler(readEvent, async (req, res) => {
     return;
   }
 
-  const event = await prisma.event.findUnique({
+  const event = await prisma.event.findUniqueOrThrow({
     where: { code: req.query.eventcode },
     include: eventInclude,
   });
-
-  if (!event) {
-    res.status(404).end();
-    return;
-  }
 
   res.status(200).json(toEvent(event));
 });

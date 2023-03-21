@@ -41,9 +41,19 @@ export function createHandler<R extends Route>(
 
     try {
       await handler(req as RouteRequest<R>, res as RouteResponse<R>);
-    } catch (error) {
+    } catch (error: any) {
+      // https://www.prisma.io/docs/reference/api-reference/error-reference#prisma-client-query-engine
+      switch (error.code) {
+        case "P2001": // record does not exist
+          res.status(404).end();
+          return;
+        case "P2002": // unique constraint failed
+        case "P2003": // foreign key constraint failed
+          res.status(409).end();
+          return;
+      }
       console.error(error);
-      if (!res.closed) res.status(500).end();
+      res.status(500).end();
     }
   };
 }

@@ -27,6 +27,7 @@ export async function getServerSideProps({
       },
     },
   });
+
   if (!event) return { notFound: true };
 
   const { receipts, ...rest } = event;
