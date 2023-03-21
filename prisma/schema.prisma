@@ -32,7 +32,7 @@ model Event {
 
   // passed to new Function()
   // must be a JavaScript pure function
-  // (records: { itemcode: string; count: number, dedication: boolean }[]) => number
+  // (state: { [K in ItemCode]: { count: number, dedication?: boolean } }) => number
   calculator String @default("return 0") @db.Text
 
   displays Display[]
