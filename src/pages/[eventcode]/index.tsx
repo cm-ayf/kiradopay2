@@ -4,10 +4,15 @@ import ItemCard from "@/components/ItemCard";
 import Layout from "@/components/Layout";
 import { verify } from "@/lib/auth";
 import { eventInclude, prisma, toEvent } from "@/lib/prisma";
-import { createUseRoute, createUseRouteMutation } from "@/lib/swr";
-import { createDisplay, deleteDisplay } from "@/types/display";
-import { readEvent, updateEvent, Event as EventSchema } from "@/types/event";
-import { readItems, Item as ItemSchema } from "@/types/item";
+import {
+  useCreateDisplay,
+  useDeleteDisplay,
+  useEvent,
+  useItems,
+  useUpdateEvent,
+} from "@/lib/swr";
+import { UpdateEvent, Event as EventSchema } from "@/types/event";
+import type { Item as ItemSchema } from "@/types/item";
 import Edit from "@mui/icons-material/Edit";
 import LoadingButton from "@mui/lab/LoadingButton";
 import Box from "@mui/material/Box";
@@ -52,8 +57,6 @@ export async function getServerSideProps({
   };
 }
 
-const useEvent = createUseRoute(readEvent);
-
 export default function EventWrapper() {
   const router = useRouter();
   const { eventcode } = router.query;
@@ -84,8 +87,6 @@ function Event({ eventcode }: { eventcode: string }) {
   );
 }
 
-const useUpdateEvent = createUseRouteMutation(updateEvent);
-
 function About({ event }: { event: EventSchema }) {
   const { trigger, isMutating } = useUpdateEvent({ eventcode: event.code });
   const router = useRouter();
@@ -95,7 +96,7 @@ function About({ event }: { event: EventSchema }) {
     <Box sx={{ display: "flex", flexDirection: "row", columnGap: 2, m: 2 }}>
       <EventCard width={300} event={event} onClick={() => setOpen(true)} />
       <EventDialog
-        schema={updateEvent.body}
+        schema={UpdateEvent}
         title="イベントを更新"
         event={event}
         open={open}
@@ -257,8 +258,6 @@ function Display({ event }: { event: EventSchema }) {
   );
 }
 
-const useItems = createUseRoute(readItems);
-
 function DisplayDialog({
   event,
   open,
@@ -290,9 +289,6 @@ function DisplayDialog({
     </Dialog>
   );
 }
-
-const useCreateDisplay = createUseRouteMutation(createDisplay);
-const useDeleteDisplay = createUseRouteMutation(deleteDisplay);
 
 function DisplaySwitch({
   eventcode,

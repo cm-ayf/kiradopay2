@@ -13,7 +13,7 @@ export const Event = Type.Object({
 
 export type Event = Static<typeof Event>;
 
-const CreateEvent = Type.Object({
+export const CreateEvent = Type.Object({
   code: Code,
   name: Name,
   date: Date,
@@ -22,7 +22,7 @@ const CreateEvent = Type.Object({
 
 export type CreateEvent = Static<typeof CreateEvent>;
 
-const UpdateEvent = Type.Partial(CreateEvent);
+export const UpdateEvent = Type.Partial(CreateEvent);
 
 export type UpdateEvent = Static<typeof UpdateEvent>;
 

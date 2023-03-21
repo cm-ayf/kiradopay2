@@ -1,13 +1,6 @@
 import Layout from "@/components/Layout";
-import { createUseRoute, createUseRouteMutation } from "@/lib/swr";
-import { createEvent, readEvents } from "@/types/event";
-import {
-  Item,
-  createItem,
-  deleteItem,
-  readItems,
-  updateItem,
-} from "@/types/item";
+import { CreateEvent } from "@/types/event";
+import { Item, CreateItem, UpdateItem } from "@/types/item";
 import Box from "@mui/material/Box";
 import Grid from "@mui/material/Grid";
 import IconButton from "@mui/material/IconButton";
@@ -22,6 +15,14 @@ import EventCard from "@/components/EventCard";
 import EventDialog from "@/components/EventDialog";
 import ItemCard from "@/components/ItemCard";
 import ItemDialog from "@/components/ItemDialog";
+import {
+  useCreateEvent,
+  useCreateItem,
+  useDeleteItem,
+  useEvents,
+  useItems,
+  useUpdateItem,
+} from "@/lib/swr";
 
 export async function getServerSideProps({ req }: GetServerSidePropsContext) {
   const token = verify(req);
@@ -52,9 +53,6 @@ export default function Home() {
   );
 }
 
-const useEvents = createUseRoute(readEvents);
-const useCreateEvent = createUseRouteMutation(createEvent);
-
 function Events() {
   const { data: events } = useEvents();
   const { trigger, isMutating } = useCreateEvent();
@@ -83,7 +81,7 @@ function Events() {
         ))}
       </Grid>
       <EventDialog
-        schema={createEvent.body}
+        schema={CreateEvent}
         title="イベントを作成"
         open={open}
         onClose={() => setOpen(false)}
@@ -103,13 +101,10 @@ function Events() {
   );
 }
 
-const useItems = createUseRoute(readItems);
-const useCreateItem = createUseRouteMutation(createItem);
-
 function Items() {
   const { data: items } = useItems();
-  const [open, setOpen] = useState(false);
   const { trigger, isMutating } = useCreateItem();
+  const [open, setOpen] = useState(false);
 
   return (
     <>
@@ -129,7 +124,7 @@ function Items() {
         ))}
       </Grid>
       <ItemDialog
-        schema={createItem.body}
+        schema={CreateItem}
         title="商品を作成"
         open={open}
         onClose={() => setOpen(false)}
@@ -149,9 +144,6 @@ function Items() {
   );
 }
 
-const useUpdateItem = createUseRouteMutation(updateItem);
-const useDeleteItem = createUseRouteMutation(deleteItem);
-
 function ItemWrapper({ item }: { item: Item }) {
   const [open, setOpen] = useState(false);
   const { trigger: triggerUpdate, isMutating: isUpdating } = useUpdateItem({
@@ -165,7 +157,7 @@ function ItemWrapper({ item }: { item: Item }) {
     <>
       <ItemCard item={item} width={250} onClick={() => setOpen(true)} />
       <ItemDialog
-        schema={updateItem.body}
+        schema={UpdateItem}
         title="商品を編集"
         item={item}
         open={open}

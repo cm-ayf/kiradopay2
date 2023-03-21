@@ -1,11 +1,45 @@
 import Layout from "@/components/Layout";
+import { verify } from "@/lib/auth";
 import { useIDBReceipts } from "@/lib/idb";
-import { createUseRoute } from "@/lib/swr";
-import { Event, readEvent } from "@/types/event";
-import { readReceipts, Receipt } from "@/types/receipt";
+import { eventInclude, prisma, toEvent } from "@/lib/prisma";
+import { useEvent, useReceipts } from "@/lib/swr";
+import type { Event } from "@/types/event";
+import type { Receipt } from "@/types/receipt";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
+import type { GetServerSidePropsContext } from "next";
 import { useRouter } from "next/router";
 import { useMemo } from "react";
+
+export async function getServerSideProps({
+  req,
+  params,
+}: GetServerSidePropsContext<{ eventcode: string }>) {
+  const token = verify(req);
+  if (!token) return { props: {} };
+
+  const { eventcode } = params!;
+  const event = await prisma.event.findUnique({
+    where: { code: "test" },
+    include: {
+      ...eventInclude,
+      receipts: {
+        include: { records: true },
+      },
+    },
+  });
+  if (!event) return { notFound: true };
+
+  const { receipts, ...rest } = event;
+  return {
+    props: {
+      fallback: {
+        "/api/users/me": token,
+        [`/api/events/${eventcode}`]: toEvent(rest),
+        [`/api/events/${eventcode}/receipts`]: receipts,
+      },
+    },
+  };
+}
 
 export default function ReceiptsWrapper() {
   const router = useRouter();
@@ -29,9 +63,6 @@ function Receipts({ eventcode }: { eventcode: string }) {
     </Layout>
   );
 }
-
-const useEvent = createUseRoute(readEvent);
-const useReceipts = createUseRoute(readReceipts);
 
 const basicColumns: GridColDef[] = [
   {

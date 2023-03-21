@@ -7,10 +7,9 @@ import {
   useIDBReceipts,
 } from "@/lib/idb";
 import { eventInclude, prisma, toEvent } from "@/lib/prisma";
-import { createUseRoute, createUseRouteMutation } from "@/lib/swr";
-import { Event, readEvent } from "@/types/event";
+import { useCreateReceipts, useEvent } from "@/lib/swr";
+import type { Event } from "@/types/event";
 import type { Item } from "@/types/item";
-import { createReceipts } from "@/types/receipt";
 import CloudDone from "@mui/icons-material/CloudDone";
 import CloudUpload from "@mui/icons-material/CloudUpload";
 import LoadingButton from "@mui/lab/LoadingButton";
@@ -120,8 +119,6 @@ function reducer(state: State, action: Action): State {
     }
   }
 }
-
-const useEvent = createUseRoute(readEvent);
 
 function Register({ eventcode }: { eventcode: string }) {
   const { data: event } = useEvent({ eventcode });
@@ -261,8 +258,6 @@ function useCalculator({ calculator, items }: Event): Calculator {
     return (state) => raw({ ...defaults, ...state });
   }, [calculator, items]);
 }
-
-const useCreateReceipts = createUseRouteMutation(createReceipts);
 
 function useSync(eventcode: string) {
   const { data: receipts } = useIDBReceipts(eventcode);

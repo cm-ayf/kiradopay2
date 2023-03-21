@@ -7,14 +7,10 @@ import { TypeCompiler } from "@sinclair/typebox/compiler";
 import type { Static } from "@sinclair/typebox";
 import { useAlert } from "@/components/Alert";
 import { useEffect } from "react";
-
-type ParamsArg<P> = Static<TParams> extends P ? [params?: P] : [params: P];
-
-type GetRoute = Route & { method: "GET" };
-
-export type UseRoute<R extends GetRoute> = {
-  (...args: ParamsArg<Route.Params<R>>): SWRResponse<Route.Response<R>, Error>;
-};
+import { createEvent, readEvent, readEvents, updateEvent } from "@/types/event";
+import { createItem, deleteItem, readItems, updateItem } from "@/types/item";
+import { createReceipts, readReceipts } from "@/types/receipt";
+import { createDisplay, deleteDisplay } from "@/types/display";
 
 export class UnauthorizedError extends Error {
   code = "UNAUTHORIZED";
@@ -23,6 +19,14 @@ export class UnauthorizedError extends Error {
 export class InvalidResponseError extends Error {
   code = "INVALID_RESPONSE";
 }
+
+type ParamsArg<P> = Static<TParams> extends P ? [params?: P] : [params: P];
+
+type GetRoute = Route & { method: "GET" };
+
+type UseRoute<R extends GetRoute> = {
+  (...args: ParamsArg<Route.Params<R>>): SWRResponse<Route.Response<R>, Error>;
+};
 
 function createPathGenerator<R extends Route>(route: R) {
   return (params = {} as Route.Params<R>) =>
@@ -64,11 +68,11 @@ export function createUseRoute<R extends GetRoute>(
   };
 }
 
-export type UseRouteMutation<R extends Route> = (
+type UseRouteMutation<R extends Route> = (
   ...args: ParamsArg<Route.Params<R>>
 ) => SWRMutationResponse<Route.Response<R>, any, Route.Body<R>>;
 
-export function createUseRouteMutation<R extends Route>(
+function createUseRouteMutation<R extends Route>(
   route: R,
   options?: SWRMutationConfiguration<Route.Response<R>, any, Route.Body<R>>
 ): UseRouteMutation<R> {
@@ -106,3 +110,17 @@ export function createUseRouteMutation<R extends Route>(
     return response;
   };
 }
+
+export const useItems = createUseRoute(readItems);
+export const useEvents = createUseRoute(readEvents);
+export const useEvent = createUseRoute(readEvent);
+export const useReceipts = createUseRoute(readReceipts);
+
+export const useCreateItem = createUseRouteMutation(createItem);
+export const useUpdateItem = createUseRouteMutation(updateItem);
+export const useDeleteItem = createUseRouteMutation(deleteItem);
+export const useCreateEvent = createUseRouteMutation(createEvent);
+export const useUpdateEvent = createUseRouteMutation(updateEvent);
+export const useCreateDisplay = createUseRouteMutation(createDisplay);
+export const useDeleteDisplay = createUseRouteMutation(deleteDisplay);
+export const useCreateReceipts = createUseRouteMutation(createReceipts);
