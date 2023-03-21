@@ -7,15 +7,13 @@ import type { MouseEventHandler } from "react";
 
 export default function EventCard({
   event,
-  width,
   onClick,
 }: {
   event: Event;
-  width: number;
   onClick?: MouseEventHandler<HTMLButtonElement>;
 }) {
   return (
-    <Card sx={{ width }}>
+    <Card>
       {onClick ? (
         <CardActionArea onClick={onClick} sx={{ m: 0, p: 0 }}>
           <Inner event={event} />

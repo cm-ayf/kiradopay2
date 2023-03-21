@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import AppBar from "@mui/material/AppBar";
 import Avatar from "@mui/material/Avatar";
 import Box from "@mui/material/Box";
@@ -15,20 +15,7 @@ import { useRouter } from "next/router";
 import ArrowBack from "@mui/icons-material/ArrowBack";
 import CloudOff from "@mui/icons-material/CloudOff";
 
-const useUser = createUseRoute(readUsersMe, {
-  refreshInterval: 10000,
-  revalidateOnFocus: false,
-  onSuccess: ({ exp }) => {
-    if (exp - Date.now() / 1000 < 300) {
-      fetch("/api/auth/refresh", { method: "POST" });
-    }
-  },
-  onError: (error) => {
-    if (error instanceof UnauthorizedError) {
-      fetch("/api/auth/refresh", { method: "POST" });
-    }
-  },
-});
+const useUser = createUseRoute(readUsersMe, { refreshInterval: 10000 });
 
 export interface NavigationProps {
   bodyTitle: string;
@@ -36,25 +23,41 @@ export interface NavigationProps {
 }
 
 type ConnectionState =
-  | { type: "authorized"; user: Token }
-  | { type: "unauthorized" }
+  | { type: "authorized"; user: Token; isRefreshing: boolean }
+  | { type: "unauthorized"; isRefreshing: boolean }
   | { type: "error" }
   | { type: "loading" };
 
+function isRefreshNeeded(state: ConnectionState) {
+  switch (state.type) {
+    case "authorized":
+      return state.user.exp - Date.now() / 1000 < 300 && !state.isRefreshing;
+    case "unauthorized":
+      return !state.isRefreshing;
+    default:
+      return false;
+  }
+}
+
 export default function Navigation({ bodyTitle, back }: NavigationProps) {
-  const { data: user, error } = useUser();
+  const { data: user, error, mutate } = useUser();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  const state: ConnectionState = user
-    ? { type: "authorized", user }
-    : error
-    ? error instanceof UnauthorizedError
-      ? { type: "unauthorized" }
-      : { type: "error" }
-    : { type: "loading" };
+  const state: ConnectionState = useMemo(
+    () =>
+      user
+        ? { type: "authorized", user, isRefreshing }
+        : error
+        ? error instanceof UnauthorizedError
+          ? { type: "unauthorized", isRefreshing }
+          : { type: "error" }
+        : { type: "loading" },
+    [user, error, isRefreshing]
+  );
 
   useEffect(() => {
     router.events.on("routeChangeStart", () => setIsLoading(true));
@@ -65,6 +68,21 @@ export default function Navigation({ bodyTitle, back }: NavigationProps) {
     };
   }, [router]);
 
+  const onStateChange = useCallback(
+    async (state: ConnectionState) => {
+      if (!isRefreshNeeded(state)) return;
+      setIsRefreshing(true);
+      await fetch("/api/auth/refresh", { method: "POST" });
+      await mutate();
+      setIsRefreshing(false);
+    },
+    [mutate]
+  );
+
+  useEffect(() => {
+    onStateChange(state);
+  }, [state, onStateChange]);
+
   return (
     <AppBar position="static" ref={ref}>
       <Toolbar variant="dense">
@@ -74,7 +92,7 @@ export default function Navigation({ bodyTitle, back }: NavigationProps) {
           </IconButton>
         )}
         <Typography component="h1">{bodyTitle}</Typography>
-        {isLoading && <CircularProgress color="info" />}
+        {isLoading && <CircularProgress color="info" sx={{ px: 2 }} />}
         <Box sx={{ flex: 1 }} />
         <MenuButton state={state} setOpen={setOpen} />
         <Menu

@@ -93,8 +93,22 @@ function About({ event }: { event: EventSchema }) {
   const [open, setOpen] = useState(false);
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "row", columnGap: 2, m: 2 }}>
-      <EventCard width={300} event={event} onClick={() => setOpen(true)} />
+    <>
+      <Box sx={{ my: 2, display: "flex", flexDirection: "row", columnGap: 2 }}>
+        <EventCard event={event} onClick={() => setOpen(true)} />
+        <Button
+          variant="contained"
+          onClick={() => router.push(`/${event.code}/register`)}
+        >
+          レジを起動
+        </Button>
+        <Button
+          variant="contained"
+          onClick={() => router.push(`/${event.code}/receipts`)}
+        >
+          購入履歴
+        </Button>
+      </Box>
       <EventDialog
         schema={UpdateEvent}
         title="イベントを更新"
@@ -114,19 +128,7 @@ function About({ event }: { event: EventSchema }) {
           },
         ]}
       />
-      <Button
-        variant="contained"
-        onClick={() => router.push(`/${event.code}/register`)}
-      >
-        レジを起動
-      </Button>
-      <Button
-        variant="contained"
-        onClick={() => router.push(`/${event.code}/receipts`)}
-      >
-        購入履歴
-      </Button>
-    </Box>
+    </>
   );
 }
 
@@ -151,7 +153,7 @@ function calculate(state: State): number {
 
 function UpdateCalculator({ event }: { event: EventSchema }) {
   const { trigger, isMutating } = useUpdateEvent({ eventcode: event.code });
-  const [calculator, setCalculator] = useState<string>();
+  const [calculator, setCalculator] = useState<string>(event.calculator);
 
   const hash = useMemo(
     () => compressToEncodedURIComponent(playground(event.items)),
@@ -159,14 +161,7 @@ function UpdateCalculator({ event }: { event: EventSchema }) {
   );
   return (
     <>
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "row",
-          alignItems: "center",
-          columnGap: 2,
-        }}
-      >
+      <Box sx={{ my: 2, display: "flex", flexDirection: "row", columnGap: 2 }}>
         <Typography variant="h2" sx={{ fontSize: "2em" }}>
           計算機
         </Typography>
@@ -182,12 +177,13 @@ function UpdateCalculator({ event }: { event: EventSchema }) {
         <LoadingButton
           variant="contained"
           loading={isMutating}
-          disabled={calculator === undefined || !isValidCalculator(calculator)}
+          disabled={
+            calculator === event.calculator || !isValidCalculator(calculator)
+          }
           onClick={async (e) => {
             e.preventDefault();
             if (!calculator || !isValidCalculator(calculator)) return;
             await trigger({ calculator });
-            setCalculator(undefined);
           }}
         >
           更新
@@ -195,27 +191,20 @@ function UpdateCalculator({ event }: { event: EventSchema }) {
       </Box>
       <Box
         sx={{
+          width: "100%",
+          m: 2,
           display: "flex",
           flexDirection: "column",
-          rowGap: "0",
-          alignItems: "flex-start",
         }}
       >
         {"function calculate(state) {"}
         <TextField
           variant="outlined"
-          sx={{ m: "1em", width: "100%" }}
+          sx={{ px: 2, width: "100%" }}
           value={calculator ?? event.calculator}
           error={calculator !== undefined && !isValidCalculator(calculator)}
           multiline
-          onChange={(e) => {
-            const value = e.target.value;
-            if (value === event.calculator) {
-              setCalculator(undefined);
-            } else {
-              setCalculator(value);
-            }
-          }}
+          onChange={(e) => setCalculator(e.target.value)}
         />
         {"}"}
       </Box>
@@ -228,13 +217,7 @@ function Display({ event }: { event: EventSchema }) {
 
   return (
     <>
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "row",
-          alignItems: "center",
-        }}
-      >
+      <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
         <Typography variant="h2" sx={{ fontSize: "2em" }}>
           お品書き
         </Typography>
@@ -246,10 +229,10 @@ function Display({ event }: { event: EventSchema }) {
           <Edit />
         </IconButton>
       </Box>
-      <Grid container spacing={2} sx={{ mx: 2 }}>
+      <Grid container spacing={2}>
         {event.items.map((item) => (
           <Grid item key={item.code}>
-            <ItemCard item={item} width={250} />
+            <ItemCard item={item} />
           </Grid>
         ))}
       </Grid>
@@ -336,13 +319,7 @@ function DisplaySwitch({
   }
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "row",
-        alignItems: "center",
-      }}
-    >
+    <Box sx={{ display: "flex", flexDirection: "row" }}>
       <Typography
         variant="caption"
         sx={{ fontSize: "1em", fontWeight: "bold" }}

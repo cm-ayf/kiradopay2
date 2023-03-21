@@ -21,10 +21,12 @@ export default function Layout({
         <title>{headTitle}</title>
       </Head>
       <Navigation {...navigation} />
-      <Container sx={{ flex: "auto", overflowY: "auto", py: 2 }}>
+      <Container
+        sx={{ flex: "auto", overflowX: "hidden", overflowY: "scroll", py: 2 }}
+      >
         {children}
       </Container>
-      {bottom}
+      {bottom && <Box flex={0}>{bottom}</Box>}
     </Box>
   );
 }

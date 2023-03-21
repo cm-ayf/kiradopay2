@@ -74,7 +74,6 @@ function Events() {
           <Grid item key={event.code}>
             <EventCard
               event={event}
-              width={250}
               onClick={() => router.push(`/${event.code}`)}
             />
           </Grid>
@@ -103,9 +102,8 @@ function Events() {
 
 function Items() {
   const { data: items } = useItems();
-  const { trigger, isMutating } = useCreateItem();
   const [open, setOpen] = useState(false);
-
+  const [item, setItem] = useState<Item>();
   return (
     <>
       <Box sx={{ display: "flex", flexDirection: "row", my: 2 }}>
@@ -119,69 +117,91 @@ function Items() {
       <Grid container spacing={2} sx={{ mx: 2 }}>
         {items?.map((item) => (
           <Grid item key={item.code}>
-            <ItemWrapper key={item.code} item={item} />
+            <ItemCard
+              key={item.code}
+              item={item}
+              onClick={() => setItem(item)}
+            />
           </Grid>
         ))}
       </Grid>
-      <ItemDialog
-        schema={CreateItem}
-        title="商品を作成"
-        open={open}
-        onClose={() => setOpen(false)}
-        isMutating={isMutating}
-        buttons={[
-          {
-            label: "作成",
-            needsValidation: true,
-            onClick: async (body) => {
-              await trigger(body);
-              setOpen(false);
-            },
-          },
-        ]}
-      />
+      <CreateItemDialog open={open} onClose={() => setOpen(false)} />
+      <MutateItemDialog item={item} onClose={() => setItem(undefined)} />
     </>
   );
 }
 
-function ItemWrapper({ item }: { item: Item }) {
-  const [open, setOpen] = useState(false);
+function CreateItemDialog({
+  open,
+  onClose,
+}: {
+  open: boolean;
+  onClose: () => void;
+}) {
+  const { trigger, isMutating } = useCreateItem();
+
+  return (
+    <ItemDialog
+      schema={CreateItem}
+      title="商品を作成"
+      open={open}
+      onClose={onClose}
+      isMutating={isMutating}
+      buttons={[
+        {
+          label: "作成",
+          needsValidation: true,
+          onClick: async (body) => {
+            await trigger(body);
+            onClose();
+          },
+        },
+      ]}
+    />
+  );
+}
+
+function MutateItemDialog({
+  item,
+  onClose,
+}: {
+  item: Item | undefined;
+  onClose: () => void;
+}) {
+  const itemcode = item ? item.code : "";
   const { trigger: triggerUpdate, isMutating: isUpdating } = useUpdateItem({
-    itemcode: item.code,
+    itemcode,
   });
   const { trigger: triggerDelete, isMutating: isDeleting } = useDeleteItem({
-    itemcode: item.code,
+    itemcode,
   });
 
   return (
-    <>
-      <ItemCard item={item} width={250} onClick={() => setOpen(true)} />
-      <ItemDialog
-        schema={UpdateItem}
-        title="商品を編集"
-        item={item}
-        open={open}
-        onClose={() => setOpen(false)}
-        isMutating={isUpdating || isDeleting}
-        buttons={[
-          {
-            label: "更新",
-            needsValidation: true,
-            needsUpdate: true,
-            onClick: async (body) => {
-              await triggerUpdate(body);
-              setOpen(false);
-            },
+    <ItemDialog
+      schema={UpdateItem}
+      title="商品を編集"
+      item={item}
+      open={Boolean(item)}
+      onClose={onClose}
+      isMutating={isUpdating || isDeleting}
+      buttons={[
+        {
+          label: "更新",
+          needsValidation: true,
+          needsUpdate: true,
+          onClick: async (body) => {
+            await triggerUpdate(body);
+            onClose();
           },
-          {
-            label: "削除",
-            onClick: async () => {
-              await triggerDelete(null);
-              setOpen(false);
-            },
+        },
+        {
+          label: "削除",
+          onClick: async () => {
+            await triggerDelete(null);
+            onClose();
           },
-        ]}
-      />
-    </>
+        },
+      ]}
+    />
   );
 }

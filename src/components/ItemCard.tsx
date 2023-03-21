@@ -7,17 +7,15 @@ import type { MouseEventHandler } from "react";
 
 export default function ItemCard({
   item,
-  width,
   onClick,
 }: {
   item: Item;
-  width: number;
   onClick?: MouseEventHandler<HTMLButtonElement>;
 }) {
   return (
-    <Card sx={{ width }}>
+    <Card>
       {onClick ? (
-        <CardActionArea onClick={onClick} sx={{ m: 0, p: 0 }}>
+        <CardActionArea onClick={onClick}>
           <Inner item={item} />
         </CardActionArea>
       ) : (
@@ -34,10 +32,12 @@ function Inner({ item }: { item: Item }) {
         component="img"
         image={item.picture}
         alt={item.name}
-        sx={{ maxWidth: 200, mx: "auto", my: 2 }}
+        sx={{ width: 200, m: 2 }}
       />
       <CardContent
         sx={{
+          pt: 0,
+          pb: 3,
           textAlign: "center",
           fontSize: "1.25rem",
           fontWeight: "bold",

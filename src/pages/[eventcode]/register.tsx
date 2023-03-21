@@ -13,13 +13,13 @@ import type { Item } from "@/types/item";
 import CloudDone from "@mui/icons-material/CloudDone";
 import CloudUpload from "@mui/icons-material/CloudUpload";
 import LoadingButton from "@mui/lab/LoadingButton";
+import { Tooltip } from "@mui/material";
 import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import CardActions from "@mui/material/CardActions";
 import CardContent from "@mui/material/CardContent";
 import CardMedia from "@mui/material/CardMedia";
 import Checkbox from "@mui/material/Checkbox";
-import Container from "@mui/material/Container";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Grid from "@mui/material/Grid";
 import Paper from "@mui/material/Paper";
@@ -136,7 +136,7 @@ function Register({ eventcode }: { eventcode: string }) {
     >
       <Grid container spacing={2} sx={{ flex: 1 }}>
         {event?.items.map((item) => (
-          <Grid item flex={1} key={item.code} sx={{ alignItems: "center" }}>
+          <Grid item xs={12} md={6} xl={4} key={item.code}>
             <ItemPanel
               item={item}
               record={state[item.code]}
@@ -162,13 +162,6 @@ function Bottom({
     useIDBCreateReceipt(event.code);
   const calculator = useCalculator(event);
   const total = calculator(state);
-  const hints =
-    total > 0
-      ? [500, 1000, 5000, 10000]
-          .filter((r) => r >= total)
-          .map((r) => ({ receive: r, change: r - total }))
-      : [];
-
   async function onClick() {
     const records = Object.entries(state).map(([itemcode, record]) => ({
       itemcode,
@@ -197,53 +190,65 @@ function Bottom({
   }, [pending10, dispatchAlert]);
 
   return (
-    <Paper variant="outlined" square sx={{ height: 144 }}>
-      <Container
-        sx={{
-          height: "100%",
-          display: "flex",
-          flexDirection: "row",
-          justifyContent: "flex-end",
-          alignItems: "center",
-          columnGap: 2,
-        }}
+    <Paper
+      variant="outlined"
+      square
+      sx={{
+        display: "flex",
+        flexDirection: "row",
+        alignItems: "center",
+        px: 2,
+      }}
+    >
+      <LoadingButton
+        size="large"
+        variant="outlined"
+        loading={isSyncing}
+        startIcon={pending ? <CloudUpload /> : <CloudDone />}
+        disabled={!pending}
+        onClick={triggerSync}
       >
-        <LoadingButton
-          size="large"
-          variant="outlined"
-          loading={isSyncing}
-          startIcon={pending ? <CloudUpload /> : <CloudDone />}
-          disabled={!pending}
-          onClick={triggerSync}
-        >
-          同期
-        </LoadingButton>
-        <Box sx={{ flex: 1 }} />
-        <Table size="small" sx={{ flex: 0 }}>
-          <TableBody sx={{ rowGap: 0 }}>
-            {hints.map(({ receive, change }) => (
-              <TableRow key={receive}>
-                <TableCell>¥{receive}</TableCell>
-                <TableCell>→</TableCell>
-                <TableCell>¥{change}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-        <Typography variant="caption" fontSize="3em" sx={{ p: 2, width: 192 }}>
+        同期
+      </LoadingButton>
+      <Box sx={{ flex: 1 }} />
+      <Tooltip title={<PriceTable total={total} />} placement="top-start">
+        <Typography variant="caption" px={2} fontSize="3em">
           ¥{total}
         </Typography>
-        <LoadingButton
-          size="large"
-          variant="contained"
-          loading={isCreating}
-          disabled={Object.keys(state).length === 0}
-          onClick={onClick}
-        >
-          登録
-        </LoadingButton>
-      </Container>
+      </Tooltip>
+      <LoadingButton
+        size="large"
+        variant="contained"
+        loading={isCreating}
+        disabled={Object.keys(state).length === 0}
+        onClick={onClick}
+      >
+        登録
+      </LoadingButton>
     </Paper>
+  );
+}
+
+function PriceTable({ total }: { total: number }) {
+  const hints =
+    total > 0
+      ? [500, 1000, 5000, 10000]
+          .filter((r) => r >= total)
+          .map((r) => ({ receive: r, change: r - total }))
+      : [];
+
+  return (
+    <Table size="small" sx={{ flex: 0 }}>
+      <TableBody sx={{ rowGap: 0 }}>
+        {hints.map(({ receive, change }) => (
+          <TableRow key={receive}>
+            <TableCell>¥{receive}</TableCell>
+            <TableCell>→</TableCell>
+            <TableCell>¥{change}</TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
   );
 }
 
@@ -301,19 +306,19 @@ function ItemPanel({
   );
 
   return (
-    <Card key={item.code} sx={{ display: "flex", width: 450 }}>
+    <Card key={item.code} sx={{ width: "100%", display: "flex" }}>
       <CardMedia
         component="img"
         image={item.picture}
         alt={item.name}
         sx={{ width: 150 }}
       />
-      <Box sx={{ display: "flex", flexDirection: "column", width: "100%" }}>
+      <Box sx={{ width: "100%", display: "flex", flexDirection: "column" }}>
         <CardContent sx={{ fontSize: "1.5em" }}>{item.name}</CardContent>
         <Box sx={{ flex: 1 }} />
         <CardActions
           sx={{
-            m: 0,
+            p: 0,
             display: "flex",
             flexDirection: "column",
             alignItems: "flex-start",

@@ -30,13 +30,13 @@ export default async function handler(
     return;
   }
 
-  const response = await client.tokenRequest({
-    scope,
-    grantType: "refresh_token",
-    refreshToken,
-  });
-
   try {
+    const response = await client.tokenRequest({
+      scope,
+      grantType: "refresh_token",
+      refreshToken,
+    });
+
     const credentials = await createCredentials(response);
     setCredentials(res, credentials);
     switch (req.method) {
@@ -49,6 +49,13 @@ export default async function handler(
     }
   } catch (error) {
     clearCredentials(res);
-    redirectError(res, error);
+    switch (req.method) {
+      case "GET":
+        redirectError(res, error);
+        break;
+      case "POST":
+        res.status(401).end();
+        break;
+    }
   }
 }
