@@ -1,11 +1,11 @@
 {
-  "theme_color": "#42a5f5",
-  "background_color": "#42a5f5",
+  "theme_color": "#1976d2",
+  "background_color": "#1976d2",
   "display": "standalone",
   "scope": "/",
   "start_url": "/",
-  "name": "Kirado Pay 2",
-  "short_name": "kiradopay2",
-  "description": "This is a demo to create PWA with next",
+  "name": "Kiradopay",
+  "short_name": "kiradopay",
+  "description": "東京大学きらら同好会で利用するレジアプリです",
   "icons": []
 }
