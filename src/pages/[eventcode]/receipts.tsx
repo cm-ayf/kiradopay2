@@ -19,7 +19,7 @@ export async function getServerSideProps({
 
   const { eventcode } = params!;
   const event = await prisma.event.findUnique({
-    where: { code: "test" },
+    where: { code: eventcode },
     include: {
       ...eventInclude,
       receipts: {
