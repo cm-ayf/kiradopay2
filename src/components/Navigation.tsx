@@ -43,7 +43,6 @@ export default function Navigation({ bodyTitle, back }: NavigationProps) {
   const { data: user, error, mutate } = useUser();
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -58,15 +57,6 @@ export default function Navigation({ bodyTitle, back }: NavigationProps) {
         : { type: "loading" },
     [user, error, isRefreshing]
   );
-
-  useEffect(() => {
-    router.events.on("routeChangeStart", () => setIsLoading(true));
-    router.events.on("routeChangeComplete", () => setIsLoading(false));
-    return () => {
-      router.events.off("routeChangeStart", () => setIsLoading(true));
-      router.events.off("routeChangeComplete", () => setIsLoading(false));
-    };
-  }, [router]);
 
   const onStateChange = useCallback(
     async (state: ConnectionState) => {
@@ -92,7 +82,6 @@ export default function Navigation({ bodyTitle, back }: NavigationProps) {
           </IconButton>
         )}
         <Typography component="h1">{bodyTitle}</Typography>
-        {isLoading && <CircularProgress color="info" sx={{ px: 2 }} />}
         <Box sx={{ flex: 1 }} />
         <MenuButton state={state} setOpen={setOpen} />
         <Menu
