@@ -28,14 +28,15 @@ export default function EventDialog<T extends TSchema>({
   buttons: DialogButton<T>[];
 }) {
   const check = useMemo(() => TypeCompiler.Compile(schema), [schema]);
+  const defaultDateString = event && getISODateString(event.date);
   const [code, setCode] = useState(event?.code ?? "");
   const [name, setName] = useState(event?.name ?? "");
-  const [date, setDate] = useState((event?.date ?? new Date()).toString());
+  const [date, setDate] = useState(defaultDateString ?? "");
 
   const body = {
     ...(event?.code !== code && { code }),
     ...(event?.name !== name && { name }),
-    ...(event?.date.toString() !== date && { date }),
+    ...(defaultDateString !== date && { date: new Date(date) }),
   };
   const isValid = check.Check(body);
   const isUpdated = Object.keys(body).length > 0;
@@ -98,4 +99,9 @@ export default function EventDialog<T extends TSchema>({
       </DialogActions>
     </Dialog>
   );
+}
+
+function getISODateString(date: string | Date) {
+  const [d] = new Date(date).toISOString().split("T");
+  return d!;
 }

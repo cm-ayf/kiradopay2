@@ -160,6 +160,7 @@ function Bottom({
 }) {
   const { trigger: triggerCreate, isMutating: isCreating } =
     useIDBCreateReceipt(event.code);
+  const { info, error } = useAlert();
   const calculator = useCalculator(event);
   const total = calculator(state);
   async function onClick() {
@@ -168,8 +169,12 @@ function Bottom({
       count: record.count,
       dedication: record.dedication ?? false,
     }));
-    await triggerCreate({ total, records });
-    dispatch({ type: "reset" });
+    try {
+      await triggerCreate({ total, records });
+      dispatch({ type: "reset" });
+    } catch (e) {
+      error("エラーが発生しました");
+    }
   }
 
   const {
@@ -178,16 +183,12 @@ function Bottom({
     pending,
   } = useSync(event.code);
   const pending10 = Boolean(pending && pending >= 10);
-  const { dispatch: dispatchAlert } = useAlert();
 
   useEffect(() => {
     if (pending10) {
-      dispatchAlert({
-        severity: "info",
-        message: "同期されていないデータがあります",
-      });
+      info("同期されていないデータがあります");
     }
-  }, [pending10, dispatchAlert]);
+  }, [pending10, info]);
 
   return (
     <Paper
