@@ -41,6 +41,7 @@
     "@types/google-one-tap": "^1.2.2",
     "@types/jsonwebtoken": "^9.0.1",
     "eslint-config-prettier": "^8.7.0",
+    "eslint-plugin-mui-path-imports": "^0.0.15",
     "lint-staged": "^13.2.0",
     "prettier": "^2.8.4",
     "prisma": "^4.11.0",
