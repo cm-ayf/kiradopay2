@@ -48,7 +48,7 @@ export async function getServerSideProps({ req }: GetServerSidePropsContext) {
 
 export default function Home() {
   return (
-    <Layout headTitle="Kiradopay" bodyTitle="Kiradopay">
+    <Layout>
       <Events />
       <Items />
     </Layout>

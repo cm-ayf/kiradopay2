@@ -74,7 +74,7 @@ function Event({ eventcode }: { eventcode: string }) {
   const title = event ? event.name : eventcode;
 
   return (
-    <Layout headTitle={`${title} | Kiradopay`} bodyTitle={title} back="/">
+    <Layout title={title} back="/">
       {event && <About event={event} />}
       {event && <UpdateCalculator event={event} />}
       {event && <Display event={event} />}

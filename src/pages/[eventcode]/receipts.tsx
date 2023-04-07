@@ -55,11 +55,7 @@ function Receipts({ eventcode }: { eventcode: string }) {
   const title = event ? event.name : eventcode;
 
   return (
-    <Layout
-      headTitle={`${title} | Kiradopay`}
-      bodyTitle={title}
-      back={`/${eventcode}`}
-    >
+    <Layout title={title} back={`/${eventcode}`}>
       {event && <ReceiptTable event={event} />}
     </Layout>
   );

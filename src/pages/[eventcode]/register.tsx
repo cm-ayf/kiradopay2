@@ -127,8 +127,7 @@ function Register({ eventcode }: { eventcode: string }) {
 
   return (
     <Layout
-      headTitle={`${title} | Kiradopay`}
-      bodyTitle={title}
+      title={title}
       back={`/${eventcode}`}
       bottom={
         event && <Bottom event={event} state={state} dispatch={dispatch} />
