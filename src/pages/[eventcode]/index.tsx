@@ -5,14 +5,7 @@ import ItemCard from "@/components/ItemCard";
 import Layout from "@/components/Layout";
 import { verify } from "@/lib/auth";
 import { eventInclude, prisma, toEvent } from "@/lib/prisma";
-import {
-  ConflictError,
-  useCreateDisplay,
-  useDeleteDisplay,
-  useEvent,
-  useItems,
-  useUpdateEvent,
-} from "@/lib/swr";
+import { ConflictError, useEvent, useItems, useUpdateEvent } from "@/lib/swr";
 import { UpdateEvent, Event as EventSchema } from "@/types/event";
 import type { Item as ItemSchema } from "@/types/item";
 import Edit from "@mui/icons-material/Edit";
@@ -264,6 +257,10 @@ function DisplayDialog({
   onClose: () => void;
 }) {
   const { data: items } = useItems();
+  const { trigger, isMutating } = useUpdateEvent({ eventcode: event.code });
+  const { error, success } = useAlert();
+  const defaultDisplays = event.items.map((i) => i.code);
+  const [displays, setDisplays] = useState(defaultDisplays);
 
   return (
     <Dialog open={open} onClose={onClose}>
@@ -271,93 +268,42 @@ function DisplayDialog({
       <DialogContent>
         <DialogContentText></DialogContentText>
         {items?.map((item) => (
-          <DisplaySwitch
-            key={item.code}
-            eventcode={event.code}
-            item={item}
-            included={event.items.some((i) => i.code === item.code)}
-          />
+          <Box key={item.code} sx={{ display: "flex", alignItems: "center" }}>
+            <Typography>{item.name}</Typography>
+            <Box sx={{ flexGrow: 1 }} />
+            <Switch
+              key={item.code}
+              checked={displays.some((code) => code === item.code)}
+              onChange={(e) => {
+                if (e.target.checked) setDisplays([...displays, item.code]);
+                else setDisplays(displays.filter((i) => i !== item.code));
+              }}
+              disabled={isMutating}
+            />
+          </Box>
         ))}
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>閉じる</Button>
+        <LoadingButton
+          onClick={async () => {
+            try {
+              await trigger({ items: displays });
+              success("商品を更新しました");
+              onClose();
+            } catch (e) {
+              error("商品の更新に失敗しました");
+            }
+          }}
+          loading={isMutating}
+          disabled={
+            [...displays].sort().toString() ===
+            [...defaultDisplays].sort().toString()
+          }
+        >
+          更新
+        </LoadingButton>
       </DialogActions>
     </Dialog>
-  );
-}
-
-function DisplaySwitch({
-  eventcode,
-  item,
-  included,
-}: {
-  eventcode: string;
-  item: ItemSchema;
-  included: boolean;
-}) {
-  const { mutate } = useEvent({ eventcode });
-  const { trigger: triggerCreate, isMutating: isCreating } = useCreateDisplay({
-    eventcode,
-    itemcode: item.code,
-  });
-  const { trigger: triggerDelete, isMutating: isDeleting } = useDeleteDisplay({
-    eventcode,
-    itemcode: item.code,
-  });
-  const { error } = useAlert();
-
-  async function onCreate() {
-    try {
-      await triggerCreate(null);
-      await mutate(
-        (event) =>
-          event && {
-            ...event,
-            items: [...event.items, item].sort((a, b) =>
-              a.code.localeCompare(b.code)
-            ),
-          },
-        { revalidate: false }
-      );
-    } catch (e) {
-      error("お品書きの追加に失敗しました");
-    }
-  }
-
-  async function onDelete() {
-    try {
-      await triggerDelete(null);
-      await mutate(
-        (event) =>
-          event && {
-            ...event,
-            items: event.items.filter((i: any) => i.code !== item.code),
-          },
-        { revalidate: false }
-      );
-    } catch (e) {
-      if (e instanceof ConflictError) error("この商品はすでに購入されています");
-      else error("お品書きの削除に失敗しました");
-    }
-  }
-
-  return (
-    <Box sx={{ display: "flex", flexDirection: "row" }}>
-      <Typography
-        variant="caption"
-        sx={{ fontSize: "1em", fontWeight: "bold" }}
-      >
-        {item.name}
-      </Typography>
-      <Box sx={{ flex: 1 }} />
-      <Switch
-        checked={included}
-        onChange={(e) => {
-          if (e.target.checked) onCreate();
-          else onDelete();
-        }}
-        disabled={isCreating || isDeleting}
-      />
-    </Box>
   );
 }

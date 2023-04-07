@@ -18,6 +18,7 @@ export const CreateEvent = Type.Object({
   name: Name,
   date: Date,
   calculator: Type.Optional(Type.String()),
+  items: Type.Optional(Type.Array(Code)),
 });
 
 export type CreateEvent = Static<typeof CreateEvent>;
