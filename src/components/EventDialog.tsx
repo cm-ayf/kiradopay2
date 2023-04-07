@@ -8,7 +8,7 @@ import DialogTitle from "@mui/material/DialogTitle";
 import TextField from "@mui/material/TextField";
 import type { TSchema } from "@sinclair/typebox";
 import { TypeCompiler } from "@sinclair/typebox/compiler";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 export default function EventDialog<T extends TSchema>({
   schema,
@@ -29,9 +29,19 @@ export default function EventDialog<T extends TSchema>({
 }) {
   const check = useMemo(() => TypeCompiler.Compile(schema), [schema]);
   const defaultDateString = event && getISODateString(event.date);
+  const todayString = getISODateString(new Date());
   const [code, setCode] = useState(event?.code ?? "");
   const [name, setName] = useState(event?.name ?? "");
-  const [date, setDate] = useState(defaultDateString ?? "");
+  const [date, setDate] = useState(defaultDateString ?? todayString);
+  const clear = useCallback(() => {
+    setCode(event?.code ?? "");
+    setName(event?.name ?? "");
+    setDate(defaultDateString ?? todayString);
+  }, [event, defaultDateString, todayString]);
+
+  useEffect(() => {
+    if (open) clear();
+  }, [open, clear]);
 
   const body = {
     ...(event?.code !== code && { code }),
@@ -42,7 +52,13 @@ export default function EventDialog<T extends TSchema>({
   const isUpdated = Object.keys(body).length > 0;
 
   return (
-    <Dialog open={open} onClose={onClose}>
+    <Dialog
+      open={open}
+      onClose={() => {
+        onClose();
+        clear();
+      }}
+    >
       <DialogTitle>{title}</DialogTitle>
       <DialogContent
         sx={{
@@ -82,14 +98,17 @@ export default function EventDialog<T extends TSchema>({
                 Boolean(needsValidation && !isValid) ||
                 Boolean(needsUpdate && !isUpdated)
               }
-              onClick={(e) => {
+              onClick={async (e) => {
                 e.preventDefault();
-                if (needsValidation) {
-                  if (!isValid) return;
-                  onClick(body);
-                } else {
-                  onClick();
-                }
+                try {
+                  if (needsValidation) {
+                    if (!isValid) return;
+                    await onClick(body);
+                  } else {
+                    await onClick();
+                  }
+                  clear();
+                } catch (e) {}
               }}
             >
               {label}
