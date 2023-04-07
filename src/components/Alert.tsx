@@ -1,7 +1,7 @@
 import Alert, { type AlertColor } from "@mui/material/Alert";
 import Snackbar from "@mui/material/Snackbar";
 import Stack from "@mui/material/Stack";
-import { createContext, useContext, useReducer } from "react";
+import { createContext, useCallback, useContext, useReducer } from "react";
 
 export type CommonAlert = keyof typeof commonAlerts;
 
@@ -71,9 +71,21 @@ export function useAlert() {
   const { dispatch } = useContext(AlertContext);
   return {
     dispatch,
-    success: (message: string) => dispatch({ severity: "success", message }),
-    info: (message: string) => dispatch({ severity: "info", message }),
-    warning: (message: string) => dispatch({ severity: "warning", message }),
-    error: (message: string) => dispatch({ severity: "error", message }),
+    success: useCallback(
+      (message: string) => dispatch({ severity: "success", message }),
+      [dispatch]
+    ),
+    info: useCallback(
+      (message: string) => dispatch({ severity: "info", message }),
+      [dispatch]
+    ),
+    warning: useCallback(
+      (message: string) => dispatch({ severity: "warning", message }),
+      [dispatch]
+    ),
+    error: useCallback(
+      (message: string) => dispatch({ severity: "error", message }),
+      [dispatch]
+    ),
   };
 }
