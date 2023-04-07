@@ -56,7 +56,7 @@ class JWT {
 const jwt = new JWT(secret);
 
 export async function createCredentials(
-  credentials: DiscordOAuth2.TokenRequestResult,
+  tokens: Tokens,
   upsert = false
 ): Promise<Credentials> {
   const {
@@ -65,7 +65,7 @@ export async function createCredentials(
     nick = null,
     // @ts-expect-error avatar is not defined in the type
     avatar: memberAvatar,
-  } = await client.getGuildMember(credentials.access_token, options.guildId);
+  } = await client.getGuildMember(tokens.access_token, options.guildId);
 
   if (!user) {
     throw new Error("Missing user");
@@ -76,7 +76,7 @@ export async function createCredentials(
 
   const { id, username, avatar: userAvatar = null } = user;
   const avatar: string | null = memberAvatar ?? userAvatar;
-  const exp = Math.floor(Date.now() / 1000) + 60 * 60;
+  const exp = Math.floor(Date.now() / 1000) + 60; // * 60;
   const session = jwt.sign({ id, username, nick, avatar, exp });
 
   if (upsert) {
@@ -87,10 +87,10 @@ export async function createCredentials(
     });
   }
 
-  return { ...credentials, session };
+  return { ...tokens, session };
 }
 
-export function redirectError(res: NextApiResponse, error: unknown) {
+export function redirectError(res: NextApiResponse, error?: unknown) {
   const params = new URLSearchParams("error=invalid_credentials");
   if (error instanceof Error) {
     params.append("error_description", error.message);
@@ -114,7 +114,7 @@ const sessionCookieOptions: CookieSerializeOptions = {
   sameSite: "strict",
   secure,
   path: "/",
-  maxAge: 3600,
+  maxAge: 60, // * 60,
 };
 
 const accessTokenCookieOptions: CookieSerializeOptions = {
@@ -140,11 +140,19 @@ const clearCookieOptions: CookieSerializeOptions = {
   maxAge: -1,
 };
 
-export interface Credentials extends DiscordOAuth2.TokenRequestResult {
+interface Tokens {
+  access_token: string;
+  refresh_token?: string;
+}
+
+export interface Credentials extends Tokens {
   session: string;
 }
 
-export function setCredentials(res: NextApiResponse, credentials: Credentials) {
+export function setCredentials(
+  res: NextApiResponse,
+  credentials: Partial<Credentials>
+) {
   const { session, access_token, refresh_token } = credentials;
   const cookies: string[] = [];
   if (session) {

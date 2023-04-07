@@ -5,11 +5,11 @@ import type { SWRMutationResponse } from "swr/mutation";
 import type { Route, TParams } from "@/types/route";
 import { TypeCompiler } from "@sinclair/typebox/compiler";
 import type { Static } from "@sinclair/typebox";
-import { useAlert } from "@/components/Alert";
 import { useEffect } from "react";
 import { createEvent, readEvent, readEvents, updateEvent } from "@/types/event";
 import { createItem, deleteItem, readItems, updateItem } from "@/types/item";
 import { createReceipts, readReceipts } from "@/types/receipt";
+import { useRefresh } from "@/components/UserState";
 
 export class UnauthorizedError extends Error {
   code = "UNAUTHORIZED";
@@ -63,13 +63,14 @@ export function createUseRoute<R extends GetRoute>(
 
   return (...args) => {
     const response = useSWR(pathGenerator(...args), fetcher, options);
-    const { dispatch } = useAlert();
+    const { error, mutate } = response;
+    const refresh = useRefresh();
 
-    const isUnauthorized = response.error instanceof UnauthorizedError;
+    const isUnauthorized = error instanceof UnauthorizedError;
 
     useEffect(() => {
-      if (isUnauthorized) dispatch("unauthorized");
-    }, [isUnauthorized, dispatch]);
+      if (isUnauthorized) refresh().then(() => mutate());
+    }, [isUnauthorized, refresh, mutate]);
 
     return response;
   };
@@ -114,13 +115,14 @@ function createUseRouteMutation<R extends Route>(
 
   return (...args) => {
     const response = useSWRMutation(pathGenerator(...args), fetcher, options);
-    const { dispatch } = useAlert();
+    const { error } = response;
+    const refresh = useRefresh();
 
-    const isUnauthorized = response.error instanceof UnauthorizedError;
+    const isUnauthorized = error instanceof UnauthorizedError;
 
     useEffect(() => {
-      if (isUnauthorized) dispatch("unauthorized");
-    }, [isUnauthorized, dispatch]);
+      if (isUnauthorized) refresh();
+    }, [isUnauthorized, refresh]);
 
     return response;
   };
