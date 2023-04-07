@@ -29,9 +29,10 @@ export default function EventDialog<T extends TSchema>({
 }) {
   const check = useMemo(() => TypeCompiler.Compile(schema), [schema]);
   const defaultDateString = event && getISODateString(event.date);
+  const todayString = getISODateString(new Date());
   const [code, setCode] = useState(event?.code ?? "");
   const [name, setName] = useState(event?.name ?? "");
-  const [date, setDate] = useState(defaultDateString ?? "");
+  const [date, setDate] = useState(defaultDateString ?? todayString);
 
   const body = {
     ...(event?.code !== code && { code }),
