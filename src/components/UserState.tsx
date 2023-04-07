@@ -28,7 +28,7 @@ const useUser = createUseRoute(readUsersMe, { refreshInterval: 10000 });
 
 export function UserStateProvider({ children }: PropsWithChildren) {
   const { data: user, error, mutate } = useUser();
-  const { dispatch } = useAlert();
+  const { dispatch, error: errorAlert } = useAlert();
 
   /**
    * ```plaintext
@@ -54,13 +54,20 @@ export function UserStateProvider({ children }: PropsWithChildren) {
     [user, error]
   );
 
+  const url = useMemo(
+    () => globalThis.location && new URL(globalThis.location.href),
+    []
+  );
+  const hasRedirectError = url?.searchParams.get("error") !== null;
+
   const refresh = useCallback(async () => {
     const response = await fetch("/api/auth/refresh", { method: "POST" });
     if (response.ok) {
       await mutate();
     } else {
       await mutate(undefined);
-      if (response.status === 401) dispatch("unauthorized");
+      if (response.status === 401 && !hasRedirectError)
+        dispatch("unauthorized");
     }
   }, [mutate, dispatch]);
 
@@ -68,11 +75,34 @@ export function UserStateProvider({ children }: PropsWithChildren) {
     if (state.type === "refreshing") refresh();
   }, [state, refresh]);
 
+  useEffect(() => {
+    if (hasRedirectError) {
+      const description = url.searchParams.get("error_description");
+      console.log(description);
+      if (description?.includes("role")) {
+        errorAlert("必要なロールが付与されていません");
+      } else if (description?.includes("Unknown Guild")) {
+        errorAlert("サーバーに参加していません");
+      } else {
+        errorAlert("ログインに失敗しました");
+      }
+    }
+  }, [url, hasRedirectError, errorAlert]);
+
   return (
     <UserStateContext.Provider value={{ state, refresh }}>
       {children}
     </UserStateContext.Provider>
   );
+}
+
+function useRedirectError() {
+  const { error } = useAlert();
+
+  useEffect(() => {
+    const url = new URL(location.href);
+    if (url.searchParams.get("error") === null) return;
+  }, [error]);
 }
 
 export function useUserState() {
