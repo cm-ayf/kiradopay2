@@ -2,8 +2,7 @@ import Layout from "@/components/Layout";
 import { verify } from "@/lib/auth";
 import { useIDBReceipts } from "@/lib/idb";
 import { eventInclude, prisma, toEvent } from "@/lib/prisma";
-import { useEvent, useReceipts } from "@/lib/swr";
-import type { Event } from "@/types/event";
+import { useEvent, useReceipts, useTitle } from "@/lib/swr";
 import type { Receipt } from "@/types/receipt";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
 import type { GetServerSidePropsContext } from "next";
@@ -51,16 +50,11 @@ export default function ReceiptsWrapper() {
 }
 
 function Receipts({ eventcode }: { eventcode: string }) {
-  const { data: event } = useEvent({ eventcode });
-  const title = event ? event.name : eventcode;
+  const title = useTitle(eventcode);
 
   return (
-    <Layout
-      headTitle={`${title} | Kiradopay`}
-      bodyTitle={title}
-      back={`/${eventcode}`}
-    >
-      {event && <ReceiptTable event={event} />}
+    <Layout title={title} back={`/${eventcode}`}>
+      {event && <ReceiptTable eventcode={eventcode} />}
     </Layout>
   );
 }
@@ -88,20 +82,21 @@ function flat(receipt: Receipt, onServer: boolean) {
   };
 }
 
-function ReceiptTable({ event }: { event: Event }) {
-  const { data: onServer } = useReceipts({ eventcode: event.code });
-  const { data: onBrowser } = useIDBReceipts(event.code);
+function ReceiptTable({ eventcode }: { eventcode: string }) {
+  const { data: event } = useEvent({ eventcode });
+  const { data: onServer } = useReceipts({ eventcode });
+  const { data: onBrowser } = useIDBReceipts(eventcode);
   const columns = useMemo(
     () => [
       ...basicColumns,
-      ...event.items.map<GridColDef>(({ code, name }) => ({
+      ...(event?.items.map<GridColDef>(({ code, name }) => ({
         field: code,
         headerName: name,
         width: 160,
         align: "right",
-      })),
+      })) ?? []),
     ],
-    [event.items]
+    [event?.items]
   );
   const rows = useMemo(
     () => [

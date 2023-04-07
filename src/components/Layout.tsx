@@ -5,20 +5,20 @@ import Navigation, { NavigationProps } from "./Navigation";
 import type { PropsWithChildren } from "react";
 
 export interface LayoutProps extends NavigationProps {
-  headTitle: string;
   bottom?: React.ReactNode;
 }
 
 export default function Layout({
   children,
-  headTitle,
   bottom,
   ...navigation
 }: PropsWithChildren<LayoutProps>) {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
       <Head>
-        <title>{headTitle}</title>
+        <title>
+          {navigation.title ? `${navigation.title} | Kiradopay` : "Kiradopay"}
+        </title>
       </Head>
       <Navigation {...navigation} />
       <Container

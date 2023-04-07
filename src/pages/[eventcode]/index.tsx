@@ -5,8 +5,14 @@ import ItemCard from "@/components/ItemCard";
 import Layout from "@/components/Layout";
 import { verify } from "@/lib/auth";
 import { eventInclude, prisma, toEvent } from "@/lib/prisma";
-import { ConflictError, useEvent, useItems, useUpdateEvent } from "@/lib/swr";
-import { UpdateEvent, Event as EventSchema } from "@/types/event";
+import {
+  ConflictError,
+  useEvent,
+  useItems,
+  useTitle,
+  useUpdateEvent,
+} from "@/lib/swr";
+import { UpdateEvent } from "@/types/event";
 import type { Item as ItemSchema } from "@/types/item";
 import Edit from "@mui/icons-material/Edit";
 import LoadingButton from "@mui/lab/LoadingButton";
@@ -70,20 +76,20 @@ function isValidCalculator(calculator: string) {
 }
 
 function Event({ eventcode }: { eventcode: string }) {
-  const { data: event } = useEvent({ eventcode });
-  const title = event ? event.name : eventcode;
+  const title = useTitle(eventcode);
 
   return (
-    <Layout headTitle={`${title} | Kiradopay`} bodyTitle={title} back="/">
-      {event && <About event={event} />}
-      {event && <UpdateCalculator event={event} />}
-      {event && <Display event={event} />}
+    <Layout title={title} back="/">
+      {event && <About eventcode={eventcode} />}
+      {event && <UpdateCalculator eventcode={eventcode} />}
+      {event && <Display eventcode={eventcode} />}
     </Layout>
   );
 }
 
-function About({ event }: { event: EventSchema }) {
-  const { trigger, isMutating } = useUpdateEvent({ eventcode: event.code });
+function About({ eventcode }: { eventcode: string }) {
+  const { data: event } = useEvent({ eventcode });
+  const { trigger, isMutating } = useUpdateEvent({ eventcode });
   const router = useRouter();
   const { error, success } = useAlert();
   const [open, setOpen] = useState(false);
@@ -100,6 +106,7 @@ function About({ event }: { event: EventSchema }) {
     }
   }
 
+  if (!event) return null;
   return (
     <>
       <Box sx={{ my: 2, display: "flex", flexDirection: "row", columnGap: 2 }}>
@@ -151,14 +158,17 @@ function calculate(state: State): number {
 `;
 }
 
-function UpdateCalculator({ event }: { event: EventSchema }) {
-  const { trigger, isMutating } = useUpdateEvent({ eventcode: event.code });
+function UpdateCalculator({ eventcode }: { eventcode: string }) {
+  const { data: event } = useEvent({ eventcode });
+  const { trigger, isMutating } = useUpdateEvent({ eventcode });
   const { error, success } = useAlert();
-  const [calculator, setCalculator] = useState<string>(event.calculator);
+  const defaultCalculator = event?.calculator || "return 0";
+  const [calculator, setCalculator] = useState<string>(defaultCalculator);
 
   const hash = useMemo(
-    () => compressToEncodedURIComponent(playground(event.items)),
-    [event.items]
+    () =>
+      event?.items && compressToEncodedURIComponent(playground(event.items)),
+    [event?.items]
   );
 
   async function onClick() {
@@ -190,7 +200,7 @@ function UpdateCalculator({ event }: { event: EventSchema }) {
           variant="contained"
           loading={isMutating}
           disabled={
-            calculator === event.calculator || !isValidCalculator(calculator)
+            calculator === defaultCalculator || !isValidCalculator(calculator)
           }
           onClick={onClick}
         >
@@ -209,7 +219,7 @@ function UpdateCalculator({ event }: { event: EventSchema }) {
         <TextField
           variant="outlined"
           sx={{ px: 2, width: "100%" }}
-          value={calculator ?? event.calculator}
+          value={calculator ?? defaultCalculator}
           error={calculator !== undefined && !isValidCalculator(calculator)}
           multiline
           onChange={(e) => setCalculator(e.target.value)}
@@ -220,7 +230,8 @@ function UpdateCalculator({ event }: { event: EventSchema }) {
   );
 }
 
-function Display({ event }: { event: EventSchema }) {
+function Display({ eventcode }: { eventcode: string }) {
+  const { data: event } = useEvent({ eventcode });
   const [open, setOpen] = useState(false);
 
   return (
@@ -238,30 +249,35 @@ function Display({ event }: { event: EventSchema }) {
         </IconButton>
       </Box>
       <Grid container spacing={2}>
-        {event.items.map((item) => (
+        {event?.items.map((item) => (
           <Grid item key={item.code}>
             <ItemCard item={item} />
           </Grid>
         ))}
       </Grid>
-      <DisplayDialog event={event} open={open} onClose={() => setOpen(false)} />
+      <DisplayDialog
+        eventcode={eventcode}
+        open={open}
+        onClose={() => setOpen(false)}
+      />
     </>
   );
 }
 
 function DisplayDialog({
-  event,
+  eventcode,
   open,
   onClose,
 }: {
-  event: EventSchema;
+  eventcode: string;
   open: boolean;
   onClose: () => void;
 }) {
+  const { data: event } = useEvent({ eventcode });
   const { data: items } = useItems();
-  const { trigger, isMutating } = useUpdateEvent({ eventcode: event.code });
+  const { trigger, isMutating } = useUpdateEvent({ eventcode });
   const { error, success } = useAlert();
-  const defaultDisplays = event.items.map((i) => i.code);
+  const defaultDisplays = event?.items.map((i) => i.code) || [];
   const [displays, setDisplays] = useState(defaultDisplays);
 
   return (

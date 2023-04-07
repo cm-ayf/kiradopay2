@@ -18,7 +18,7 @@ import CloudOff from "@mui/icons-material/CloudOff";
 const useUser = createUseRoute(readUsersMe, { refreshInterval: 10000 });
 
 export interface NavigationProps {
-  bodyTitle: string;
+  title?: string;
   back?: string;
 }
 
@@ -39,7 +39,7 @@ function isRefreshNeeded(state: ConnectionState) {
   }
 }
 
-export default function Navigation({ bodyTitle, back }: NavigationProps) {
+export default function Navigation({ title, back }: NavigationProps) {
   const { data: user, error, mutate } = useUser();
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -81,7 +81,7 @@ export default function Navigation({ bodyTitle, back }: NavigationProps) {
             <ArrowBack />
           </IconButton>
         )}
-        <Typography component="h1">{bodyTitle}</Typography>
+        <Typography component="h1">{title ?? "Kiradopay"}</Typography>
         <Box sx={{ flex: 1 }} />
         <MenuButton state={state} setOpen={setOpen} />
         <Menu
