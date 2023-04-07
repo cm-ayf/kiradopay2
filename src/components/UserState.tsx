@@ -69,7 +69,7 @@ export function UserStateProvider({ children }: PropsWithChildren) {
       if (response.status === 401 && !hasRedirectError)
         dispatch("unauthorized");
     }
-  }, [mutate, dispatch]);
+  }, [mutate, dispatch, hasRedirectError]);
 
   useEffect(() => {
     if (state.type === "refreshing") refresh();
@@ -94,15 +94,6 @@ export function UserStateProvider({ children }: PropsWithChildren) {
       {children}
     </UserStateContext.Provider>
   );
-}
-
-function useRedirectError() {
-  const { error } = useAlert();
-
-  useEffect(() => {
-    const url = new URL(location.href);
-    if (url.searchParams.get("error") === null) return;
-  }, [error]);
 }
 
 export function useUserState() {
