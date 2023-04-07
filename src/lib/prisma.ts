@@ -1,4 +1,5 @@
 import type { Event } from "@/types/event";
+import type { Receipt } from "@/types/receipt";
 import { Prisma, PrismaClient } from "@prisma/client";
 
 export const prisma = new PrismaClient();
@@ -18,6 +19,18 @@ export function toEvent({
   return {
     date: date.toISOString(),
     items: displays.map((display) => display.item),
+    ...rest,
+  };
+}
+
+export function toReceipt({
+  createdAt,
+  ...rest
+}: Prisma.ReceiptGetPayload<{
+  include: { records: true };
+}>): Receipt {
+  return {
+    createdAt: createdAt.toISOString(),
     ...rest,
   };
 }

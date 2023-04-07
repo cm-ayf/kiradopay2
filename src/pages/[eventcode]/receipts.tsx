@@ -1,7 +1,7 @@
 import Layout from "@/components/Layout";
 import { verify } from "@/lib/auth";
 import { useIDBReceipts } from "@/lib/idb";
-import { eventInclude, prisma, toEvent } from "@/lib/prisma";
+import { eventInclude, prisma, toEvent, toReceipt } from "@/lib/prisma";
 import { useEvent, useReceipts, useTitle } from "@/lib/swr";
 import type { Receipt } from "@/types/receipt";
 import TabContext from "@mui/lab/TabContext";
@@ -43,7 +43,7 @@ export async function getServerSideProps({
       fallback: {
         "/api/users/me": token,
         [`/api/events/${eventcode}`]: toEvent(rest),
-        [`/api/events/${eventcode}/receipts`]: receipts,
+        [`/api/events/${eventcode}/receipts`]: receipts.map(toReceipt),
       },
     },
   };
@@ -128,11 +128,12 @@ function ReceiptSummary({ eventcode }: { eventcode: string }) {
         <TableRow>
           <TableCell>売上</TableCell>
           <TableCell>
-            {total.toLocaleString("ja-JP", {
-              style: "currency",
-              currency: "JPY",
-              currencyDisplay: "symbol",
-            })}
+            {total
+              .toLocaleString("ja-JP", {
+                style: "currency",
+                currency: "JPY",
+              })
+              .replace("￥", "¥")}
           </TableCell>
         </TableRow>
         {event?.items.map(({ code, name }) => (

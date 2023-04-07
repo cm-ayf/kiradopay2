@@ -80,9 +80,9 @@ function Event({ eventcode }: { eventcode: string }) {
 
   return (
     <Layout title={title} back="/">
-      {event && <About eventcode={eventcode} />}
-      {event && <UpdateCalculator eventcode={eventcode} />}
-      {event && <Display eventcode={eventcode} />}
+      <About eventcode={eventcode} />
+      <UpdateCalculator eventcode={eventcode} />
+      <Display eventcode={eventcode} />
     </Layout>
   );
 }
