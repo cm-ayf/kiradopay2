@@ -54,9 +54,24 @@ const updateEventHandler = createHandler(updateEvent, async (req, res) => {
     }
   }
 
+  const { date, items, ...rest } = req.body;
   const event = await prisma.event.update({
     where: { code: req.query.eventcode },
-    data: req.body,
+    data: {
+      ...rest,
+      ...(date && { date: new Date(date) }),
+      ...(items && {
+        displays: {
+          deleteMany: {
+            itemcode: { notIn: items },
+          },
+          createMany: {
+            data: items.map((itemcode) => ({ itemcode })),
+            skipDuplicates: true,
+          },
+        },
+      }),
+    },
     include: eventInclude,
   });
 
