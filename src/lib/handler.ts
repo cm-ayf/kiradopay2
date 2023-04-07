@@ -49,6 +49,7 @@ export function createHandler<R extends Route>(
           return;
         case "P2002": // unique constraint failed
         case "P2003": // foreign key constraint failed
+        case "P2014": // would violate required relation
           res.status(409).end();
           return;
       }

@@ -307,10 +307,12 @@ function DisplayDialog({
           onClick={async () => {
             try {
               await trigger({ items: displays });
-              success("商品を更新しました");
+              success("お品書きを更新しました");
               onClose();
             } catch (e) {
-              error("商品の更新に失敗しました");
+              if (e instanceof ConflictError)
+                error("この商品はすでに購入されています");
+              else error("お品書きの更新に失敗しました");
               throw e;
             }
           }}
