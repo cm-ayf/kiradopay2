@@ -38,3 +38,12 @@ export const readReceipts = {
   }),
   response: Type.Array(Receipt),
 } satisfies Route;
+
+export const exportReceipts = {
+  method: "GET",
+  path: "/api/events/[eventcode]/receipts/export",
+  params: Type.Object({
+    eventcode: Type.String(),
+  }),
+  response: Type.String(),
+} satisfies Route;

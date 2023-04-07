@@ -1,13 +1,22 @@
 import Layout from "@/components/Layout";
 import { verify } from "@/lib/auth";
 import { useIDBReceipts } from "@/lib/idb";
-import { eventInclude, prisma, toEvent } from "@/lib/prisma";
+import { eventInclude, prisma, toEvent, toReceipt } from "@/lib/prisma";
 import { useEvent, useReceipts, useTitle } from "@/lib/swr";
 import type { Receipt } from "@/types/receipt";
+import TabContext from "@mui/lab/TabContext";
+import TabPanel from "@mui/lab/TabPanel";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableRow from "@mui/material/TableRow";
+import Tab from "@mui/material/Tab";
+import Tabs from "@mui/material/Tabs";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
 import type { GetServerSidePropsContext } from "next";
 import { useRouter } from "next/router";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import Button from "@mui/material/Button";
 
 export async function getServerSideProps({
   req,
@@ -35,7 +44,7 @@ export async function getServerSideProps({
       fallback: {
         "/api/users/me": token,
         [`/api/events/${eventcode}`]: toEvent(rest),
-        [`/api/events/${eventcode}/receipts`]: receipts,
+        [`/api/events/${eventcode}/receipts`]: receipts.map(toReceipt),
       },
     },
   };
@@ -51,27 +60,122 @@ export default function ReceiptsWrapper() {
 
 function Receipts({ eventcode }: { eventcode: string }) {
   const title = useTitle(eventcode);
+  const [tab, setTab] = useState("summary");
 
   return (
     <Layout title={title} back={`/${eventcode}`}>
-      {event && <ReceiptTable eventcode={eventcode} />}
+      <Tabs value={tab} onChange={(_, value) => setTab(value)}>
+        <Tab label="概要" value="summary" />
+        <Tab label="表" value="table" />
+        <Tab label="出力" value="export" />
+      </Tabs>
+      <TabContext value={tab}>
+        <TabPanel value="summary">
+          <ReceiptSummary eventcode={eventcode} />
+        </TabPanel>
+        <TabPanel value="table" sx={{ flex: 1 }}>
+          <ReceiptTable eventcode={eventcode} />
+        </TabPanel>
+        <TabPanel value="export">
+          <ReceiptExport eventcode={eventcode} />
+        </TabPanel>
+      </TabContext>
     </Layout>
   );
 }
 
-const basicColumns: GridColDef[] = [
-  {
-    field: "createdAt",
-    headerName: "時刻",
-    width: 160,
-    valueGetter: ({ value }) => value.toLocaleString("ja-JP"),
-  },
-  { field: "total", headerName: "合計", width: 90, align: "right" },
-  { field: "onServer", headerName: "同期", width: 90, align: "center" },
-];
+interface ReceiptExt extends Receipt {
+  onServer: boolean;
+}
 
-function flat(receipt: Receipt, onServer: boolean) {
-  const { records, createdAt, ...rest } = receipt;
+function useReceiptExts(eventcode: string) {
+  const { data: onServer } = useReceipts({ eventcode });
+  const { data: onBrowser } = useIDBReceipts(eventcode);
+  return useMemo<ReceiptExt[] | undefined>(
+    () =>
+      onServer &&
+      onBrowser && [
+        ...onServer.map((receipt) => ({ ...receipt, onServer: true })),
+        ...onBrowser.map((receipt) => ({ ...receipt, onServer: false })),
+      ],
+    [onServer, onBrowser]
+  );
+}
+
+function useTotal(receipts: ReceiptExt[]) {
+  return useMemo(
+    () => receipts.reduce((t, { total }) => t + total, 0),
+    [receipts]
+  );
+}
+
+function useCounts(receipts: ReceiptExt[]) {
+  return useMemo(() => {
+    const counts: { [itemcode: string]: number } = {};
+    for (const receipt of receipts) {
+      for (const { itemcode, count } of receipt.records) {
+        counts[itemcode] = (counts[itemcode] ?? 0) + count;
+      }
+    }
+    return counts;
+  }, [receipts]);
+}
+
+function ReceiptSummary({ eventcode }: { eventcode: string }) {
+  const { data: event } = useEvent({ eventcode });
+  const receipts = useReceiptExts(eventcode);
+  const total = useTotal(receipts ?? []);
+  const counts = useCounts(receipts ?? []);
+
+  return (
+    <Table>
+      <TableBody>
+        <TableRow>
+          <TableCell>売上</TableCell>
+          <TableCell>
+            {total
+              .toLocaleString("ja-JP", {
+                style: "currency",
+                currency: "JPY",
+              })
+              .replace("￥", "¥")}
+          </TableCell>
+        </TableRow>
+        {event?.items.map(({ code, name }) => (
+          <TableRow key={code}>
+            <TableCell>頒布数：{name}</TableCell>
+            <TableCell>{counts[code] ?? 0}</TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  );
+}
+
+function useColumns(eventcode: string) {
+  const { data: event } = useEvent({ eventcode });
+  return useMemo<GridColDef[]>(
+    () => [
+      {
+        field: "createdAt",
+        headerName: "時刻",
+        width: 160,
+        valueGetter: ({ value }) => value.toLocaleString("ja-JP"),
+      },
+      { field: "total", headerName: "合計", width: 90, align: "right" },
+      { field: "onServer", headerName: "同期", width: 90, align: "center" },
+      ...(event?.items.map<GridColDef>(({ code, name }) => ({
+        field: code,
+        headerName: name,
+        width: 160,
+        align: "right",
+      })) ?? []),
+    ],
+    [event]
+  );
+}
+
+function toRow({ records, createdAt, onServer, ...rest }: ReceiptExt) {
   return {
     ...rest,
     createdAt: new Date(createdAt),
@@ -83,28 +187,19 @@ function flat(receipt: Receipt, onServer: boolean) {
 }
 
 function ReceiptTable({ eventcode }: { eventcode: string }) {
-  const { data: event } = useEvent({ eventcode });
-  const { data: onServer } = useReceipts({ eventcode });
-  const { data: onBrowser } = useIDBReceipts(eventcode);
-  const columns = useMemo(
-    () => [
-      ...basicColumns,
-      ...(event?.items.map<GridColDef>(({ code, name }) => ({
-        field: code,
-        headerName: name,
-        width: 160,
-        align: "right",
-      })) ?? []),
-    ],
-    [event?.items]
-  );
-  const rows = useMemo(
-    () => [
-      ...(onServer || []).map((receipt) => flat(receipt, true)),
-      ...(onBrowser || []).map((receipt) => flat(receipt, false)),
-    ],
-    [onServer, onBrowser]
-  );
+  const columns = useColumns(eventcode);
+  const receipts = useReceiptExts(eventcode);
 
-  return <DataGrid rows={rows} columns={columns} />;
+  return <DataGrid rows={receipts?.map(toRow) ?? []} columns={columns} />;
+}
+
+function ReceiptExport({ eventcode }: { eventcode: string }) {
+  return (
+    <Button
+      variant="contained"
+      href={`/api/events/${eventcode}/receipts/export`}
+    >
+      CSV
+    </Button>
+  );
 }

@@ -22,7 +22,14 @@ export default function Layout({
       </Head>
       <Navigation {...navigation} />
       <Container
-        sx={{ flex: "auto", overflowX: "hidden", overflowY: "scroll", py: 2 }}
+        sx={{
+          flex: "auto",
+          overflowX: "hidden",
+          overflowY: "scroll",
+          py: 2,
+          display: "flex",
+          flexDirection: "column",
+        }}
       >
         {children}
       </Container>
