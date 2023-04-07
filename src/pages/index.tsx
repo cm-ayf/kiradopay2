@@ -69,6 +69,7 @@ function Events() {
     } catch (e) {
       if (e instanceof ConflictError) error("イベントコードが重複しています");
       else error("イベントの作成に失敗しました");
+      throw e;
     }
   }
 
@@ -153,6 +154,7 @@ function CreateItemDialog({
     } catch (e) {
       if (e instanceof ConflictError) error("商品コードが重複しています");
       else error("商品の作成に失敗しました");
+      throw e;
     }
   }
 
@@ -192,6 +194,7 @@ function MutateItemDialog({
     } catch (e) {
       if (e instanceof ConflictError) error("商品コードが重複しています");
       else error("商品の更新に失敗しました");
+      throw e;
     }
   }
 
@@ -204,6 +207,7 @@ function MutateItemDialog({
       if (e instanceof ConflictError)
         error("この商品は1つ以上のイベントのお品書きにあります");
       else error("商品の削除に失敗しました");
+      throw e;
     }
   }
 

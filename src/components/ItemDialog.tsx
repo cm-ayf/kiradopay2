@@ -8,7 +8,7 @@ import DialogTitle from "@mui/material/DialogTitle";
 import TextField from "@mui/material/TextField";
 import type { TSchema } from "@sinclair/typebox";
 import { TypeCompiler } from "@sinclair/typebox/compiler";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 export default function ItemDialog<T extends TSchema>({
   schema,
@@ -31,6 +31,15 @@ export default function ItemDialog<T extends TSchema>({
   const [code, setCode] = useState(item?.code ?? "");
   const [name, setName] = useState(item?.name ?? "");
   const [picture, setPicture] = useState(item?.picture ?? "");
+  const clear = useCallback(() => {
+    setCode(item?.code ?? "");
+    setName(item?.name ?? "");
+    setPicture(item?.picture ?? "");
+  }, [item]);
+
+  useEffect(() => {
+    if (open) clear();
+  }, [open, clear]);
 
   const body = {
     ...(item?.code !== code && { code }),
@@ -41,7 +50,13 @@ export default function ItemDialog<T extends TSchema>({
   const isUpdated = Object.keys(body).length > 0;
 
   return (
-    <Dialog open={open} onClose={onClose}>
+    <Dialog
+      open={open}
+      onClose={() => {
+        onClose();
+        clear();
+      }}
+    >
       <DialogTitle>{title}</DialogTitle>
       <DialogContent
         sx={{
@@ -81,14 +96,17 @@ export default function ItemDialog<T extends TSchema>({
                 Boolean(needsValidation && !isValid) ||
                 Boolean(needsUpdate && !isUpdated)
               }
-              onClick={(e) => {
+              onClick={async (e) => {
                 e.preventDefault();
-                if (needsValidation) {
-                  if (!isValid) return;
-                  onClick(body);
-                } else {
-                  onClick();
-                }
+                try {
+                  if (needsValidation) {
+                    if (!isValid) return;
+                    await onClick(body);
+                  } else {
+                    await onClick();
+                  }
+                  clear();
+                } catch (_) {}
               }}
             >
               {label}

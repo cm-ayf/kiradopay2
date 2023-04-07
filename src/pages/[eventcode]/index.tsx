@@ -96,6 +96,7 @@ function About({ event }: { event: EventSchema }) {
     } catch (e) {
       if (e instanceof ConflictError) error("イベントコードが重複しています");
       else error("イベントの更新に失敗しました");
+      throw e;
     }
   }
 
@@ -166,6 +167,7 @@ function UpdateCalculator({ event }: { event: EventSchema }) {
       success("計算機を更新しました");
     } catch (e) {
       error("計算機の更新に失敗しました");
+      throw e;
     }
   }
 
@@ -293,6 +295,7 @@ function DisplayDialog({
               onClose();
             } catch (e) {
               error("商品の更新に失敗しました");
+              throw e;
             }
           }}
           loading={isMutating}
