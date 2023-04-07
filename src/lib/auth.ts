@@ -76,7 +76,7 @@ export async function createCredentials(
 
   const { id, username, avatar: userAvatar = null } = user;
   const avatar: string | null = memberAvatar ?? userAvatar;
-  const exp = Math.floor(Date.now() / 1000) + 60; // * 60;
+  const exp = Math.floor(Date.now() / 1000) + 60 * 60;
   const session = jwt.sign({ id, username, nick, avatar, exp });
 
   if (upsert) {
@@ -114,7 +114,7 @@ const sessionCookieOptions: CookieSerializeOptions = {
   sameSite: "strict",
   secure,
   path: "/",
-  maxAge: 60, // * 60,
+  maxAge: 60 * 60,
 };
 
 const accessTokenCookieOptions: CookieSerializeOptions = {
