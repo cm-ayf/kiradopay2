@@ -3,8 +3,6 @@ import EventCard from "@/components/EventCard";
 import EventDialog from "@/components/EventDialog";
 import ItemCard from "@/components/ItemCard";
 import Layout from "@/components/Layout";
-import { verify } from "@/lib/auth";
-import { eventInclude, prisma, toEvent } from "@/lib/prisma";
 import {
   ConflictError,
   useEvent,
@@ -29,34 +27,10 @@ import Switch from "@mui/material/Switch";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { compressToEncodedURIComponent } from "lz-string";
-import type { GetServerSidePropsContext } from "next";
 import { useRouter } from "next/router";
 import { useMemo, useState } from "react";
 
-export async function getServerSideProps({
-  req,
-  params,
-}: GetServerSidePropsContext<{ eventcode: string }>) {
-  const token = verify(req);
-  if (!token) return { props: {} };
-
-  const { eventcode } = params!;
-  const event = await prisma.event.findUnique({
-    where: { code: eventcode },
-    include: eventInclude,
-  });
-
-  if (!event) return { notFound: true };
-
-  return {
-    props: {
-      fallback: {
-        "/api/users/me": token,
-        [`/api/events/${eventcode}`]: toEvent(event),
-      },
-    },
-  };
-}
+// export { eventScoped as getServerSideProps } from "@/lib/ssr";
 
 export default function EventWrapper() {
   const router = useRouter();

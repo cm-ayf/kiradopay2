@@ -1,12 +1,10 @@
 import { useAlert } from "@/components/Alert";
 import Layout from "@/components/Layout";
-import { verify } from "@/lib/auth";
 import {
   useIDBCreateReceipt,
   useIDBDeleteReceipts,
   useIDBReceipts,
 } from "@/lib/idb";
-import { eventInclude, prisma, toEvent } from "@/lib/prisma";
 import { useCreateReceipts, useEvent } from "@/lib/swr";
 import type { Event } from "@/types/event";
 import type { Item } from "@/types/item";
@@ -31,34 +29,10 @@ import TextField from "@mui/material/TextField";
 import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Typography from "@mui/material/Typography";
-import type { GetServerSidePropsContext } from "next";
 import { useRouter } from "next/router";
 import { useCallback, useEffect, useMemo, useReducer } from "react";
 
-export async function getServerSideProps({
-  req,
-  params,
-}: GetServerSidePropsContext<{ eventcode: string }>) {
-  const token = verify(req);
-  if (!token) return { props: {} };
-
-  const { eventcode } = params!;
-  const event = await prisma.event.findUnique({
-    where: { code: eventcode },
-    include: eventInclude,
-  });
-
-  if (!event) return { notFound: true };
-
-  return {
-    props: {
-      fallback: {
-        "/api/users/me": token,
-        [`/api/events/${eventcode}`]: toEvent(event),
-      },
-    },
-  };
-}
+// export { eventScoped as getServerSideProps } from "@/lib/ssr";
 
 export default function RegisterWrapper() {
   const router = useRouter();

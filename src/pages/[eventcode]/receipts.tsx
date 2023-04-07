@@ -1,7 +1,5 @@
 import Layout from "@/components/Layout";
-import { verify } from "@/lib/auth";
 import { useIDBReceipts } from "@/lib/idb";
-import { eventInclude, prisma, toEvent, toReceipt } from "@/lib/prisma";
 import { useEvent, useReceipts, useTitle } from "@/lib/swr";
 import type { Receipt } from "@/types/receipt";
 import TabContext from "@mui/lab/TabContext";
@@ -13,42 +11,11 @@ import TableRow from "@mui/material/TableRow";
 import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
-import type { GetServerSidePropsContext } from "next";
 import { useRouter } from "next/router";
 import { useMemo, useState } from "react";
 import Button from "@mui/material/Button";
 
-export async function getServerSideProps({
-  req,
-  params,
-}: GetServerSidePropsContext<{ eventcode: string }>) {
-  const token = verify(req);
-  if (!token) return { props: {} };
-
-  const { eventcode } = params!;
-  const event = await prisma.event.findUnique({
-    where: { code: eventcode },
-    include: {
-      ...eventInclude,
-      receipts: {
-        include: { records: true },
-      },
-    },
-  });
-
-  if (!event) return { notFound: true };
-
-  const { receipts, ...rest } = event;
-  return {
-    props: {
-      fallback: {
-        "/api/users/me": token,
-        [`/api/events/${eventcode}`]: toEvent(rest),
-        [`/api/events/${eventcode}/receipts`]: receipts.map(toReceipt),
-      },
-    },
-  };
-}
+// export { eventScoped as getServerSideProps } from "@/lib/ssr";
 
 export default function ReceiptsWrapper() {
   const router = useRouter();

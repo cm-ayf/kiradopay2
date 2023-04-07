@@ -7,10 +7,7 @@ import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
 import Add from "@mui/icons-material/Add";
 import { useState } from "react";
-import { eventInclude, prisma, toEvent } from "@/lib/prisma";
 import { useRouter } from "next/router";
-import type { GetServerSidePropsContext } from "next";
-import { verify } from "@/lib/auth";
 import EventCard from "@/components/EventCard";
 import EventDialog from "@/components/EventDialog";
 import ItemCard from "@/components/ItemCard";
@@ -26,25 +23,7 @@ import {
 } from "@/lib/swr";
 import { useAlert } from "@/components/Alert";
 
-export async function getServerSideProps({ req }: GetServerSidePropsContext) {
-  const token = verify(req);
-  if (!token) return { props: {} };
-
-  const [events, items] = await prisma.$transaction([
-    prisma.event.findMany({ include: eventInclude }),
-    prisma.item.findMany({ orderBy: { code: "asc" } }),
-  ]);
-
-  return {
-    props: {
-      fallback: {
-        "/api/users/me": token,
-        "/api/events": events.map(toEvent),
-        "/api/items": items,
-      },
-    },
-  };
-}
+// export { root as getServerSideProps } from "@/lib/ssr";
 
 export default function Home() {
   return (
