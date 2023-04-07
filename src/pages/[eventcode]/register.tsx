@@ -13,7 +13,7 @@ import type { Item } from "@/types/item";
 import CloudDone from "@mui/icons-material/CloudDone";
 import CloudUpload from "@mui/icons-material/CloudUpload";
 import LoadingButton from "@mui/lab/LoadingButton";
-import { Tooltip } from "@mui/material";
+import Tooltip from "@mui/material/Tooltip";
 import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import CardActions from "@mui/material/CardActions";
