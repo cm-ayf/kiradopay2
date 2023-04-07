@@ -16,6 +16,7 @@ import { DataGrid, GridColDef } from "@mui/x-data-grid";
 import type { GetServerSidePropsContext } from "next";
 import { useRouter } from "next/router";
 import { useMemo, useState } from "react";
+import Button from "@mui/material/Button";
 
 export async function getServerSideProps({
   req,
@@ -66,6 +67,7 @@ function Receipts({ eventcode }: { eventcode: string }) {
       <Tabs value={tab} onChange={(_, value) => setTab(value)}>
         <Tab label="概要" value="summary" />
         <Tab label="表" value="table" />
+        <Tab label="出力" value="export" />
       </Tabs>
       <TabContext value={tab}>
         <TabPanel value="summary">
@@ -73,6 +75,9 @@ function Receipts({ eventcode }: { eventcode: string }) {
         </TabPanel>
         <TabPanel value="table" sx={{ flex: 1 }}>
           <ReceiptTable eventcode={eventcode} />
+        </TabPanel>
+        <TabPanel value="export">
+          <ReceiptExport eventcode={eventcode} />
         </TabPanel>
       </TabContext>
     </Layout>
@@ -186,4 +191,15 @@ function ReceiptTable({ eventcode }: { eventcode: string }) {
   const receipts = useReceiptExts(eventcode);
 
   return <DataGrid rows={receipts?.map(toRow) ?? []} columns={columns} />;
+}
+
+function ReceiptExport({ eventcode }: { eventcode: string }) {
+  return (
+    <Button
+      variant="contained"
+      href={`/api/events/${eventcode}/receipts/export`}
+    >
+      CSV
+    </Button>
+  );
 }
