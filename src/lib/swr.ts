@@ -10,7 +10,6 @@ import { useEffect } from "react";
 import { createEvent, readEvent, readEvents, updateEvent } from "@/types/event";
 import { createItem, deleteItem, readItems, updateItem } from "@/types/item";
 import { createReceipts, readReceipts } from "@/types/receipt";
-import { createDisplay, deleteDisplay } from "@/types/display";
 
 export class UnauthorizedError extends Error {
   code = "UNAUTHORIZED";
@@ -137,6 +136,4 @@ export const useUpdateItem = createUseRouteMutation(updateItem);
 export const useDeleteItem = createUseRouteMutation(deleteItem);
 export const useCreateEvent = createUseRouteMutation(createEvent);
 export const useUpdateEvent = createUseRouteMutation(updateEvent);
-export const useCreateDisplay = createUseRouteMutation(createDisplay);
-export const useDeleteDisplay = createUseRouteMutation(deleteDisplay);
 export const useCreateReceipts = createUseRouteMutation(createReceipts);
