@@ -131,6 +131,11 @@ export const useEvents = createUseRoute(readEvents);
 export const useEvent = createUseRoute(readEvent);
 export const useReceipts = createUseRoute(readReceipts);
 
+export function useTitle(eventcode: string) {
+  const { data: event } = useEvent({ eventcode });
+  return event ? event.name : eventcode;
+}
+
 export const useCreateItem = createUseRouteMutation(createItem);
 export const useUpdateItem = createUseRouteMutation(updateItem);
 export const useDeleteItem = createUseRouteMutation(deleteItem);
