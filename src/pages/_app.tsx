@@ -1,4 +1,5 @@
 import { AlertProvider } from "@/components/Alert";
+import { UserStateProvider } from "@/components/UserState";
 import "@/styles/globals.css";
 import type { AppProps } from "next/app";
 
@@ -10,7 +11,9 @@ export default function App({ Component, pageProps }: AppProps) {
   return (
     <SWRConfig value={{ fallback }}>
       <AlertProvider>
-        <Component {...props} />
+        <UserStateProvider>
+          <Component {...props} />
+        </UserStateProvider>
       </AlertProvider>
     </SWRConfig>
   );

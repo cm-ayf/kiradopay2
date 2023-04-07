@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import AppBar from "@mui/material/AppBar";
 import Avatar from "@mui/material/Avatar";
 import Box from "@mui/material/Box";
@@ -9,69 +9,21 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
-import { createUseRoute, UnauthorizedError } from "@/lib/swr";
-import { readUsersMe, Token } from "@/types/user";
+import type { Token } from "@/types/user";
 import { useRouter } from "next/router";
 import ArrowBack from "@mui/icons-material/ArrowBack";
 import CloudOff from "@mui/icons-material/CloudOff";
-
-const useUser = createUseRoute(readUsersMe, { refreshInterval: 10000 });
+import { useUserState } from "./UserState";
 
 export interface NavigationProps {
   title?: string;
   back?: string;
 }
 
-type ConnectionState =
-  | { type: "authorized"; user: Token; isRefreshing: boolean }
-  | { type: "unauthorized"; isRefreshing: boolean }
-  | { type: "error" }
-  | { type: "loading" };
-
-function isRefreshNeeded(state: ConnectionState) {
-  switch (state.type) {
-    case "authorized":
-      return state.user.exp - Date.now() / 1000 < 300 && !state.isRefreshing;
-    case "unauthorized":
-      return !state.isRefreshing;
-    default:
-      return false;
-  }
-}
-
 export default function Navigation({ title, back }: NavigationProps) {
-  const { data: user, error, mutate } = useUser();
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-
-  const state: ConnectionState = useMemo(
-    () =>
-      user
-        ? { type: "authorized", user, isRefreshing }
-        : error
-        ? error instanceof UnauthorizedError
-          ? { type: "unauthorized", isRefreshing }
-          : { type: "error" }
-        : { type: "loading" },
-    [user, error, isRefreshing]
-  );
-
-  const onStateChange = useCallback(
-    async (state: ConnectionState) => {
-      if (!isRefreshNeeded(state)) return;
-      setIsRefreshing(true);
-      await fetch("/api/auth/refresh", { method: "POST" });
-      await mutate();
-      setIsRefreshing(false);
-    },
-    [mutate]
-  );
-
-  useEffect(() => {
-    onStateChange(state);
-  }, [state, onStateChange]);
 
   return (
     <AppBar position="static" ref={ref}>
@@ -83,7 +35,7 @@ export default function Navigation({ title, back }: NavigationProps) {
         )}
         <Typography component="h1">{title ?? "Kiradopay"}</Typography>
         <Box sx={{ flex: 1 }} />
-        <MenuButton state={state} setOpen={setOpen} />
+        <MenuButton onClick={() => setOpen(true)} />
         <Menu
           anchorEl={ref.current}
           open={open}
@@ -100,20 +52,16 @@ export default function Navigation({ title, back }: NavigationProps) {
   );
 }
 
-function MenuButton({
-  state,
-  setOpen,
-}: {
-  state: ConnectionState;
-  setOpen: (v: boolean) => void;
-}) {
+function MenuButton({ onClick }: { onClick: () => void }) {
+  const state = useUserState();
   const router = useRouter();
   switch (state.type) {
     case "authorized":
+    case "refreshing":
       return (
         <Button
           color="inherit"
-          onClick={() => setOpen(true)}
+          onClick={onClick}
           endIcon={<UserAvatar user={state.user} />}
         >
           <UserButton user={state.user} />
