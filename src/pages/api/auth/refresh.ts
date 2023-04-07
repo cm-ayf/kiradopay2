@@ -23,39 +23,53 @@ export default async function handler(
       res.status(405).end();
   }
 
-  const { refresh_token: refreshToken } = req.cookies;
-  if (!refreshToken) {
-    clearCredentials(res);
-    res.status(400).end();
-    return;
+  const { access_token, refresh_token } = req.cookies;
+
+  if (access_token) {
+    try {
+      const { session } = await createCredentials({ access_token });
+      setCredentials(res, { session });
+      success(req, res);
+      return;
+    } catch (e) {}
   }
 
-  try {
-    const response = await client.tokenRequest({
-      scope,
-      grantType: "refresh_token",
-      refreshToken,
-    });
+  if (refresh_token) {
+    try {
+      const response = await client.tokenRequest({
+        scope,
+        grantType: "refresh_token",
+        refreshToken: refresh_token,
+      });
 
-    const credentials = await createCredentials(response);
-    setCredentials(res, credentials);
-    switch (req.method) {
-      case "GET":
-        res.redirect("/");
-        break;
-      case "POST":
-        res.status(200).end();
-        break;
-    }
-  } catch (error) {
-    clearCredentials(res);
-    switch (req.method) {
-      case "GET":
-        redirectError(res, error);
-        break;
-      case "POST":
-        res.status(401).end();
-        break;
-    }
+      const credentials = await createCredentials(response);
+      setCredentials(res, credentials);
+      success(req, res);
+    } catch (e) {}
+  }
+
+  clearCredentials(res);
+  failure(req, res);
+}
+
+function success(req: NextApiRequest, res: NextApiResponse) {
+  switch (req.method) {
+    case "GET":
+      res.redirect("/");
+      break;
+    case "POST":
+      res.status(200).end();
+      break;
+  }
+}
+
+function failure(req: NextApiRequest, res: NextApiResponse) {
+  switch (req.method) {
+    case "GET":
+      redirectError(res);
+      break;
+    case "POST":
+      res.status(401).end();
+      break;
   }
 }
