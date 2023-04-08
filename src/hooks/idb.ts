@@ -3,6 +3,7 @@ import { DBState, useDBState } from "./DBState";
 import useSWR from "swr";
 import useSWRMutation from "swr/mutation";
 import { useMemo } from "react";
+import { v4 as uuidv4 } from "uuid";
 
 function key(eventcode: string) {
   return `idb:receipts:${eventcode}`;
@@ -21,7 +22,7 @@ function toCreateReceiptFetcher(state: DBState) {
       { arg }: { arg: CreateReceipt }
     ) {
       const receipt: Receipt = {
-        id: crypto.randomUUID(),
+        id: uuidv4(),
         createdAt: new Date(),
         eventcode: eventcode(key),
         ...arg,
