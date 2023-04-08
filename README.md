@@ -77,3 +77,5 @@ Vercelには[PlanetScaleのintegration](https://vercel.com/integrations/planetsc
 ## ライセンス
 
 [MIT License](LICENSE)
+
+- icons: [UTKiraraCircle](https://github.com/UTKiraraCircle)
