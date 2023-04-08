@@ -1,52 +1,8 @@
-import type { Receipt, Record } from "@/types/receipt";
-import { DBSchema, IDBPDatabase, openDB } from "idb";
+import type { Receipt } from "@/types/receipt";
+import { DBState, useDBState } from "./DBState";
 import useSWR from "swr";
 import useSWRMutation from "swr/mutation";
-
-interface DB extends DBSchema {
-  receipts: {
-    key: string;
-    value: Receipt;
-    indexes: {
-      eventcode: string;
-    };
-  };
-}
-
-type Migration = (db: IDBPDatabase<DB>) => void;
-
-const migrations: Migration[] = [
-  (db) => {
-    const receipts = db.createObjectStore("receipts", {
-      keyPath: "id",
-      autoIncrement: false,
-    });
-    receipts.createIndex("eventcode", "eventcode");
-  },
-];
-
-export async function initializeDB() {
-  return;
-}
-
-interface CreateReceipt {
-  total: number;
-  records: Record[];
-}
-
-const g: typeof global & { db?: IDBPDatabase<DB> } = global;
-
-async function ensureDB() {
-  return (g.db ??= await openDB<DB>("receipts", 1, {
-    upgrade(db, oldVersion, newVersion) {
-      if (newVersion) {
-        migrations
-          .slice(oldVersion, newVersion)
-          .forEach((migration) => migration(db));
-      }
-    },
-  }));
-}
+import { useMemo } from "react";
 
 function key(eventcode: string) {
   return `idb:receipts:${eventcode}`;
@@ -56,45 +12,71 @@ function eventcode(key: string) {
   return key.split(":")[2] as string;
 }
 
-async function createReceipt(key: string, { arg }: { arg: CreateReceipt }) {
-  const db = await ensureDB();
-  const receipt: Receipt = {
-    id: crypto.randomUUID(),
-    createdAt: new Date(),
-    eventcode: eventcode(key),
-    ...arg,
-  };
-  await db.add("receipts", receipt);
+type CreateReceipt = Pick<Receipt, "total" | "records">;
 
-  return receipt;
+function toCreateReceiptFetcher(state: DBState) {
+  if (state.type === "available") {
+    return async function fetcher(
+      key: string,
+      { arg }: { arg: CreateReceipt }
+    ) {
+      const receipt: Receipt = {
+        id: crypto.randomUUID(),
+        createdAt: new Date(),
+        eventcode: eventcode(key),
+        ...arg,
+      };
+      await state.db.add("receipts", receipt);
+
+      return receipt;
+    };
+  } else {
+    return async () => undefined;
+  }
 }
 
 export function useIDBCreateReceipt(eventcode: string) {
-  return useSWRMutation(key(eventcode), createReceipt);
+  const state = useDBState();
+  const fetcher = useMemo(() => toCreateReceiptFetcher(state), [state]);
+  return useSWRMutation(key(eventcode), fetcher);
 }
 
-async function readReceipts(key: string) {
-  const db = await ensureDB();
-  return db.getAllFromIndex("receipts", "eventcode", eventcode(key));
+function toReceiptsFetcher(state: DBState) {
+  if (state.type === "available") {
+    return async function fetcher(key: string) {
+      return state.db.getAllFromIndex("receipts", "eventcode", eventcode(key));
+    };
+  } else {
+    return async () => undefined;
+  }
 }
 
 export function useIDBReceipts(eventcode: string) {
-  return useSWR(key(eventcode), readReceipts);
+  const state = useDBState();
+  const fetcher = useMemo(() => toReceiptsFetcher(state), [state]);
+  return useSWR(key(eventcode), fetcher);
 }
 
-type DeleteReceipts = { id: string }[];
+function toDeleteReceiptsFetcher(state: DBState) {
+  if (state.type === "available") {
+    return async function fetcher(
+      _: string,
+      { arg }: { arg: { id: string }[] }
+    ) {
+      const tx = state.db.transaction("receipts", "readwrite");
+      const store = tx.objectStore("receipts");
+      await Promise.all(arg.map(({ id }) => store.delete(id)));
+      await tx.done;
 
-async function deleteReceipts(_: string, { arg }: { arg: DeleteReceipts }) {
-  const db = await ensureDB();
-
-  const tx = db.transaction("receipts", "readwrite");
-  const store = tx.objectStore("receipts");
-  await Promise.all(arg.map(({ id }) => store.delete(id)));
-  await tx.done;
-
-  return [];
+      return [];
+    };
+  } else {
+    return async () => undefined;
+  }
 }
 
 export function useIDBDeleteReceipts(eventcode: string) {
-  return useSWRMutation(key(eventcode), deleteReceipts);
+  const state = useDBState();
+  const fetcher = useMemo(() => toDeleteReceiptsFetcher(state), [state]);
+  return useSWRMutation(key(eventcode), fetcher);
 }

@@ -31,6 +31,7 @@ import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Typography from "@mui/material/Typography";
 import { useRouter } from "next/router";
 import { useCallback, useEffect, useMemo, useReducer } from "react";
+import { DBStateProvider, useDBState } from "@/hooks/DBState";
 
 // export { eventScoped as getServerSideProps } from "@/lib/ssr";
 
@@ -39,7 +40,11 @@ export default function RegisterWrapper() {
   const { eventcode } = router.query;
   if (typeof eventcode !== "string") return null;
 
-  return <Register eventcode={eventcode} />;
+  return (
+    <DBStateProvider>
+      <Register eventcode={eventcode} />
+    </DBStateProvider>
+  );
 }
 
 interface RecordSetCount {
@@ -131,6 +136,9 @@ function Bottom({
   state: State;
   dispatch: React.Dispatch<Action>;
 }) {
+  const dbState = useDBState();
+  const isOpening = dbState.type === "opening";
+  const isAvailable = dbState.type === "available";
   const { trigger: triggerCreate, isMutating: isCreating } =
     useIDBCreateReceipt(event.code);
   const { info, error } = useAlert();
@@ -193,8 +201,8 @@ function Bottom({
       <LoadingButton
         size="large"
         variant="contained"
-        loading={isCreating}
-        disabled={Object.keys(state).length === 0}
+        loading={isOpening || isCreating}
+        disabled={!isAvailable || Object.keys(state).length === 0}
         onClick={onClick}
       >
         登録
