@@ -1,6 +1,6 @@
 import Layout from "@/components/Layout";
-import { useIDBReceipts } from "@/lib/idb";
-import { useEvent, useReceipts, useTitle } from "@/lib/swr";
+import { useIDBReceipts } from "@/hooks/idb";
+import { useEvent, useReceipts, useTitle } from "@/hooks/swr";
 import type { Receipt } from "@/types/receipt";
 import TabContext from "@mui/lab/TabContext";
 import TabPanel from "@mui/lab/TabPanel";
@@ -14,6 +14,7 @@ import { DataGrid, GridColDef } from "@mui/x-data-grid";
 import { useRouter } from "next/router";
 import { useMemo, useState } from "react";
 import Button from "@mui/material/Button";
+import { DBStateProvider } from "@/hooks/DBState";
 
 // export { eventScoped as getServerSideProps } from "@/lib/ssr";
 
@@ -22,7 +23,11 @@ export default function ReceiptsWrapper() {
   const { eventcode } = router.query;
   if (typeof eventcode !== "string") return null;
 
-  return <Receipts eventcode={eventcode} />;
+  return (
+    <DBStateProvider>
+      <Receipts eventcode={eventcode} />;
+    </DBStateProvider>
+  );
 }
 
 function Receipts({ eventcode }: { eventcode: string }) {

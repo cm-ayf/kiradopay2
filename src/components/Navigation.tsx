@@ -13,7 +13,7 @@ import type { Token } from "@/types/user";
 import { useRouter } from "next/router";
 import ArrowBack from "@mui/icons-material/ArrowBack";
 import CloudOff from "@mui/icons-material/CloudOff";
-import { useUserState } from "./UserState";
+import { useUserState } from "../hooks/UserState";
 
 export interface NavigationProps {
   title?: string;

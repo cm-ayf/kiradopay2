@@ -1,5 +1,5 @@
 import { AlertProvider } from "@/components/Alert";
-import { UserStateProvider } from "@/components/UserState";
+import { UserStateProvider } from "@/hooks/UserState";
 import "@/styles/globals.css";
 import type { AppProps } from "next/app";
 

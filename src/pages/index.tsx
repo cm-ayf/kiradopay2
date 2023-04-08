@@ -20,7 +20,7 @@ import {
   useEvents,
   useItems,
   useUpdateItem,
-} from "@/lib/swr";
+} from "@/hooks/swr";
 import { useAlert } from "@/components/Alert";
 
 // export { root as getServerSideProps } from "@/lib/ssr";

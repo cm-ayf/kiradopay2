@@ -9,7 +9,7 @@ import {
   useItems,
   useTitle,
   useUpdateEvent,
-} from "@/lib/swr";
+} from "@/hooks/swr";
 import { UpdateEvent } from "@/types/event";
 import type { Item as ItemSchema } from "@/types/item";
 import Edit from "@mui/icons-material/Edit";

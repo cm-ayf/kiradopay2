@@ -4,12 +4,13 @@ import {
   useIDBCreateReceipt,
   useIDBDeleteReceipts,
   useIDBReceipts,
-} from "@/lib/idb";
-import { useCreateReceipts, useEvent } from "@/lib/swr";
+} from "@/hooks/idb";
+import { useCreateReceipts, useEvent } from "@/hooks/swr";
 import type { Event } from "@/types/event";
 import type { Item } from "@/types/item";
 import CloudDone from "@mui/icons-material/CloudDone";
 import CloudUpload from "@mui/icons-material/CloudUpload";
+import Error from "@mui/icons-material/Error";
 import LoadingButton from "@mui/lab/LoadingButton";
 import Tooltip from "@mui/material/Tooltip";
 import Box from "@mui/material/Box";
@@ -31,6 +32,7 @@ import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Typography from "@mui/material/Typography";
 import { useRouter } from "next/router";
 import { useCallback, useEffect, useMemo, useReducer } from "react";
+import { DBStateProvider, useDBState } from "@/hooks/DBState";
 
 // export { eventScoped as getServerSideProps } from "@/lib/ssr";
 
@@ -39,7 +41,11 @@ export default function RegisterWrapper() {
   const { eventcode } = router.query;
   if (typeof eventcode !== "string") return null;
 
-  return <Register eventcode={eventcode} />;
+  return (
+    <DBStateProvider>
+      <Register eventcode={eventcode} />
+    </DBStateProvider>
+  );
 }
 
 interface RecordSetCount {
@@ -131,6 +137,7 @@ function Bottom({
   state: State;
   dispatch: React.Dispatch<Action>;
 }) {
+  const dbState = useDBState();
   const { trigger: triggerCreate, isMutating: isCreating } =
     useIDBCreateReceipt(event.code);
   const { info, error } = useAlert();
@@ -193,8 +200,11 @@ function Bottom({
       <LoadingButton
         size="large"
         variant="contained"
-        loading={isCreating}
-        disabled={Object.keys(state).length === 0}
+        loading={dbState.type === "opening" || isCreating}
+        startIcon={dbState.type === "error" && <Error />}
+        disabled={
+          dbState.type !== "available" || Object.keys(state).length === 0
+        }
         onClick={onClick}
       >
         登録

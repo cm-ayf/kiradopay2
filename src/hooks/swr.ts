@@ -9,7 +9,7 @@ import { useEffect } from "react";
 import { createEvent, readEvent, readEvents, updateEvent } from "@/types/event";
 import { createItem, deleteItem, readItems, updateItem } from "@/types/item";
 import { createReceipts, readReceipts } from "@/types/receipt";
-import { useRefresh } from "@/components/UserState";
+import { useRefresh } from "@/hooks/UserState";
 
 export class UnauthorizedError extends Error {
   code = "UNAUTHORIZED";
