@@ -10,6 +10,7 @@ import type { Event } from "@/types/event";
 import type { Item } from "@/types/item";
 import CloudDone from "@mui/icons-material/CloudDone";
 import CloudUpload from "@mui/icons-material/CloudUpload";
+import Error from "@mui/icons-material/Error";
 import LoadingButton from "@mui/lab/LoadingButton";
 import Tooltip from "@mui/material/Tooltip";
 import Box from "@mui/material/Box";
@@ -137,8 +138,6 @@ function Bottom({
   dispatch: React.Dispatch<Action>;
 }) {
   const dbState = useDBState();
-  const isOpening = dbState.type === "opening";
-  const isAvailable = dbState.type === "available";
   const { trigger: triggerCreate, isMutating: isCreating } =
     useIDBCreateReceipt(event.code);
   const { info, error } = useAlert();
@@ -201,8 +200,11 @@ function Bottom({
       <LoadingButton
         size="large"
         variant="contained"
-        loading={isOpening || isCreating}
-        disabled={!isAvailable || Object.keys(state).length === 0}
+        loading={dbState.type === "opening" || isCreating}
+        startIcon={dbState.type === "error" && <Error />}
+        disabled={
+          dbState.type !== "available" || Object.keys(state).length === 0
+        }
         onClick={onClick}
       >
         登録
