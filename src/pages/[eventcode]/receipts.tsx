@@ -1,6 +1,6 @@
 import Layout from "@/components/Layout";
-import { useIDBReceipts } from "@/lib/idb";
-import { useEvent, useReceipts, useTitle } from "@/lib/swr";
+import { useIDBReceipts } from "@/hooks/idb";
+import { useEvent, useReceipts, useTitle } from "@/hooks/swr";
 import type { Receipt } from "@/types/receipt";
 import TabContext from "@mui/lab/TabContext";
 import TabPanel from "@mui/lab/TabPanel";

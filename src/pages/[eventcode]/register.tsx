@@ -4,8 +4,8 @@ import {
   useIDBCreateReceipt,
   useIDBDeleteReceipts,
   useIDBReceipts,
-} from "@/lib/idb";
-import { useCreateReceipts, useEvent } from "@/lib/swr";
+} from "@/hooks/idb";
+import { useCreateReceipts, useEvent } from "@/hooks/swr";
 import type { Event } from "@/types/event";
 import type { Item } from "@/types/item";
 import CloudDone from "@mui/icons-material/CloudDone";
