@@ -28,7 +28,7 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { compressToEncodedURIComponent } from "lz-string";
 import { useRouter } from "next/router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 // export { eventScoped as getServerSideProps } from "@/lib/ssr";
 
@@ -133,11 +133,17 @@ function calculate(state: State): number {
 }
 
 function UpdateCalculator({ eventcode }: { eventcode: string }) {
-  const { data: event } = useEvent({ eventcode });
+  const { data: event, isLoading } = useEvent({ eventcode });
   const { trigger, isMutating } = useUpdateEvent({ eventcode });
   const { error, success } = useAlert();
-  const defaultCalculator = event?.calculator || "return 0";
-  const [calculator, setCalculator] = useState<string>(defaultCalculator);
+  const [calculator, setCalculator] = useState("");
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    if (isLoaded || !event) return;
+    setCalculator(event.calculator);
+    setIsLoaded(true);
+  }, [event, isLoaded]);
 
   const hash = useMemo(
     () =>
@@ -174,7 +180,9 @@ function UpdateCalculator({ eventcode }: { eventcode: string }) {
           variant="contained"
           loading={isMutating}
           disabled={
-            calculator === defaultCalculator || !isValidCalculator(calculator)
+            isLoading ||
+            calculator === event?.calculator ||
+            !isValidCalculator(calculator)
           }
           onClick={onClick}
         >
@@ -193,8 +201,10 @@ function UpdateCalculator({ eventcode }: { eventcode: string }) {
         <TextField
           variant="outlined"
           sx={{ px: 2, width: "100%" }}
-          value={calculator ?? defaultCalculator}
-          error={calculator !== undefined && !isValidCalculator(calculator)}
+          value={calculator}
+          error={
+            calculator !== event?.calculator && !isValidCalculator(calculator)
+          }
           multiline
           onChange={(e) => setCalculator(e.target.value)}
         />
