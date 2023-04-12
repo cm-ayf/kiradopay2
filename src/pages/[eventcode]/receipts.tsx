@@ -1,6 +1,11 @@
 import Layout from "@/components/Layout";
-import { useIDBReceipts } from "@/hooks/idb";
-import { useEvent, useReceipts, useTitle } from "@/hooks/swr";
+import { useIDBDeleteReceipts, useIDBReceipts } from "@/hooks/idb";
+import {
+  useDeleteReceipts,
+  useEvent,
+  useReceipts,
+  useTitle,
+} from "@/hooks/swr";
 import type { Receipt } from "@/types/receipt";
 import TabContext from "@mui/lab/TabContext";
 import TabPanel from "@mui/lab/TabPanel";
@@ -16,6 +21,10 @@ import { useMemo, useState } from "react";
 import Button from "@mui/material/Button";
 import { DBStateProvider } from "@/hooks/DBState";
 import CircularProgress from "@mui/material/CircularProgress";
+import { Box } from "@mui/system";
+import { SyncButton } from "@/components/SyncButton";
+import LoadingButton from "@mui/lab/LoadingButton";
+import { useAlert } from "@/components/Alert";
 
 // export { eventScoped as getServerSideProps } from "@/lib/ssr";
 
@@ -62,9 +71,9 @@ interface ReceiptExt extends Receipt {
 }
 
 function useReceiptExts(eventcode: string) {
-  const { data: onServer } = useReceipts({ eventcode });
-  const { data: onBrowser } = useIDBReceipts(eventcode);
-  return useMemo<ReceiptExt[] | undefined>(
+  const { data: onServer, mutate: mutateServer } = useReceipts({ eventcode });
+  const { data: onBrowser, mutate: mutateBrowser } = useIDBReceipts(eventcode);
+  const receipts = useMemo<ReceiptExt[] | undefined>(
     () =>
       onServer &&
       onBrowser && [
@@ -73,6 +82,11 @@ function useReceiptExts(eventcode: string) {
       ],
     [onServer, onBrowser]
   );
+  async function reload() {
+    await Promise.all([mutateServer(), mutateBrowser()]);
+  }
+
+  return { receipts, reload };
 }
 
 function useTotal(receipts: ReceiptExt[]) {
@@ -96,7 +110,7 @@ function useCounts(receipts: ReceiptExt[]) {
 
 function ReceiptSummary({ eventcode }: { eventcode: string }) {
   const { data: event } = useEvent({ eventcode });
-  const receipts = useReceiptExts(eventcode);
+  const { receipts } = useReceiptExts(eventcode);
   const total = useTotal(receipts ?? []);
   const counts = useCounts(receipts ?? []);
 
@@ -163,11 +177,63 @@ function toRow({ records, createdAt, onServer, ...rest }: ReceiptExt) {
 
 function ReceiptTable({ eventcode }: { eventcode: string }) {
   const columns = useColumns(eventcode);
-  const receipts = useReceiptExts(eventcode);
+  const { receipts, reload } = useReceiptExts(eventcode);
+  const { trigger: triggerServer, isMutating: isDeletingServer } =
+    useDeleteReceipts({ eventcode });
+  const { trigger: triggerBrowser, isMutating: isDeletingBrowser } =
+    useIDBDeleteReceipts(eventcode);
+  const { error } = useAlert();
+  const [selected, setSelected] = useState<string[]>([]);
+
+  async function onClickDelete() {
+    const rowsToDelete = receipts?.filter(({ id }) => selected.includes(id));
+    if (!rowsToDelete?.length) return;
+
+    const serverRows = rowsToDelete.filter(({ onServer }) => onServer);
+    const browserRows = rowsToDelete.filter(({ onServer }) => !onServer);
+
+    try {
+      await Promise.all([
+        serverRows.length && triggerServer(serverRows.map(({ id }) => id)),
+        browserRows.length && triggerBrowser(browserRows),
+      ]);
+      await reload();
+    } catch (e) {
+      error("履歴の削除に失敗しました");
+    }
+  }
 
   if (!receipts) return <CircularProgress />;
 
-  return <DataGrid rows={receipts?.map(toRow) ?? []} columns={columns} />;
+  return (
+    <Box
+      sx={{ height: "100%", display: "flex", flexDirection: "column", gap: 1 }}
+    >
+      <Box sx={{ flex: 1 }}>
+        <DataGrid
+          rows={receipts.map(toRow)}
+          columns={columns}
+          checkboxSelection
+          getRowId={(row) => row.id}
+          rowSelectionModel={selected}
+          onRowSelectionModelChange={(selected) =>
+            setSelected(selected.map(String))
+          }
+        />
+      </Box>
+      <Box sx={{ display: "flex", flexDirection: "row", gap: 1 }}>
+        <LoadingButton
+          variant="contained"
+          onClick={onClickDelete}
+          disabled={selected.length === 0}
+          loading={isDeletingServer || isDeletingBrowser}
+        >
+          履歴を削除
+        </LoadingButton>
+        <SyncButton eventcode={eventcode} variant="contained" />
+      </Box>
+    </Box>
+  );
 }
 
 function ReceiptExport({ eventcode }: { eventcode: string }) {
