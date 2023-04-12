@@ -144,6 +144,7 @@ function Bottom({
   const calculator = useCalculator(event);
   const total = calculator(state);
   async function onClick() {
+    if (isNaN(total)) return;
     const records = Object.entries(state).map(([itemcode, record]) => ({
       itemcode,
       count: record.count,
@@ -194,7 +195,7 @@ function Bottom({
       <Box sx={{ flex: 1 }} />
       <Tooltip title={<PriceTable total={total} />} placement="top-start">
         <Typography variant="caption" px={2} fontSize="3em">
-          ¥{total}
+          {isNaN(total) ? `¥${total}` : "エラー"}
         </Typography>
       </Tooltip>
       <LoadingButton
@@ -203,7 +204,9 @@ function Bottom({
         loading={dbState.type === "opening" || isCreating}
         startIcon={dbState.type === "error" && <Error />}
         disabled={
-          dbState.type !== "available" || Object.keys(state).length === 0
+          dbState.type !== "available" ||
+          Object.keys(state).length === 0 ||
+          isNaN(total)
         }
         onClick={onClick}
       >
@@ -240,11 +243,11 @@ type Calculator = (state: State) => number;
 
 function useCalculator({ calculator, items }: Event): Calculator {
   return useMemo(() => {
-    const raw = new Function("state", calculator) as Calculator;
+    const raw = new Function("state", calculator) as (state: State) => unknown;
     const defaults = Object.fromEntries(
       items.map((item) => [item.code, { count: 0 }])
     );
-    return (state) => raw({ ...defaults, ...state });
+    return (state) => Number(raw({ ...defaults, ...state }));
   }, [calculator, items]);
 }
 
