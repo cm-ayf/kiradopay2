@@ -195,7 +195,7 @@ function Bottom({
       <Box sx={{ flex: 1 }} />
       <Tooltip title={<PriceTable total={total} />} placement="top-start">
         <Typography variant="caption" px={2} fontSize="3em">
-          {isNaN(total) ? `¥${total}` : "エラー"}
+          {isNaN(total) ? "エラー" : `¥${total}`}
         </Typography>
       </Tooltip>
       <LoadingButton
