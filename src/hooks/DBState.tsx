@@ -3,7 +3,6 @@ import { DBSchema, IDBPDatabase, openDB } from "idb";
 import {
   createContext,
   PropsWithChildren,
-  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -21,7 +20,7 @@ interface DB extends DBSchema {
   };
 }
 
-type IDB = IDBPDatabase<DB>;
+export type IDB = IDBPDatabase<DB>;
 
 type Migration = (db: IDBPDatabase<DB>) => void;
 
@@ -45,51 +44,51 @@ function upgrade(db: IDB, oldVersion: number, newVersion: number | null) {
 
 export type DBState =
   | { type: "available"; db: IDB }
-  | { type: "opening" | "error" };
+  | { type: "opening"; promise: Promise<IDB> }
+  | { type: "error"; error?: any };
 
-interface DBStateContext {
-  state: DBState;
-  open: () => Promise<void>;
-}
-
-const DBStateContext = createContext<DBStateContext>({
-  state: { type: "opening" },
-  open: async () => {},
-});
+const DBStateContext = createContext<DBState>({ type: "error" });
 
 export function DBStateProvider({ children }: PropsWithChildren) {
   const [type, setType] = useState<DBState["type"]>("opening");
-  const db = useRef<IDB>();
-
-  const state = useMemo<DBState>(
-    () => (type === "available" ? { type, db: db.current! } : { type }),
-    [type]
+  const promise = useRef<Promise<IDB>>(
+    openDB<DB>("receipts", migrations.length, {
+      upgrade,
+      terminated: () => setType("error"),
+    })
   );
+  const db = useRef<IDB>();
+  const error = useRef<any>();
 
-  const open = useCallback(async () => {
-    try {
-      db.current = await openDB<DB>("receipts", migrations.length, {
-        upgrade,
-        terminated: () => setType("error"),
-      });
-      setType("available");
-    } catch (error) {
-      setType("error");
+  const state = useMemo<DBState>(() => {
+    switch (type) {
+      case "available":
+        return { type, db: db.current! };
+      case "opening":
+        return { type, promise: promise.current };
+      case "error":
+        return { type, error: error.current };
     }
-  }, []);
+  }, [type]);
 
   useEffect(() => {
-    if (state.type === "opening") open();
-  }, [state, open]);
+    promise.current.then(
+      (d) => {
+        setType("available");
+        db.current = d;
+      },
+      (e) => {
+        setType("error");
+        error.current = e;
+      }
+    );
+  }, []);
 
   return (
-    <DBStateContext.Provider value={{ state, open }}>
-      {children}
-    </DBStateContext.Provider>
+    <DBStateContext.Provider value={state}>{children}</DBStateContext.Provider>
   );
 }
 
 export function useDBState() {
-  const { state } = useContext(DBStateContext);
-  return state;
+  return useContext(DBStateContext);
 }

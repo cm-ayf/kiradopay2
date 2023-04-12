@@ -15,6 +15,7 @@ import { useRouter } from "next/router";
 import { useMemo, useState } from "react";
 import Button from "@mui/material/Button";
 import { DBStateProvider } from "@/hooks/DBState";
+import CircularProgress from "@mui/material/CircularProgress";
 
 // export { eventScoped as getServerSideProps } from "@/lib/ssr";
 
@@ -99,6 +100,8 @@ function ReceiptSummary({ eventcode }: { eventcode: string }) {
   const total = useTotal(receipts ?? []);
   const counts = useCounts(receipts ?? []);
 
+  if (!event || !receipts) return <CircularProgress />;
+
   return (
     <Table>
       <TableBody>
@@ -161,6 +164,8 @@ function toRow({ records, createdAt, onServer, ...rest }: ReceiptExt) {
 function ReceiptTable({ eventcode }: { eventcode: string }) {
   const columns = useColumns(eventcode);
   const receipts = useReceiptExts(eventcode);
+
+  if (!receipts) return <CircularProgress />;
 
   return <DataGrid rows={receipts?.map(toRow) ?? []} columns={columns} />;
 }
