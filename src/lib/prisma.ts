@@ -2,7 +2,11 @@ import type { Event } from "@/types/event";
 import type { Receipt } from "@/types/receipt";
 import { Prisma, PrismaClient } from "@prisma/client";
 
-export const prisma = new PrismaClient();
+declare global {
+  var prisma: PrismaClient;
+}
+
+export var prisma = (global.prisma ??= new PrismaClient());
 
 export const eventInclude = {
   displays: {
