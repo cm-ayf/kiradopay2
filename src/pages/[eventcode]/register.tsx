@@ -108,7 +108,7 @@ function Register({ eventcode }: { eventcode: string }) {
         event && <Bottom event={event} state={state} dispatch={dispatch} />
       }
     >
-      <Grid container spacing={2} sx={{ flex: 1 }}>
+      <Grid container spacing={2}>
         {event?.items.map((item) => (
           <Grid item xs={12} md={6} xl={4} key={item.code}>
             <ItemPanel
