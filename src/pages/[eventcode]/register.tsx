@@ -1,15 +1,9 @@
 import { useAlert } from "@/components/Alert";
 import Layout from "@/components/Layout";
-import {
-  useIDBCreateReceipt,
-  useIDBDeleteReceipts,
-  useIDBReceipts,
-} from "@/hooks/idb";
-import { useCreateReceipts, useEvent } from "@/hooks/swr";
+import { useIDBCreateReceipt } from "@/hooks/idb";
+import { useEvent } from "@/hooks/swr";
 import type { Event } from "@/types/event";
 import type { Item } from "@/types/item";
-import CloudDone from "@mui/icons-material/CloudDone";
-import CloudUpload from "@mui/icons-material/CloudUpload";
 import Error from "@mui/icons-material/Error";
 import LoadingButton from "@mui/lab/LoadingButton";
 import Tooltip from "@mui/material/Tooltip";
@@ -31,8 +25,9 @@ import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Typography from "@mui/material/Typography";
 import { useRouter } from "next/router";
-import { useCallback, useEffect, useMemo, useReducer } from "react";
+import { useCallback, useMemo, useReducer } from "react";
 import { DBStateProvider, useDBState } from "@/hooks/DBState";
+import { SyncButton } from "@/components/SyncButton";
 
 // export { eventScoped as getServerSideProps } from "@/lib/ssr";
 
@@ -140,10 +135,11 @@ function Bottom({
   const dbState = useDBState();
   const { trigger: triggerCreate, isMutating: isCreating } =
     useIDBCreateReceipt(event.code);
-  const { info, error } = useAlert();
+  const { error } = useAlert();
   const calculator = useCalculator(event);
   const total = calculator(state);
-  async function onClick() {
+
+  async function onClickCreate() {
     if (isNaN(total)) return;
     const records = Object.entries(state).map(([itemcode, record]) => ({
       itemcode,
@@ -154,22 +150,9 @@ function Bottom({
       await triggerCreate({ total, records });
       dispatch({ type: "reset" });
     } catch (e) {
-      error("エラーが発生しました");
+      error("登録に失敗しました");
     }
   }
-
-  const {
-    trigger: triggerSync,
-    isMutating: isSyncing,
-    pending,
-  } = useSync(event.code);
-  const pending10 = Boolean(pending && pending >= 10);
-
-  useEffect(() => {
-    if (pending10) {
-      info("同期されていないデータがあります");
-    }
-  }, [pending10, info]);
 
   return (
     <Paper
@@ -182,16 +165,7 @@ function Bottom({
         px: 2,
       }}
     >
-      <LoadingButton
-        size="large"
-        variant="outlined"
-        loading={isSyncing}
-        startIcon={pending ? <CloudUpload /> : <CloudDone />}
-        disabled={!pending}
-        onClick={triggerSync}
-      >
-        同期
-      </LoadingButton>
+      <SyncButton eventcode={event.code} size="large" variant="outlined" />
       <Box sx={{ flex: 1 }} />
       <Tooltip title={<PriceTable total={total} />} placement="top-start">
         <Typography variant="caption" px={2} fontSize="3em">
@@ -208,7 +182,7 @@ function Bottom({
           Object.keys(state).length === 0 ||
           isNaN(total)
         }
-        onClick={onClick}
+        onClick={onClickCreate}
       >
         登録
       </LoadingButton>
@@ -249,26 +223,6 @@ function useCalculator({ calculator, items }: Event): Calculator {
     );
     return (state) => Number(raw({ ...defaults, ...state }));
   }, [calculator, items]);
-}
-
-function useSync(eventcode: string) {
-  const { data: receipts } = useIDBReceipts(eventcode);
-  const { trigger: triggerCreate, isMutating: isCreating } = useCreateReceipts({
-    eventcode,
-  });
-  const { trigger: triggerDelete, isMutating: isDeleting } =
-    useIDBDeleteReceipts(eventcode);
-
-  return {
-    pending: receipts?.length,
-    trigger: useCallback(async () => {
-      if (!receipts) return;
-      const created = await triggerCreate(receipts);
-      if (!created) return;
-      await triggerDelete(receipts);
-    }, [triggerCreate, triggerDelete, receipts]),
-    isMutating: isCreating || isDeleting,
-  };
 }
 
 function ItemPanel({

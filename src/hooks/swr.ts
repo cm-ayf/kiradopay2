@@ -8,7 +8,7 @@ import type { Static } from "@sinclair/typebox";
 import { useEffect } from "react";
 import { createEvent, readEvent, readEvents, updateEvent } from "@/types/event";
 import { createItem, deleteItem, readItems, updateItem } from "@/types/item";
-import { createReceipts, readReceipts } from "@/types/receipt";
+import { createReceipts, deleteReceipts, readReceipts } from "@/types/receipt";
 import { useRefresh } from "@/hooks/UserState";
 
 export class UnauthorizedError extends Error {
@@ -144,3 +144,4 @@ export const useDeleteItem = createUseRouteMutation(deleteItem);
 export const useCreateEvent = createUseRouteMutation(createEvent);
 export const useUpdateEvent = createUseRouteMutation(updateEvent);
 export const useCreateReceipts = createUseRouteMutation(createReceipts);
+export const useDeleteReceipts = createUseRouteMutation(deleteReceipts);
