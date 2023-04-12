@@ -138,7 +138,8 @@ function Bottom({
   const { error } = useAlert();
   const calculator = useCalculator(event);
   const total = calculator(state);
-  async function onClick() {
+
+  async function onClickCreate() {
     if (isNaN(total)) return;
     const records = Object.entries(state).map(([itemcode, record]) => ({
       itemcode,
@@ -149,7 +150,7 @@ function Bottom({
       await triggerCreate({ total, records });
       dispatch({ type: "reset" });
     } catch (e) {
-      error("エラーが発生しました");
+      error("登録に失敗しました");
     }
   }
 
@@ -181,7 +182,7 @@ function Bottom({
           Object.keys(state).length === 0 ||
           isNaN(total)
         }
-        onClick={onClick}
+        onClick={onClickCreate}
       >
         登録
       </LoadingButton>
