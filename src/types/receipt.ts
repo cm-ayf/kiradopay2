@@ -47,3 +47,13 @@ export const exportReceipts = {
   }),
   response: Type.String(),
 } satisfies Route;
+
+export const deleteReceipts = {
+  method: "POST",
+  path: "/api/events/[eventcode]/receipts/delete",
+  params: Type.Object({
+    eventcode: Type.String(),
+  }),
+  body: Type.Array(Type.String()),
+  response: Type.Integer(),
+} satisfies Route;
