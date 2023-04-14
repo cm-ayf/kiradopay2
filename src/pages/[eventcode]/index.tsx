@@ -63,19 +63,38 @@ function Event({ eventcode }: { eventcode: string }) {
 
 function About({ eventcode }: { eventcode: string }) {
   const { data: event } = useEvent({ eventcode });
-  const { trigger, isMutating } = useUpdateEvent({ eventcode });
+  const { trigger: triggerUpdate, isMutating: isUpdating } = useUpdateEvent({
+    eventcode,
+  });
+  const { trigger: triggerDelete, isMutating: isDeleting } = useDeleteEvent({
+    eventcode,
+  });
   const router = useRouter();
   const { error, success } = useAlert();
   const [open, setOpen] = useState(false);
 
-  async function onClick(body: UpdateEvent) {
+  async function onClickUpdate(body: UpdateEvent) {
     try {
-      await trigger(body);
+      await triggerUpdate(body);
       success("イベントを更新しました");
       setOpen(false);
+      if (body.code) router.replace(`/${body.code}`);
     } catch (e) {
       if (e instanceof ConflictError) error("イベントコードが重複しています");
       else error("イベントの更新に失敗しました");
+      throw e;
+    }
+  }
+
+  async function onClickDelete() {
+    try {
+      await triggerDelete(null, { revalidate: false });
+      router.push("/");
+    } catch (e) {
+      console.error(e);
+      if (e instanceof ConflictError)
+        error("このイベントにはすでに購入履歴があります");
+      error("イベントの削除に失敗しました");
       throw e;
     }
   }
@@ -104,9 +123,15 @@ function About({ eventcode }: { eventcode: string }) {
         event={event}
         open={open}
         onClose={() => setOpen(false)}
-        isMutating={isMutating}
+        isMutating={isUpdating || isDeleting}
         buttons={[
-          { label: "更新", needsValidation: true, needsUpdate: true, onClick },
+          {
+            label: "更新",
+            needsValidation: true,
+            needsUpdate: true,
+            onClick: onClickUpdate,
+          },
+          { label: "削除", color: "error", onClick: onClickDelete },
         ]}
       />
     </>
