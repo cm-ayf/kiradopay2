@@ -45,7 +45,7 @@ model Display {
   item      Item   @relation(fields: [itemcode], references: [code])
   itemcode  String
 
-  Record Record[]
+  records Record[]
 
   @@id([eventcode, itemcode])
   @@index([eventcode])
