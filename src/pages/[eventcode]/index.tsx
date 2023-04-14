@@ -5,13 +5,13 @@ import ItemCard from "@/components/ItemCard";
 import Layout from "@/components/Layout";
 import {
   ConflictError,
+  useDeleteEvent,
   useEvent,
   useItems,
   useTitle,
   useUpdateEvent,
 } from "@/hooks/swr";
-import { UpdateEvent } from "@/types/event";
-import type { Item as ItemSchema } from "@/types/item";
+import { Event as EventSchema, UpdateEvent } from "@/types/event";
 import Edit from "@mui/icons-material/Edit";
 import LoadingButton from "@mui/lab/LoadingButton";
 import Box from "@mui/material/Box";
@@ -138,7 +138,7 @@ function About({ eventcode }: { eventcode: string }) {
   );
 }
 
-function playground(items: ItemSchema[]) {
+function playground({ calculator, items }: EventSchema) {
   return `\
 type Itemcode = ${items.map((item) => `"${item.code}"`).join(" | ") || "never"};
 
@@ -152,7 +152,10 @@ type State = {
 }
 
 function calculate(state: State): number {
-  return 0;
+${calculator
+  .split("\n")
+  .map((line) => `  ${line}`)
+  .join("\n")}
 }
 `;
 }
@@ -162,18 +165,17 @@ function UpdateCalculator({ eventcode }: { eventcode: string }) {
   const { trigger, isMutating } = useUpdateEvent({ eventcode });
   const { error, success } = useAlert();
   const [calculator, setCalculator] = useState("");
-  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    if (isLoaded || !event) return;
+    if (isLoading || !event) return;
     setCalculator(event.calculator);
-    setIsLoaded(true);
-  }, [event, isLoaded]);
+    // for first state rendering; should only be called once
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading]);
 
   const hash = useMemo(
-    () =>
-      event?.items && compressToEncodedURIComponent(playground(event.items)),
-    [event?.items]
+    () => event && compressToEncodedURIComponent(playground(event)),
+    [event]
   );
 
   async function onClick() {
@@ -282,12 +284,19 @@ function DisplayDialog({
   open: boolean;
   onClose: () => void;
 }) {
-  const { data: event } = useEvent({ eventcode });
+  const { data: event, isLoading } = useEvent({ eventcode });
   const { data: items } = useItems();
   const { trigger, isMutating } = useUpdateEvent({ eventcode });
   const { error, success } = useAlert();
   const defaultDisplays = event?.items.map((i) => i.code) || [];
   const [displays, setDisplays] = useState(defaultDisplays);
+
+  useEffect(() => {
+    if (isLoading || !event) return;
+    setDisplays(event.items.map((i) => i.code));
+    // for first state rendering; should only be called once
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading]);
 
   return (
     <Dialog open={open} onClose={onClose}>
