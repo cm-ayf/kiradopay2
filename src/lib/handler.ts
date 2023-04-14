@@ -45,6 +45,7 @@ export function createHandler<R extends Route>(
       // https://www.prisma.io/docs/reference/api-reference/error-reference#prisma-client-query-engine
       switch (error.code) {
         case "P2001": // record does not exist
+        case "P2025": // no record found
           res.status(404).end();
           return;
         case "P2002": // unique constraint failed
