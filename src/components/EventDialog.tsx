@@ -90,9 +90,10 @@ export default function EventDialog<T extends TSchema>({
       </DialogContent>
       <DialogActions>
         {buttons.map(
-          ({ onClick, label, needsValidation, needsUpdate }, index) => (
+          ({ onClick, label, color, needsValidation, needsUpdate }, index) => (
             <LoadingButton
               key={index}
+              color={color ?? "primary"}
               loading={isMutating}
               disabled={
                 Boolean(needsValidation && !isValid) ||

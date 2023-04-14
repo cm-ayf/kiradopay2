@@ -5,13 +5,13 @@ import ItemCard from "@/components/ItemCard";
 import Layout from "@/components/Layout";
 import {
   ConflictError,
+  useDeleteEvent,
   useEvent,
   useItems,
   useTitle,
   useUpdateEvent,
 } from "@/hooks/swr";
-import { UpdateEvent } from "@/types/event";
-import type { Item as ItemSchema } from "@/types/item";
+import { Event as EventSchema, UpdateEvent } from "@/types/event";
 import Edit from "@mui/icons-material/Edit";
 import LoadingButton from "@mui/lab/LoadingButton";
 import Box from "@mui/material/Box";
@@ -63,19 +63,38 @@ function Event({ eventcode }: { eventcode: string }) {
 
 function About({ eventcode }: { eventcode: string }) {
   const { data: event } = useEvent({ eventcode });
-  const { trigger, isMutating } = useUpdateEvent({ eventcode });
+  const { trigger: triggerUpdate, isMutating: isUpdating } = useUpdateEvent({
+    eventcode,
+  });
+  const { trigger: triggerDelete, isMutating: isDeleting } = useDeleteEvent({
+    eventcode,
+  });
   const router = useRouter();
   const { error, success } = useAlert();
   const [open, setOpen] = useState(false);
 
-  async function onClick(body: UpdateEvent) {
+  async function onClickUpdate(body: UpdateEvent) {
     try {
-      await trigger(body);
+      await triggerUpdate(body);
       success("イベントを更新しました");
       setOpen(false);
+      if (body.code) router.replace(`/${body.code}`);
     } catch (e) {
       if (e instanceof ConflictError) error("イベントコードが重複しています");
       else error("イベントの更新に失敗しました");
+      throw e;
+    }
+  }
+
+  async function onClickDelete() {
+    try {
+      await triggerDelete(null, { revalidate: false });
+      router.push("/");
+    } catch (e) {
+      console.error(e);
+      if (e instanceof ConflictError)
+        error("このイベントにはすでに購入履歴があります");
+      error("イベントの削除に失敗しました");
       throw e;
     }
   }
@@ -104,16 +123,22 @@ function About({ eventcode }: { eventcode: string }) {
         event={event}
         open={open}
         onClose={() => setOpen(false)}
-        isMutating={isMutating}
+        isMutating={isUpdating || isDeleting}
         buttons={[
-          { label: "更新", needsValidation: true, needsUpdate: true, onClick },
+          {
+            label: "更新",
+            needsValidation: true,
+            needsUpdate: true,
+            onClick: onClickUpdate,
+          },
+          { label: "削除", color: "error", onClick: onClickDelete },
         ]}
       />
     </>
   );
 }
 
-function playground(items: ItemSchema[]) {
+function playground({ calculator, items }: EventSchema) {
   return `\
 type Itemcode = ${items.map((item) => `"${item.code}"`).join(" | ") || "never"};
 
@@ -127,7 +152,10 @@ type State = {
 }
 
 function calculate(state: State): number {
-  return 0;
+${calculator
+  .split("\n")
+  .map((line) => `  ${line}`)
+  .join("\n")}
 }
 `;
 }
@@ -137,18 +165,17 @@ function UpdateCalculator({ eventcode }: { eventcode: string }) {
   const { trigger, isMutating } = useUpdateEvent({ eventcode });
   const { error, success } = useAlert();
   const [calculator, setCalculator] = useState("");
-  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    if (isLoaded || !event) return;
+    if (isLoading || !event) return;
     setCalculator(event.calculator);
-    setIsLoaded(true);
-  }, [event, isLoaded]);
+    // for first state rendering; should only be called once
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading]);
 
   const hash = useMemo(
-    () =>
-      event?.items && compressToEncodedURIComponent(playground(event.items)),
-    [event?.items]
+    () => event && compressToEncodedURIComponent(playground(event)),
+    [event]
   );
 
   async function onClick() {
@@ -257,12 +284,19 @@ function DisplayDialog({
   open: boolean;
   onClose: () => void;
 }) {
-  const { data: event } = useEvent({ eventcode });
+  const { data: event, isLoading } = useEvent({ eventcode });
   const { data: items } = useItems();
   const { trigger, isMutating } = useUpdateEvent({ eventcode });
   const { error, success } = useAlert();
   const defaultDisplays = event?.items.map((i) => i.code) || [];
   const [displays, setDisplays] = useState(defaultDisplays);
+
+  useEffect(() => {
+    if (isLoading || !event) return;
+    setDisplays(event.items.map((i) => i.code));
+    // for first state rendering; should only be called once
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading]);
 
   return (
     <Dialog open={open} onClose={onClose}>

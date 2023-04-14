@@ -205,7 +205,7 @@ function MutateItemDialog({
           needsUpdate: true,
           onClick: onClickUpdate,
         },
-        { label: "削除", onClick: onClickDelete },
+        { label: "削除", color: "error", onClick: onClickDelete },
       ]}
     />
   );

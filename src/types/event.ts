@@ -54,3 +54,10 @@ export const updateEvent = {
   body: UpdateEvent,
   response: Event,
 } satisfies Route;
+
+export const deleteEvent = {
+  method: "DELETE",
+  path: "/api/events/[eventcode]",
+  params: Type.Object({ eventcode: Code }),
+  response: Type.Null(),
+} satisfies Route;

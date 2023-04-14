@@ -6,7 +6,13 @@ import type { Route, TParams } from "@/types/route";
 import { TypeCompiler } from "@sinclair/typebox/compiler";
 import type { Static } from "@sinclair/typebox";
 import { useEffect } from "react";
-import { createEvent, readEvent, readEvents, updateEvent } from "@/types/event";
+import {
+  createEvent,
+  deleteEvent,
+  readEvent,
+  readEvents,
+  updateEvent,
+} from "@/types/event";
 import { createItem, deleteItem, readItems, updateItem } from "@/types/item";
 import { createReceipts, deleteReceipts, readReceipts } from "@/types/receipt";
 import { useRefresh } from "@/hooks/UserState";
@@ -143,5 +149,6 @@ export const useUpdateItem = createUseRouteMutation(updateItem);
 export const useDeleteItem = createUseRouteMutation(deleteItem);
 export const useCreateEvent = createUseRouteMutation(createEvent);
 export const useUpdateEvent = createUseRouteMutation(updateEvent);
+export const useDeleteEvent = createUseRouteMutation(deleteEvent);
 export const useCreateReceipts = createUseRouteMutation(createReceipts);
 export const useDeleteReceipts = createUseRouteMutation(deleteReceipts);

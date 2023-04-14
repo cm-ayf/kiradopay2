@@ -1,7 +1,7 @@
 import { createHandler } from "@/lib/handler";
 import { verify } from "@/lib/auth";
 import { eventInclude, prisma, toEvent } from "@/lib/prisma";
-import { readEvent, updateEvent } from "@/types/event";
+import { deleteEvent, readEvent, updateEvent } from "@/types/event";
 import type { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handler(
@@ -14,6 +14,9 @@ export default async function handler(
       break;
     case "PATCH":
       await updateEventHandler(req, res);
+      break;
+    case "DELETE":
+      await deleteEventHandler(req, res);
       break;
     case "HEAD":
       res.status(200).end();
@@ -76,4 +79,23 @@ const updateEventHandler = createHandler(updateEvent, async (req, res) => {
   });
 
   res.status(200).json(toEvent(event));
+});
+
+const deleteEventHandler = createHandler(deleteEvent, async (req, res) => {
+  const token = verify(req);
+  if (!token) {
+    res.status(401).end();
+    return;
+  }
+
+  await prisma.$transaction([
+    prisma.display.deleteMany({
+      where: { eventcode: req.query.eventcode },
+    }),
+    prisma.event.delete({
+      where: { code: req.query.eventcode },
+    }),
+  ]);
+
+  res.status(200).json(null);
 });
