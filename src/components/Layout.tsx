@@ -1,8 +1,8 @@
-import Head from "next/head";
 import Box from "@mui/material/Box";
 import Container from "@mui/material/Container";
-import Navigation, { NavigationProps } from "./Navigation";
+import Head from "next/head";
 import type { PropsWithChildren } from "react";
+import Navigation, { NavigationProps } from "./Navigation";
 
 export interface LayoutProps extends NavigationProps {
   bottom?: React.ReactNode;

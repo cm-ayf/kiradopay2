@@ -1,5 +1,5 @@
-import { client, clearCredentials } from "@/lib/auth";
 import type { NextApiRequest, NextApiResponse } from "next";
+import { client, clearCredentials } from "@/lib/auth";
 
 export default async function handler(
   req: NextApiRequest,

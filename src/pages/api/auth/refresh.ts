@@ -1,3 +1,4 @@
+import type { NextApiRequest, NextApiResponse } from "next";
 import {
   client,
   clearCredentials,
@@ -6,7 +7,6 @@ import {
   createCredentials,
   redirectError,
 } from "@/lib/auth";
-import type { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handler(
   req: NextApiRequest,

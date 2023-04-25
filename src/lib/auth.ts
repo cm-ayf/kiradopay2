@@ -1,10 +1,10 @@
+import { CookieSerializeOptions, serialize } from "cookie";
 import DiscordOAuth2 from "discord-oauth2";
 import * as _jwt from "jsonwebtoken";
-import { CookieSerializeOptions, serialize } from "cookie";
 import type { NextApiResponse } from "next";
 import type { NextApiRequestCookies } from "next/dist/server/api-utils";
-import type { Token } from "@/types/user";
 import { prisma } from "./prisma";
+import type { Token } from "@/types/user";
 
 const clientId = process.env["DISCORD_CLIENT_ID"];
 if (!clientId) {

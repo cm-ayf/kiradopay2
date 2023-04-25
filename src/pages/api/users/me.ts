@@ -1,7 +1,7 @@
-import { createHandler } from "@/lib/handler";
-import { verify } from "@/lib/auth";
-import { readUsersMe } from "@/types/user";
 import type { NextApiRequest, NextApiResponse } from "next";
+import { verify } from "@/lib/auth";
+import { createHandler } from "@/lib/handler";
+import { readUsersMe } from "@/types/user";
 
 export default async function handler(
   req: NextApiRequest,

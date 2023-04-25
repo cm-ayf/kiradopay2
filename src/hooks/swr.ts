@@ -1,11 +1,11 @@
-import useSWR, { SWRConfiguration } from "swr";
-import useSWRMutation, { SWRMutationConfiguration } from "swr/mutation";
-import type { SWRResponse } from "swr";
-import type { SWRMutationResponse } from "swr/mutation";
-import type { Route, TParams } from "@/types/route";
-import { TypeCompiler } from "@sinclair/typebox/compiler";
 import type { Static } from "@sinclair/typebox";
+import { TypeCompiler } from "@sinclair/typebox/compiler";
 import { useEffect } from "react";
+import useSWR, { SWRConfiguration } from "swr";
+import type { SWRResponse } from "swr";
+import useSWRMutation, { SWRMutationConfiguration } from "swr/mutation";
+import type { SWRMutationResponse } from "swr/mutation";
+import { useRefresh } from "@/hooks/UserState";
 import {
   createEvent,
   deleteEvent,
@@ -15,7 +15,7 @@ import {
 } from "@/types/event";
 import { createItem, deleteItem, readItems, updateItem } from "@/types/item";
 import { createReceipts, deleteReceipts, readReceipts } from "@/types/receipt";
-import { useRefresh } from "@/hooks/UserState";
+import type { Route, TParams } from "@/types/route";
 
 export class UnauthorizedError extends Error {
   code = "UNAUTHORIZED";

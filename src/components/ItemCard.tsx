@@ -1,9 +1,9 @@
-import type { Item } from "@/types/item";
 import Card from "@mui/material/Card";
 import CardActionArea from "@mui/material/CardActionArea";
 import CardContent from "@mui/material/CardContent";
 import CardMedia from "@mui/material/CardMedia";
 import type { MouseEventHandler } from "react";
+import type { Item } from "@/types/item";
 
 export default function ItemCard({
   item,

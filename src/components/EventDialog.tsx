@@ -1,5 +1,3 @@
-import type { DialogButton } from "@/types/dialog";
-import type { Event } from "@/types/event";
 import LoadingButton from "@mui/lab/LoadingButton";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
@@ -9,6 +7,8 @@ import TextField from "@mui/material/TextField";
 import type { TSchema } from "@sinclair/typebox";
 import { TypeCompiler } from "@sinclair/typebox/compiler";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import type { DialogButton } from "@/types/dialog";
+import type { Event } from "@/types/event";
 
 export default function EventDialog<T extends TSchema>({
   schema,

@@ -1,17 +1,16 @@
-import Layout from "@/components/Layout";
-import { CreateEvent } from "@/types/event";
-import { Item, CreateItem, UpdateItem } from "@/types/item";
+import Add from "@mui/icons-material/Add";
 import Box from "@mui/material/Box";
 import Grid from "@mui/material/Grid";
 import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
-import Add from "@mui/icons-material/Add";
-import { useState } from "react";
 import { useRouter } from "next/router";
+import { useState } from "react";
+import { useAlert } from "@/components/Alert";
 import EventCard from "@/components/EventCard";
 import EventDialog from "@/components/EventDialog";
 import ItemCard from "@/components/ItemCard";
 import ItemDialog from "@/components/ItemDialog";
+import Layout from "@/components/Layout";
 import {
   ConflictError,
   useCreateEvent,
@@ -21,7 +20,8 @@ import {
   useItems,
   useUpdateItem,
 } from "@/hooks/swr";
-import { useAlert } from "@/components/Alert";
+import { CreateEvent } from "@/types/event";
+import { Item, CreateItem, UpdateItem } from "@/types/item";
 
 // export { root as getServerSideProps } from "@/lib/ssr";
 

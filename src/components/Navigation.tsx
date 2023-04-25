@@ -1,4 +1,5 @@
-import { useRef, useState } from "react";
+import ArrowBack from "@mui/icons-material/ArrowBack";
+import CloudOff from "@mui/icons-material/CloudOff";
 import AppBar from "@mui/material/AppBar";
 import Avatar from "@mui/material/Avatar";
 import Box from "@mui/material/Box";
@@ -9,11 +10,10 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
-import type { Token } from "@/types/user";
 import { useRouter } from "next/router";
-import ArrowBack from "@mui/icons-material/ArrowBack";
-import CloudOff from "@mui/icons-material/CloudOff";
+import { useRef, useState } from "react";
 import { useUserState } from "../hooks/UserState";
+import type { Token } from "@/types/user";
 
 export interface NavigationProps {
   title?: string;
