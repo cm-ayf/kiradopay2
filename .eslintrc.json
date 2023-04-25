@@ -1,7 +1,14 @@
 {
   "extends": "next/core-web-vitals",
-  "plugins": ["mui-path-imports"],
+  "plugins": ["import", "mui-path-imports"],
   "rules": {
-    "mui-path-imports/mui-path-imports": "warn"
+    "mui-path-imports/mui-path-imports": "warn",
+    "import/order": [
+      "error",
+      {
+        "alphabetize": { "order": "asc" },
+        "newlines-between": "never"
+      }
+    ]
   }
 }
