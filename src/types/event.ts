@@ -1,7 +1,7 @@
 import { Static, Type } from "@sinclair/typebox";
+import { Code, Date, Name } from "./common";
 import { Item } from "./item";
 import type { Route } from "./route";
-import { Code, Date, Name } from "./common";
 
 export const Event = Type.Object({
   code: Code,

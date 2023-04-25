@@ -1,6 +1,6 @@
 import { Static, Type } from "@sinclair/typebox";
-import type { Route } from "./route";
 import { Code, Date } from "./common";
+import type { Route } from "./route";
 
 export const Record = Type.Object({
   itemcode: Code,

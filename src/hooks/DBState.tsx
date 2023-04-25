@@ -1,4 +1,3 @@
-import type { Receipt } from "@/types/receipt";
 import { DBSchema, IDBPDatabase, openDB } from "idb";
 import {
   createContext,
@@ -9,6 +8,7 @@ import {
   useRef,
   useState,
 } from "react";
+import type { Receipt } from "@/types/receipt";
 
 interface DB extends DBSchema {
   receipts: {

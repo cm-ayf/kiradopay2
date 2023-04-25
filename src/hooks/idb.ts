@@ -1,9 +1,9 @@
-import type { Receipt } from "@/types/receipt";
-import { DBState, IDB, useDBState } from "./DBState";
+import { useMemo } from "react";
 import useSWR from "swr";
 import useSWRMutation from "swr/mutation";
-import { useMemo } from "react";
 import { v4 as uuidv4 } from "uuid";
+import { DBState, IDB, useDBState } from "./DBState";
+import type { Receipt } from "@/types/receipt";
 
 function key(eventcode: string) {
   return `idb:receipts:${eventcode}`;

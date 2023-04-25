@@ -1,6 +1,6 @@
+import { Prisma, PrismaClient } from "@prisma/client";
 import type { Event } from "@/types/event";
 import type { Receipt } from "@/types/receipt";
-import { Prisma, PrismaClient } from "@prisma/client";
 
 declare global {
   var prisma: PrismaClient;

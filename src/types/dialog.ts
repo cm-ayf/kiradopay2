@@ -1,5 +1,5 @@
-import type { Static, TSchema } from "@sinclair/typebox";
 import type { ButtonTypeMap } from "@mui/material/Button";
+import type { Static, TSchema } from "@sinclair/typebox";
 
 type Color = ButtonTypeMap["props"]["color"];
 

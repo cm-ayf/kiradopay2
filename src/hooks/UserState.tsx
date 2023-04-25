@@ -1,5 +1,3 @@
-import { createUseRoute, UnauthorizedError } from "@/hooks/swr";
-import { readUsersMe, Token } from "@/types/user";
 import {
   createContext,
   PropsWithChildren,
@@ -9,6 +7,8 @@ import {
   useMemo,
 } from "react";
 import { useAlert } from "../components/Alert";
+import { createUseRoute, UnauthorizedError } from "@/hooks/swr";
+import { readUsersMe, Token } from "@/types/user";
 
 export type UserState =
   | { type: "authorized" | "refreshing"; user: Token }

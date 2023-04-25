@@ -1,17 +1,3 @@
-import { useAlert } from "@/components/Alert";
-import EventCard from "@/components/EventCard";
-import EventDialog from "@/components/EventDialog";
-import ItemCard from "@/components/ItemCard";
-import Layout from "@/components/Layout";
-import {
-  ConflictError,
-  useDeleteEvent,
-  useEvent,
-  useItems,
-  useTitle,
-  useUpdateEvent,
-} from "@/hooks/swr";
-import { Event as EventSchema, UpdateEvent } from "@/types/event";
 import Edit from "@mui/icons-material/Edit";
 import LoadingButton from "@mui/lab/LoadingButton";
 import Box from "@mui/material/Box";
@@ -29,6 +15,20 @@ import Typography from "@mui/material/Typography";
 import { compressToEncodedURIComponent } from "lz-string";
 import { useRouter } from "next/router";
 import { useEffect, useMemo, useState } from "react";
+import { useAlert } from "@/components/Alert";
+import EventCard from "@/components/EventCard";
+import EventDialog from "@/components/EventDialog";
+import ItemCard from "@/components/ItemCard";
+import Layout from "@/components/Layout";
+import {
+  ConflictError,
+  useDeleteEvent,
+  useEvent,
+  useItems,
+  useTitle,
+  useUpdateEvent,
+} from "@/hooks/swr";
+import { Event as EventSchema, UpdateEvent } from "@/types/event";
 
 // export { eventScoped as getServerSideProps } from "@/lib/ssr";
 

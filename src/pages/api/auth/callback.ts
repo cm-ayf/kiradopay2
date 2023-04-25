@@ -1,3 +1,4 @@
+import type { NextApiRequest, NextApiResponse } from "next";
 import {
   clearState,
   client,
@@ -6,7 +7,6 @@ import {
   scope,
   setCredentials,
 } from "@/lib/auth";
-import type { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handler(
   req: NextApiRequest,

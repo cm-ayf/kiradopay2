@@ -1,8 +1,8 @@
-import { createHandler } from "@/lib/handler";
+import type { NextApiRequest, NextApiResponse } from "next";
 import { verify } from "@/lib/auth";
+import { createHandler } from "@/lib/handler";
 import { eventInclude, prisma, toEvent } from "@/lib/prisma";
 import { deleteEvent, readEvent, updateEvent } from "@/types/event";
-import type { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handler(
   req: NextApiRequest,

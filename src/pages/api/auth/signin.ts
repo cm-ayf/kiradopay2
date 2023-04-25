@@ -1,6 +1,6 @@
-import { client, scope, setState } from "@/lib/auth";
 import { randomUUID } from "crypto";
 import type { NextApiRequest, NextApiResponse } from "next";
+import { client, scope, setState } from "@/lib/auth";
 
 export default async function handler(
   req: NextApiRequest,

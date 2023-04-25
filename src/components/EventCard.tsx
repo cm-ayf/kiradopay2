@@ -1,9 +1,9 @@
-import type { Event } from "@/types/event";
 import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import CardActionArea from "@mui/material/CardActionArea";
 import CardContent from "@mui/material/CardContent";
 import type { MouseEventHandler } from "react";
+import type { Event } from "@/types/event";
 
 export default function EventCard({
   event,
