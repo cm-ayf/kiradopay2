@@ -4,7 +4,7 @@ import * as _jwt from "jsonwebtoken";
 import type { NextApiResponse } from "next";
 import type { NextApiRequestCookies } from "next/dist/server/api-utils";
 import { prisma } from "./prisma";
-import type { Token } from "@/types/user";
+import type { Token, Scope } from "@/types/user";
 
 const clientId = process.env["DISCORD_CLIENT_ID"];
 if (!clientId) {
@@ -70,14 +70,16 @@ export async function createCredentials(
   if (!user) {
     throw new Error("Missing user");
   }
-  if (options.roleId && !roles.includes(options.roleId)) {
-    throw new Error("Missing role");
-  }
 
   const { id, username, avatar: userAvatar = null } = user;
   const avatar: string | null = memberAvatar ?? userAvatar;
   const exp = Math.floor(Date.now() / 1000) + 60 * 60;
-  const session = jwt.sign({ id, username, nick, avatar, exp });
+  const scope = options.roleId
+    ? roles.includes(options.roleId)
+      ? "read write"
+      : "read"
+    : "read write";
+  const session = jwt.sign({ id, username, nick, avatar, exp, scope });
 
   if (upsert) {
     await prisma.user.upsert({
@@ -98,15 +100,27 @@ export function redirectError(res: NextApiResponse, error?: unknown) {
   res.redirect(`/?${params.toString()}`);
 }
 
-export function verify(req: { cookies: NextApiRequestCookies }) {
+export function verify(
+  req: { cookies: NextApiRequestCookies },
+  scope?: Scope[]
+) {
   const { session } = req.cookies;
   if (!session) return;
 
   try {
-    return jwt.verify(session);
+    const token = jwt.verify(session);
+    if (scope && !hasScopes(token, scope)) {
+      return null;
+    }
+    return token;
   } catch (err) {
     return null;
   }
+}
+
+function hasScopes(token: Token, verifyScopes: Scope[]) {
+  const tokenScopes = new Set((token.scope ?? "").split(" "));
+  return verifyScopes.every((scope) => tokenScopes.has(scope));
 }
 
 const sessionCookieOptions: CookieSerializeOptions = {

@@ -7,6 +7,7 @@ export const Token = Type.Object({
   nick: Type.Union([Type.String(), Type.Null()]),
   avatar: Type.Union([Type.String(), Type.Null()]),
   exp: Type.Integer(),
+  scope: Type.Optional(Type.String()),
 });
 
 export type Token = Static<typeof Token>;
@@ -16,3 +17,5 @@ export const readUsersMe = {
   path: "/api/users/me",
   response: Token,
 } satisfies Route;
+
+export type Scope = "read" | "write";

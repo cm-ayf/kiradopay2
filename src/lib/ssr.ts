@@ -6,7 +6,7 @@ export async function eventScoped({
   req,
   params,
 }: GetServerSidePropsContext<{ eventcode: string }>) {
-  const token = verify(req);
+  const token = verify(req, ["read"]);
   if (!token) return { props: {} };
 
   const { eventcode } = params!;
@@ -28,7 +28,7 @@ export async function eventScoped({
 }
 
 export async function root({ req }: GetServerSidePropsContext) {
-  const token = verify(req);
+  const token = verify(req, ["read"]);
   if (!token) return { props: {} };
 
   const [events, items] = await prisma.$transaction([

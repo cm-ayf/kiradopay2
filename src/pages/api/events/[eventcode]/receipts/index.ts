@@ -25,7 +25,7 @@ export default async function handler(
 }
 
 const readReceiptsHandler = createHandler(readReceipts, async (req, res) => {
-  const token = verify(req);
+  const token = verify(req, ["read"]);
   if (!token) {
     res.status(401).end();
     return;
@@ -42,7 +42,7 @@ const readReceiptsHandler = createHandler(readReceipts, async (req, res) => {
 const createReceiptsHandler = createHandler(
   createReceipts,
   async (req, res) => {
-    const token = verify(req);
+    const token = verify(req, ["write"]);
     if (!token) {
       res.status(401).end();
       return;

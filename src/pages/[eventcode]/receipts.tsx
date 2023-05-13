@@ -17,6 +17,7 @@ import { useAlert } from "@/components/Alert";
 import Layout from "@/components/Layout";
 import { SyncButton } from "@/components/SyncButton";
 import { DBStateProvider } from "@/hooks/DBState";
+import { useWritable } from "@/hooks/UserState";
 import { useIDBDeleteReceipts, useIDBReceipts } from "@/hooks/idb";
 import {
   useDeleteReceipts,
@@ -183,6 +184,7 @@ function ReceiptTable({ eventcode }: { eventcode: string }) {
   const { trigger: triggerBrowser, isMutating: isDeletingBrowser } =
     useIDBDeleteReceipts(eventcode);
   const { error } = useAlert();
+  const writable = useWritable();
   const [selected, setSelected] = useState<string[]>([]);
 
   async function onClickDelete() {
@@ -213,7 +215,7 @@ function ReceiptTable({ eventcode }: { eventcode: string }) {
         <DataGrid
           rows={receipts.map(toRow)}
           columns={columns}
-          checkboxSelection
+          checkboxSelection={writable}
           getRowId={(row) => row.id}
           rowSelectionModel={selected}
           onRowSelectionModelChange={(selected) =>
@@ -221,17 +223,19 @@ function ReceiptTable({ eventcode }: { eventcode: string }) {
           }
         />
       </Box>
-      <Box sx={{ display: "flex", flexDirection: "row", gap: 1 }}>
-        <LoadingButton
-          variant="contained"
-          onClick={onClickDelete}
-          disabled={selected.length === 0}
-          loading={isDeletingServer || isDeletingBrowser}
-        >
-          履歴を削除
-        </LoadingButton>
-        <SyncButton eventcode={eventcode} variant="contained" />
-      </Box>
+      {writable && (
+        <Box sx={{ display: "flex", flexDirection: "row", gap: 1 }}>
+          <LoadingButton
+            variant="contained"
+            onClick={onClickDelete}
+            disabled={selected.length === 0}
+            loading={isDeletingServer || isDeletingBrowser}
+          >
+            履歴を削除
+          </LoadingButton>
+          <SyncButton eventcode={eventcode} variant="contained" />
+        </Box>
+      )}
     </Box>
   );
 }

@@ -25,7 +25,7 @@ export default async function handler(
 }
 
 const createItemHandler = createHandler(createItem, async (req, res) => {
-  const token = verify(req);
+  const token = verify(req, ["write"]);
   if (!token) {
     res.status(401).end();
     return;
@@ -39,7 +39,7 @@ const createItemHandler = createHandler(createItem, async (req, res) => {
 });
 
 const readItemsHandler = createHandler(readItems, async (req, res) => {
-  const token = verify(req);
+  const token = verify(req, ["read"]);
   if (!token) {
     res.status(401).end();
     return;
