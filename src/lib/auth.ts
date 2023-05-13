@@ -70,14 +70,16 @@ export async function createCredentials(
   if (!user) {
     throw new Error("Missing user");
   }
-  if (options.roleId && !roles.includes(options.roleId)) {
-    throw new Error("Missing role");
-  }
 
   const { id, username, avatar: userAvatar = null } = user;
   const avatar: string | null = memberAvatar ?? userAvatar;
   const exp = Math.floor(Date.now() / 1000) + 60 * 60;
-  const session = jwt.sign({ id, username, nick, avatar, exp });
+  const scope = options.roleId
+    ? roles.includes(options.roleId)
+      ? "read write"
+      : "read"
+    : "read write";
+  const session = jwt.sign({ id, username, nick, avatar, exp, scope });
 
   if (upsert) {
     await prisma.user.upsert({
