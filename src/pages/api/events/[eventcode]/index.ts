@@ -28,7 +28,7 @@ export default async function handler(
 }
 
 const readEventHandler = createHandler(readEvent, async (req, res) => {
-  const token = verify(req);
+  const token = verify(req, ["read"]);
   if (!token) {
     res.status(401).end();
     return;
@@ -43,7 +43,7 @@ const readEventHandler = createHandler(readEvent, async (req, res) => {
 });
 
 const updateEventHandler = createHandler(updateEvent, async (req, res) => {
-  const token = verify(req);
+  const token = verify(req, ["read", "write"]);
   if (!token) {
     res.status(401).end();
     return;
@@ -82,7 +82,7 @@ const updateEventHandler = createHandler(updateEvent, async (req, res) => {
 });
 
 const deleteEventHandler = createHandler(deleteEvent, async (req, res) => {
-  const token = verify(req);
+  const token = verify(req, ["write"]);
   if (!token) {
     res.status(401).end();
     return;

@@ -25,7 +25,7 @@ export default async function handler(
 const deleteReceiptsHandler = createHandler(
   deleteReceipts,
   async (req, res) => {
-    const token = verify(req);
+    const token = verify(req, ["write"]);
     if (!token) {
       res.status(401).end();
       return;

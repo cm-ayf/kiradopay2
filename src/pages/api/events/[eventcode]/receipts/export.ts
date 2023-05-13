@@ -23,7 +23,7 @@ export default async function handler(
 }
 
 const readReceiptsHandler = createHandler(exportReceipts, async (req, res) => {
-  const token = verify(req);
+  const token = verify(req, ["read"]);
   if (!token) {
     res.status(401).end();
     return;
