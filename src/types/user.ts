@@ -17,3 +17,5 @@ export const readUsersMe = {
   path: "/api/users/me",
   response: Token,
 } satisfies Route;
+
+export type Scope = "read" | "write";

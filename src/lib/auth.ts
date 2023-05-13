@@ -4,7 +4,7 @@ import * as _jwt from "jsonwebtoken";
 import type { NextApiResponse } from "next";
 import type { NextApiRequestCookies } from "next/dist/server/api-utils";
 import { prisma } from "./prisma";
-import type { Token } from "@/types/user";
+import type { Token, Scope } from "@/types/user";
 
 const clientId = process.env["DISCORD_CLIENT_ID"];
 if (!clientId) {
@@ -102,7 +102,7 @@ export function redirectError(res: NextApiResponse, error?: unknown) {
 
 export function verify(
   req: { cookies: NextApiRequestCookies },
-  scope?: string[]
+  scope?: Scope[]
 ) {
   const { session } = req.cookies;
   if (!session) return;
@@ -118,7 +118,7 @@ export function verify(
   }
 }
 
-function hasScopes(token: Token, verifyScopes: string[]) {
+function hasScopes(token: Token, verifyScopes: Scope[]) {
   const tokenScopes = new Set((token.scope ?? "").split(" "));
   return verifyScopes.every((scope) => tokenScopes.has(scope));
 }
