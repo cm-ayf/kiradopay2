@@ -20,6 +20,7 @@ import EventCard from "@/components/EventCard";
 import EventDialog from "@/components/EventDialog";
 import ItemCard from "@/components/ItemCard";
 import Layout from "@/components/Layout";
+import { useWritable } from "@/hooks/UserState";
 import {
   ConflictError,
   useDeleteEvent,
@@ -63,21 +64,67 @@ function Event({ eventcode }: { eventcode: string }) {
 
 function About({ eventcode }: { eventcode: string }) {
   const { data: event } = useEvent({ eventcode });
+  const router = useRouter();
+  const writable = useWritable();
+
+  const [open, setOpen] = useState(false);
+
+  if (!event) return null;
+  return (
+    <>
+      <Box sx={{ my: 2, display: "flex", flexDirection: "row", columnGap: 2 }}>
+        <EventCard
+          event={event}
+          {...(writable ? { onClick: () => setOpen(true) } : {})}
+        />
+        <Button
+          variant="contained"
+          onClick={() => router.push(`/${event.code}/register`)}
+          disabled={!writable}
+        >
+          レジを起動
+        </Button>
+        <Button
+          variant="contained"
+          onClick={() => router.push(`/${event.code}/receipts`)}
+        >
+          購入履歴
+        </Button>
+      </Box>
+      {writable && (
+        <UpdateEventDialog
+          event={event}
+          open={open}
+          onClose={() => setOpen(false)}
+        />
+      )}
+    </>
+  );
+}
+
+function UpdateEventDialog({
+  event,
+  open,
+  onClose,
+}: {
+  event: EventSchema;
+  open: boolean;
+  onClose: () => void;
+}) {
   const { trigger: triggerUpdate, isMutating: isUpdating } = useUpdateEvent({
-    eventcode,
+    eventcode: event.code,
   });
   const { trigger: triggerDelete, isMutating: isDeleting } = useDeleteEvent({
-    eventcode,
+    eventcode: event.code,
   });
   const router = useRouter();
   const { error, success } = useAlert();
-  const [open, setOpen] = useState(false);
 
   async function onClickUpdate(body: UpdateEvent) {
     try {
       await triggerUpdate(body);
       success("イベントを更新しました");
-      setOpen(false);
+      onClose();
       if (body.code) router.replace(`/${body.code}`);
     } catch (e) {
       if (e instanceof ConflictError) error("イベントコードが重複しています");
@@ -99,42 +146,24 @@ function About({ eventcode }: { eventcode: string }) {
     }
   }
 
-  if (!event) return null;
   return (
-    <>
-      <Box sx={{ my: 2, display: "flex", flexDirection: "row", columnGap: 2 }}>
-        <EventCard event={event} onClick={() => setOpen(true)} />
-        <Button
-          variant="contained"
-          onClick={() => router.push(`/${event.code}/register`)}
-        >
-          レジを起動
-        </Button>
-        <Button
-          variant="contained"
-          onClick={() => router.push(`/${event.code}/receipts`)}
-        >
-          購入履歴
-        </Button>
-      </Box>
-      <EventDialog
-        schema={UpdateEvent}
-        title="イベントを更新"
-        event={event}
-        open={open}
-        onClose={() => setOpen(false)}
-        isMutating={isUpdating || isDeleting}
-        buttons={[
-          {
-            label: "更新",
-            needsValidation: true,
-            needsUpdate: true,
-            onClick: onClickUpdate,
-          },
-          { label: "削除", color: "error", onClick: onClickDelete },
-        ]}
-      />
-    </>
+    <EventDialog
+      schema={UpdateEvent}
+      title="イベントを更新"
+      event={event}
+      open={open}
+      onClose={onClose}
+      isMutating={isUpdating || isDeleting}
+      buttons={[
+        {
+          label: "更新",
+          needsValidation: true,
+          needsUpdate: true,
+          onClick: onClickUpdate,
+        },
+        { label: "削除", color: "error", onClick: onClickDelete },
+      ]}
+    />
   );
 }
 
@@ -164,6 +193,7 @@ function UpdateCalculator({ eventcode }: { eventcode: string }) {
   const { data: event, isLoading } = useEvent({ eventcode });
   const { trigger, isMutating } = useUpdateEvent({ eventcode });
   const { error, success } = useAlert();
+  const writable = useWritable();
   const [calculator, setCalculator] = useState("");
 
   useEffect(() => {
@@ -207,6 +237,7 @@ function UpdateCalculator({ eventcode }: { eventcode: string }) {
           variant="contained"
           loading={isMutating}
           disabled={
+            !writable ||
             isLoading ||
             calculator === event?.calculator ||
             !isValidCalculator(calculator)
@@ -234,6 +265,7 @@ function UpdateCalculator({ eventcode }: { eventcode: string }) {
           }
           multiline
           onChange={(e) => setCalculator(e.target.value)}
+          disabled={!writable}
         />
         {"}"}
       </Box>
@@ -243,6 +275,7 @@ function UpdateCalculator({ eventcode }: { eventcode: string }) {
 
 function Display({ eventcode }: { eventcode: string }) {
   const { data: event } = useEvent({ eventcode });
+  const writable = useWritable();
   const [open, setOpen] = useState(false);
 
   return (
@@ -255,6 +288,7 @@ function Display({ eventcode }: { eventcode: string }) {
           color="primary"
           sx={{ m: "1em" }}
           onClick={() => setOpen(true)}
+          disabled={!writable}
         >
           <Edit />
         </IconButton>
@@ -266,11 +300,13 @@ function Display({ eventcode }: { eventcode: string }) {
           </Grid>
         ))}
       </Grid>
-      <DisplayDialog
-        eventcode={eventcode}
-        open={open}
-        onClose={() => setOpen(false)}
-      />
+      {writable && (
+        <DisplayDialog
+          eventcode={eventcode}
+          open={open}
+          onClose={() => setOpen(false)}
+        />
+      )}
     </>
   );
 }

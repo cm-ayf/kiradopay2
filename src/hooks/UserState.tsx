@@ -101,6 +101,14 @@ export function useUserState() {
   return state;
 }
 
+export function useWritable() {
+  const state = useUserState();
+  return (
+    state.type === "authorized" &&
+    (state.user.scope ?? "").split(" ").includes("write")
+  );
+}
+
 export function useRefresh() {
   const { refresh } = useContext(UserStateContext);
   return refresh;

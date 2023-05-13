@@ -11,6 +11,7 @@ import EventDialog from "@/components/EventDialog";
 import ItemCard from "@/components/ItemCard";
 import ItemDialog from "@/components/ItemDialog";
 import Layout from "@/components/Layout";
+import { useWritable } from "@/hooks/UserState";
 import {
   ConflictError,
   useCreateEvent,
@@ -36,21 +37,9 @@ export default function Home() {
 
 function Events() {
   const { data: events } = useEvents();
-  const { trigger, isMutating } = useCreateEvent();
   const router = useRouter();
-  const { error } = useAlert();
   const [open, setOpen] = useState(false);
-
-  async function onClick(body: CreateEvent) {
-    try {
-      await trigger(body);
-      router.push(`/${body.code}`);
-    } catch (e) {
-      if (e instanceof ConflictError) error("イベントコードが重複しています");
-      else error("イベントの作成に失敗しました");
-      throw e;
-    }
-  }
+  const writable = useWritable();
 
   return (
     <>
@@ -58,7 +47,11 @@ function Events() {
         <Typography variant="h2" sx={{ fontSize: "2em" }}>
           イベント
         </Typography>
-        <IconButton color="primary" onClick={() => setOpen(true)}>
+        <IconButton
+          color="primary"
+          onClick={() => setOpen(true)}
+          disabled={!writable}
+        >
           <Add />
         </IconButton>
       </Box>
@@ -72,15 +65,44 @@ function Events() {
           </Grid>
         ))}
       </Grid>
-      <EventDialog
-        schema={CreateEvent}
-        title="イベントを作成"
-        open={open}
-        onClose={() => setOpen(false)}
-        isMutating={isMutating}
-        buttons={[{ label: "作成", needsValidation: true, onClick }]}
-      />
+      {writable && (
+        <CreateEventDialog open={open} onClose={() => setOpen(false)} />
+      )}
     </>
+  );
+}
+
+function CreateEventDialog({
+  open,
+  onClose,
+}: {
+  open: boolean;
+  onClose: () => void;
+}) {
+  const { trigger, isMutating } = useCreateEvent();
+  const router = useRouter();
+  const { error } = useAlert();
+
+  async function onClick(body: CreateEvent) {
+    try {
+      await trigger(body);
+      router.push(`/${body.code}`);
+    } catch (e) {
+      if (e instanceof ConflictError) error("イベントコードが重複しています");
+      else error("イベントの作成に失敗しました");
+      throw e;
+    }
+  }
+
+  return (
+    <EventDialog
+      schema={CreateEvent}
+      title="イベントを作成"
+      open={open}
+      onClose={onClose}
+      isMutating={isMutating}
+      buttons={[{ label: "作成", needsValidation: true, onClick }]}
+    />
   );
 }
 
@@ -88,13 +110,18 @@ function Items() {
   const { data: items } = useItems();
   const [open, setOpen] = useState(false);
   const [item, setItem] = useState<Item>();
+  const writable = useWritable();
   return (
     <>
       <Box sx={{ display: "flex", flexDirection: "row", my: 2 }}>
         <Typography variant="h2" sx={{ fontSize: "2em" }}>
           商品
         </Typography>
-        <IconButton color="primary" onClick={() => setOpen(true)}>
+        <IconButton
+          color="primary"
+          onClick={() => setOpen(true)}
+          disabled={!writable}
+        >
           <Add />
         </IconButton>
       </Box>
@@ -104,13 +131,17 @@ function Items() {
             <ItemCard
               key={item.code}
               item={item}
-              onClick={() => setItem(item)}
+              {...(writable ? { onClick: () => setItem(item) } : {})}
             />
           </Grid>
         ))}
       </Grid>
-      <CreateItemDialog open={open} onClose={() => setOpen(false)} />
-      <MutateItemDialog item={item} onClose={() => setItem(undefined)} />
+      {writable && (
+        <CreateItemDialog open={open} onClose={() => setOpen(false)} />
+      )}
+      {writable && (
+        <MutateItemDialog item={item} onClose={() => setItem(undefined)} />
+      )}
     </>
   );
 }
