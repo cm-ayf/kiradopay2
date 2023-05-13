@@ -100,15 +100,26 @@ export function redirectError(res: NextApiResponse, error?: unknown) {
   res.redirect(`/?${params.toString()}`);
 }
 
-export function verify(req: { cookies: NextApiRequestCookies }) {
+export function verify(
+  req: { cookies: NextApiRequestCookies },
+  scope?: string[]
+) {
   const { session } = req.cookies;
   if (!session) return;
 
   try {
-    return jwt.verify(session);
+    const token = jwt.verify(session);
+    if (scope && !hasScopes(token, scope)) {
+      return null;
+    }
+    return token;
   } catch (err) {
     return null;
   }
+}
+
+function hasScopes(token: Token, scopes: string[]) {
+  return scopes.every((scope) => token.scope?.includes(scope));
 }
 
 const sessionCookieOptions: CookieSerializeOptions = {
