@@ -118,8 +118,9 @@ export function verify(
   }
 }
 
-function hasScopes(token: Token, scopes: string[]) {
-  return scopes.every((scope) => token.scope?.includes(scope));
+function hasScopes(token: Token, verifyScopes: string[]) {
+  const tokenScopes = new Set((token.scope ?? "").split(" "));
+  return verifyScopes.every((scope) => tokenScopes.has(scope));
 }
 
 const sessionCookieOptions: CookieSerializeOptions = {
