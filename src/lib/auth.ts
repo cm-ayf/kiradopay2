@@ -144,6 +144,7 @@ const refreshTokenCookieOptions: CookieSerializeOptions = {
   sameSite: "strict",
   secure,
   path: "/",
+  maxAge: 31536000,
 };
 
 const clearCookieOptions: CookieSerializeOptions = {
