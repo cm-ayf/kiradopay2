@@ -171,11 +171,15 @@ function playground({ calculator, items }: EventSchema) {
   return `\
 type Itemcode = ${items.map((item) => `"${item.code}"`).join(" | ") || "never"};
 
+/** 購入履歴データのうち1つの商品のデータ */
 interface RecordState {
+  /** その商品の購入個数 */
   count: number;
+  /** その商品が「献本」であるか */
   dedication?: boolean;
 }
 
+/** 1つの購入履歴データ */
 type State = {
   [K in Itemcode]: RecordState;
 }
