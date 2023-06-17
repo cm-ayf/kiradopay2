@@ -34,7 +34,7 @@
 - 準備
   - Node.jsをインストールしてください．
   - `npm install`を実行してください．
-  - [環境変数の項](#環境変数)を参照して`.env`を作成してください．
+  - [環境変数の項](#環境変数)を参照して`.env.local`を作成してください．
 - 実行：`npm run dev`を実行してください．
 
 ## デプロイ
@@ -46,12 +46,10 @@
 また，Next.jsのSSRおよびAPI Routeが動作する他のプラットフォームでも動作すると考えられます．
 
 ### データベース
-データベースには[PlanetScale](https://planetscale.com/)を利用することを想定しています．  
-デプロイ方法については[Prismaを利用する場合の公式ドキュメント](https://planetscale.com/docs/tutorials/prisma-quickstart)を参照してください．
+データベースには[Vercel Postgres](https://vercel.com/docs/storage/vercel-postgres)を利用することを想定しています．  
+デプロイ方法については[公式ドキュメント](https://vercel.com/docs/storage/vercel-postgres/quickstart)を参照してください．
 
-Vercelには[PlanetScaleのintegration](https://vercel.com/integrations/planetscale)が存在します．適宜活用してください．
-
-また，[Prismaスキーマ](prisma/schema.prisma)を変更することで，他のデータベースでも動作すると考えられます．スキーマはPlanetScale向けに調整されていることに注意してください；詳しくは[Prismaのドキュメント](https://www.prisma.io/docs/guides/database/using-prisma-with-planetscale)を参照してください．
+また，[Prismaスキーマ](prisma/schema.prisma)を変更することで，他のデータベースでも動作すると考えられます．スキーマはVercel Postgres向けに調整されていることに注意してください．
 
 ### 認証
 
@@ -61,11 +59,14 @@ Vercelには[PlanetScaleのintegration](https://vercel.com/integrations/planetsc
 
 ## 環境変数
 
-[.env.example](.env.example)も参照してください．
+Vercel上で設定し，[Vercel CLI](https://vercel.com/docs/cli)でダウンロードすることを想定しています．
+
+### 設定する
+
+データベースの接続情報はVercel Postgresにより自動的に設定されます．
+
 - `HOST`：OAuth2認証に利用するホスト名です．スキーマとホスト名を含んでください．
-- `DATABASE_URL`：データベースのURLです．
-  - [Prismaのドキュメント](https://www.prisma.io/docs/reference/database-reference/connection-urls)を参照してください．
-  - 上で説明したPlanetScaleのintegrationを利用する場合，Vercel上に自動的に設定されます．
+  - Vercel上では，ProductionおよびPreview環境ではVercelのホスト名を，Development環境では`http://localhost:3000`を指定してください．
 - `DISCORD_CLIENT_ID`：DiscordのOAuth2認証に利用します．
 - `DISCORD_CLIENT_SECRET`：DiscordのOAuth2認証に利用します．
 - `JWT_SECRET`：JWTの署名・検証に利用する共通鍵です．
@@ -73,6 +74,12 @@ Vercelには[PlanetScaleのintegration](https://vercel.com/integrations/planetsc
 - `DISCORD_GUILD_ID`：サインインを許可するDiscordサーバーのIDです．
 - `DISCORD_ROLE_ID`（省略可）：サインインを許可するロールのIDです．
   - 省略した場合，そのサーバーの全てのユーザーがサインインできます．
+
+### ダウンロードする
+
+- `vercel login`が完了していることを確認してください．
+- `vercel link`を実行してください．
+- `vercel env pull`を実行してください．
 
 ## ライセンス
 
