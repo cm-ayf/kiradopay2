@@ -193,12 +193,22 @@ ${calculator
 `;
 }
 
+function dedent(text: string) {
+  const lines = text.split("\n");
+  const indents = lines
+    .filter((line) => line.trim())
+    .map((line) => line.match(/^\s*/)?.[0].length ?? Infinity);
+  const indent = Math.min(...indents);
+  return lines.map((line) => line.slice(indent)).join("\n");
+}
+
 function UpdateCalculator({ eventcode }: { eventcode: string }) {
   const { data: event, isLoading } = useEvent({ eventcode });
   const { trigger, isMutating } = useUpdateEvent({ eventcode });
   const { error, success } = useAlert();
   const writable = useWritable();
-  const [calculator, setCalculator] = useState("");
+  const defaultCalculator = event?.calculator ?? "";
+  const [calculator, setCalculator] = useState(defaultCalculator);
 
   useEffect(() => {
     if (isLoading || !event) return;
@@ -252,12 +262,7 @@ function UpdateCalculator({ eventcode }: { eventcode: string }) {
         </LoadingButton>
       </Box>
       <Box
-        sx={{
-          width: "100%",
-          m: 2,
-          display: "flex",
-          flexDirection: "column",
-        }}
+        sx={{ mx: 2, width: "100%", display: "flex", flexDirection: "column" }}
       >
         {"function calculate(state) {"}
         <TextField
@@ -269,6 +274,11 @@ function UpdateCalculator({ eventcode }: { eventcode: string }) {
           }
           multiline
           onChange={(e) => setCalculator(e.target.value)}
+          onPaste={(e) => {
+            e.preventDefault();
+            const text = e.clipboardData.getData("text/plain");
+            setCalculator(dedent(text));
+          }}
           disabled={!writable}
         />
         {"}"}
@@ -328,7 +338,7 @@ function DisplayDialog({
   const { data: items } = useItems();
   const { trigger, isMutating } = useUpdateEvent({ eventcode });
   const { error, success } = useAlert();
-  const defaultDisplays = event?.items.map((i) => i.code) || [];
+  const defaultDisplays = event?.items.map((i) => i.code) ?? [];
   const [displays, setDisplays] = useState(defaultDisplays);
 
   useEffect(() => {
