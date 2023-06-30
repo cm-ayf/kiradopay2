@@ -58,7 +58,7 @@ function success(req: NextApiRequest, res: NextApiResponse) {
       res.redirect("/");
       break;
     case "POST":
-      res.status(200).end();
+      res.status(204).end();
       break;
   }
 }

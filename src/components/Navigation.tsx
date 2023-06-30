@@ -55,18 +55,19 @@ export default function Navigation({ title, back }: NavigationProps) {
 function MenuButton({ onClick }: { onClick: () => void }) {
   const state = useUserState();
   const router = useRouter();
+  // includes auth and refreshing
+  if (state.user) {
+    return (
+      <Button
+        color="inherit"
+        onClick={onClick}
+        endIcon={<UserAvatar user={state.user} />}
+      >
+        <UserButton user={state.user} />
+      </Button>
+    );
+  }
   switch (state.type) {
-    case "authorized":
-    case "refreshing":
-      return (
-        <Button
-          color="inherit"
-          onClick={onClick}
-          endIcon={<UserAvatar user={state.user} />}
-        >
-          <UserButton user={state.user} />
-        </Button>
-      );
     case "unauthorized":
       return (
         <Button color="inherit" onClick={() => router.push("/api/auth/signin")}>
@@ -80,6 +81,8 @@ function MenuButton({ onClick }: { onClick: () => void }) {
         </Button>
       );
     case "loading":
+    // refreshing without user
+    case "refreshing":
       return <Button color="inherit" disabled endIcon={<CircularProgress />} />;
   }
 }

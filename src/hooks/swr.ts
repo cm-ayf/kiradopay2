@@ -1,11 +1,10 @@
 import type { Static } from "@sinclair/typebox";
 import { TypeCompiler } from "@sinclair/typebox/compiler";
-import { useEffect } from "react";
-import useSWR, { SWRConfiguration } from "swr";
+import useSWR, { mutate } from "swr";
 import type { SWRResponse } from "swr";
-import useSWRMutation, { SWRMutationConfiguration } from "swr/mutation";
+import useSWRMutation from "swr/mutation";
 import type { SWRMutationResponse } from "swr/mutation";
-import { useRefresh } from "@/hooks/UserState";
+import { useWaitUntilAuthorized } from "@/hooks/UserState";
 import {
   createEvent,
   deleteEvent,
@@ -46,39 +45,59 @@ function createPathGenerator<R extends Route>(route: R) {
     route.path.replace(/\[(\w+)\]/g, (_, key: string) => params[key] as string);
 }
 
-export function createUseRoute<R extends GetRoute>(
-  route: R,
-  options?: SWRConfiguration<Route.Response<R>>
-): UseRoute<R> {
-  const pathGenerator = createPathGenerator(route);
+type Fetcher<R extends Route> = R["method"] extends "GET"
+  ? (path: string) => Promise<Route.Response<R>>
+  : (
+      path: string,
+      options: { arg: Route.Body<R> }
+    ) => Promise<Route.Response<R>>;
 
+export function createFetcher<R extends Route>(route: R): Fetcher<R> {
   const response = TypeCompiler.Compile(route.response);
 
-  async function fetcher(path: string) {
-    const res = await fetch(path);
-    if (res.status === 401) {
-      throw new UnauthorizedError();
+  return async (path: string, options?: { arg: Route.Body<R> }) => {
+    const res = await fetch(path, {
+      method: route.method,
+      ...(options && {
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(options.arg),
+      }),
+    });
+
+    switch (res.status) {
+      case 200:
+      case 201:
+        const json = await res.json();
+        if (!response.Check(json)) throw new InvalidResponseError();
+        return json;
+      case 204:
+        return;
+      case 401:
+        throw new UnauthorizedError();
+      case 404:
+        throw new NotFoundError();
+      case 409:
+        throw new ConflictError();
+      default:
+        throw new Error(res.statusText);
     }
-    if (!res.ok) throw new Error(res.statusText);
+  };
+}
 
-    const json = await res.json();
-    if (!response.Check(json)) throw new InvalidResponseError();
-
-    return json;
-  }
+function createUseRoute<R extends GetRoute>(route: R): UseRoute<R> {
+  const pathGenerator = createPathGenerator(route);
+  const fetcher = createFetcher(route);
 
   return (...args) => {
-    const response = useSWR(pathGenerator(...args), fetcher, options);
-    const { error, mutate } = response;
-    const refresh = useRefresh();
-
-    const isUnauthorized = error instanceof UnauthorizedError;
-
-    useEffect(() => {
-      if (isUnauthorized) refresh().then(() => mutate());
-    }, [isUnauthorized, refresh, mutate]);
-
-    return response;
+    const waitUntilAuthorized = useWaitUntilAuthorized();
+    return useSWR(pathGenerator(...args), fetcher, {
+      async onError(error, key) {
+        if (!(error instanceof UnauthorizedError)) return;
+        const authorized = await waitUntilAuthorized();
+        if (!authorized) return;
+        mutate(key).catch(() => {});
+      },
+    });
   };
 }
 
@@ -87,50 +106,19 @@ type UseRouteMutation<R extends Route> = (
 ) => SWRMutationResponse<Route.Response<R>, any, Route.Body<R>>;
 
 function createUseRouteMutation<R extends Route>(
-  route: R,
-  options?: SWRMutationConfiguration<Route.Response<R>, any, Route.Body<R>>
+  route: R
 ): UseRouteMutation<R> {
   const pathGenerator = createPathGenerator(route);
-  const response = TypeCompiler.Compile(route.response);
-
-  async function fetcher(path: string, options: { arg: Route.Body<R> }) {
-    // throws ts2589 without `as any`
-    const { arg } = options as any;
-    const res = await fetch(path, {
-      method: route.method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(arg),
-    });
-
-    switch (res.status) {
-      case 401:
-        throw new UnauthorizedError();
-      case 404:
-        throw new NotFoundError();
-      case 409:
-        throw new ConflictError();
-    }
-    if (res.status === 401) throw new UnauthorizedError();
-    if (!res.ok) throw new Error(res.statusText);
-
-    const json = await res.json();
-    if (!response.Check(json)) throw new InvalidResponseError();
-
-    return json;
-  }
+  const fetcher = createFetcher(route);
 
   return (...args) => {
-    const response = useSWRMutation(pathGenerator(...args), fetcher, options);
-    const { error } = response;
-    const refresh = useRefresh();
-
-    const isUnauthorized = error instanceof UnauthorizedError;
-
-    useEffect(() => {
-      if (isUnauthorized) refresh();
-    }, [isUnauthorized, refresh]);
-
-    return response;
+    const waitUntilAuthorized = useWaitUntilAuthorized();
+    return useSWRMutation(pathGenerator(...args), fetcher, {
+      async onError(error) {
+        if (!(error instanceof UnauthorizedError)) return;
+        await waitUntilAuthorized();
+      },
+    });
   };
 }
 
