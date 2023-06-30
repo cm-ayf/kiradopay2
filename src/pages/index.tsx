@@ -1,5 +1,6 @@
 import Add from "@mui/icons-material/Add";
 import Box from "@mui/material/Box";
+import CircularProgress from "@mui/material/CircularProgress";
 import Grid from "@mui/material/Grid";
 import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
@@ -55,16 +56,20 @@ function Events() {
           <Add />
         </IconButton>
       </Box>
-      <Grid container spacing={2} sx={{ mx: 2 }}>
-        {events?.map((event) => (
-          <Grid item key={event.code}>
-            <EventCard
-              event={event}
-              onClick={() => router.push(`/${event.code}`)}
-            />
-          </Grid>
-        ))}
-      </Grid>
+      {events ? (
+        <Grid container spacing={2}>
+          {events.map((event) => (
+            <Grid item key={event.code}>
+              <EventCard
+                event={event}
+                onClick={() => router.push(`/${event.code}`)}
+              />
+            </Grid>
+          ))}
+        </Grid>
+      ) : (
+        <CircularProgress />
+      )}
       {writable && (
         <CreateEventDialog open={open} onClose={() => setOpen(false)} />
       )}
@@ -125,17 +130,21 @@ function Items() {
           <Add />
         </IconButton>
       </Box>
-      <Grid container spacing={2} sx={{ mx: 2 }}>
-        {items?.map((item) => (
-          <Grid item key={item.code}>
-            <ItemCard
-              key={item.code}
-              item={item}
-              {...(writable ? { onClick: () => setItem(item) } : {})}
-            />
-          </Grid>
-        ))}
-      </Grid>
+      {items ? (
+        <Grid container spacing={2}>
+          {items.map((item) => (
+            <Grid item key={item.code}>
+              <ItemCard
+                key={item.code}
+                item={item}
+                {...(writable ? { onClick: () => setItem(item) } : {})}
+              />
+            </Grid>
+          ))}
+        </Grid>
+      ) : (
+        <CircularProgress />
+      )}
       {writable && (
         <CreateItemDialog open={open} onClose={() => setOpen(false)} />
       )}

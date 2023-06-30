@@ -6,6 +6,7 @@ import CardActions from "@mui/material/CardActions";
 import CardContent from "@mui/material/CardContent";
 import CardMedia from "@mui/material/CardMedia";
 import Checkbox from "@mui/material/Checkbox";
+import CircularProgress from "@mui/material/CircularProgress";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Grid from "@mui/material/Grid";
 import Paper from "@mui/material/Paper";
@@ -108,17 +109,21 @@ function Register({ eventcode }: { eventcode: string }) {
         event && <Bottom event={event} state={state} dispatch={dispatch} />
       }
     >
-      <Grid container spacing={2}>
-        {event?.items.map((item) => (
-          <Grid item xs={12} md={6} xl={4} key={item.code}>
-            <ItemPanel
-              item={item}
-              record={state[item.code]}
-              dispatch={dispatch}
-            />
-          </Grid>
-        ))}
-      </Grid>
+      {event ? (
+        <Grid container spacing={2}>
+          {event.items.map((item) => (
+            <Grid item xs={12} md={6} xl={4} key={item.code}>
+              <ItemPanel
+                item={item}
+                record={state[item.code]}
+                dispatch={dispatch}
+              />
+            </Grid>
+          ))}
+        </Grid>
+      ) : (
+        <CircularProgress />
+      )}
     </Layout>
   );
 }

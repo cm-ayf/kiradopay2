@@ -2,6 +2,7 @@ import Edit from "@mui/icons-material/Edit";
 import LoadingButton from "@mui/lab/LoadingButton";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import CircularProgress from "@mui/material/CircularProgress";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
@@ -69,7 +70,7 @@ function About({ eventcode }: { eventcode: string }) {
 
   const [open, setOpen] = useState(false);
 
-  if (!event) return null;
+  if (!event) return <CircularProgress />;
   return (
     <>
       <Box sx={{ my: 2, display: "flex", flexDirection: "row", columnGap: 2 }}>
