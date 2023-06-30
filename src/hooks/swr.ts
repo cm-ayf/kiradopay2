@@ -89,7 +89,7 @@ export function createFetcher<R extends Route>(route: R): Fetcher<R> {
 
 function createUseRoute<R extends GetRoute>(
   route: R,
-  config?: SWRConfiguration<Route.Response<R>, any>
+  config?: SWRConfiguration<Route.Response<R>>
 ): UseRoute<R> {
   const pathGenerator = createPathGenerator(route);
   const fetcher = createFetcher(route);
@@ -98,7 +98,7 @@ function createUseRoute<R extends GetRoute>(
     const waitUntilAuthorized = useWaitUntilAuthorized();
     return useSWR(pathGenerator(...args), fetcher, {
       ...config,
-      async onError(error, key) {
+      async onError(error: unknown, key: string) {
         if (!(error instanceof UnauthorizedError)) return;
         const authorized = await waitUntilAuthorized();
         if (!authorized) return;
@@ -110,15 +110,15 @@ function createUseRoute<R extends GetRoute>(
 
 type UseRouteMutation<R extends Route> = (
   ...args: ParamsArg<Route.Params<R>>
-) => SWRMutationResponse<Route.Response<R>, any, Route.Body<R>>;
+) => SWRMutationResponse<Route.Response<R>, any, string, Route.Body<R>>;
 
 function createUseRouteMutation<R extends Route>(
   route: R,
   config?: SWRMutationConfiguration<
     Route.Response<R>,
     any,
-    Route.Body<R>,
-    string
+    string,
+    Route.Body<R>
   >
 ): UseRouteMutation<R> {
   const pathGenerator = createPathGenerator(route);
