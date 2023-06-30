@@ -1,9 +1,12 @@
 import type { Static } from "@sinclair/typebox";
 import { TypeCompiler } from "@sinclair/typebox/compiler";
 import useSWR, { mutate } from "swr";
-import type { SWRResponse } from "swr";
+import type { SWRResponse, SWRConfiguration } from "swr";
 import useSWRMutation from "swr/mutation";
-import type { SWRMutationResponse } from "swr/mutation";
+import type {
+  SWRMutationResponse,
+  SWRMutationConfiguration,
+} from "swr/mutation";
 import { useWaitUntilAuthorized } from "@/hooks/UserState";
 import {
   createEvent,
@@ -84,13 +87,17 @@ export function createFetcher<R extends Route>(route: R): Fetcher<R> {
   };
 }
 
-function createUseRoute<R extends GetRoute>(route: R): UseRoute<R> {
+function createUseRoute<R extends GetRoute>(
+  route: R,
+  config?: SWRConfiguration<Route.Response<R>, any>
+): UseRoute<R> {
   const pathGenerator = createPathGenerator(route);
   const fetcher = createFetcher(route);
 
   return (...args) => {
     const waitUntilAuthorized = useWaitUntilAuthorized();
     return useSWR(pathGenerator(...args), fetcher, {
+      ...config,
       async onError(error, key) {
         if (!(error instanceof UnauthorizedError)) return;
         const authorized = await waitUntilAuthorized();
@@ -106,7 +113,13 @@ type UseRouteMutation<R extends Route> = (
 ) => SWRMutationResponse<Route.Response<R>, any, Route.Body<R>>;
 
 function createUseRouteMutation<R extends Route>(
-  route: R
+  route: R,
+  config?: SWRMutationConfiguration<
+    Route.Response<R>,
+    any,
+    Route.Body<R>,
+    string
+  >
 ): UseRouteMutation<R> {
   const pathGenerator = createPathGenerator(route);
   const fetcher = createFetcher(route);
@@ -114,6 +127,7 @@ function createUseRouteMutation<R extends Route>(
   return (...args) => {
     const waitUntilAuthorized = useWaitUntilAuthorized();
     return useSWRMutation(pathGenerator(...args), fetcher, {
+      ...config,
       async onError(error) {
         if (!(error instanceof UnauthorizedError)) return;
         await waitUntilAuthorized();
@@ -125,7 +139,9 @@ function createUseRouteMutation<R extends Route>(
 export const useItems = createUseRoute(readItems);
 export const useEvents = createUseRoute(readEvents);
 export const useEvent = createUseRoute(readEvent);
-export const useReceipts = createUseRoute(readReceipts);
+export const useReceipts = createUseRoute(readReceipts, {
+  refreshInterval: 10000,
+});
 
 export function useTitle(eventcode: string) {
   const { data: event } = useEvent({ eventcode });
