@@ -65,7 +65,10 @@ const readEventsHandler = createHandler(readEvents, async (req, res) => {
     return;
   }
 
-  const events = await prisma.event.findMany({ include: eventInclude });
+  const events = await prisma.event.findMany({
+    include: eventInclude,
+    orderBy: { date: "desc" },
+  });
 
   res.status(200).json(events.map(toEvent));
 });
