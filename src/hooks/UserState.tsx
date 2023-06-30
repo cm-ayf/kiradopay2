@@ -5,92 +5,123 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
+  useState,
 } from "react";
+import useSWR from "swr";
+import useSWRMutation from "swr/mutation";
 import { useAlert } from "../components/Alert";
-import { createUseRoute, UnauthorizedError } from "@/hooks/swr";
-import { readUsersMe, Token } from "@/types/user";
+import { createFetcher, UnauthorizedError } from "@/hooks/swr";
+import { readUsersMe, refreshInPlace, Token } from "@/types/user";
 
 export type UserState =
-  | { type: "authorized" | "refreshing"; user: Token }
-  | { type: "unauthorized" | "loading" | "error" };
+  | { type: "authorized"; user: Token }
+  | { type: "refreshing"; user?: Token }
+  | { type: "unauthorized" | "loading" | "error"; user?: never };
 
 interface UserStateContext {
   state: UserState;
-  refresh: () => Promise<void>;
+  waitUntilAuthorized: () => Promise<boolean>;
 }
 
 const UserStateContext = createContext<UserStateContext>({
   state: { type: "loading" },
-  refresh: async () => {},
+  waitUntilAuthorized: () => Promise.reject(),
 });
 
-const useUser = createUseRoute(readUsersMe, { refreshInterval: 10000 });
+const fetcher = createFetcher(readUsersMe);
+const refresher = createFetcher(refreshInPlace);
 
 export function UserStateProvider({ children }: PropsWithChildren) {
-  const { data: user, error, mutate } = useUser();
-  const { dispatch, error: errorAlert } = useAlert();
+  const [state, setState] = useState<UserState>({ type: "loading" });
+  const inner = useRef<UserState["type"]>("loading");
 
-  /**
-   * ```plaintext
-   * user\error || undefined  | UnauthorizedError | else
-   * ===========++============+===================+=======
-   *  undefined || loading    | unauthorized      | error
-   * -----------++------------+-------------------+-------
-   *      Token || authorized | refreshing        | error
-   * ```
-   */
-  const state: UserState = useMemo(
-    () =>
-      !error
-        ? user
-          ? { type: "authorized", user }
-          : { type: "loading" }
-        : error instanceof UnauthorizedError
-        ? user
-          ? { type: "refreshing", user }
-          : { type: "unauthorized" }
-        : { type: "error" },
+  const { error } = useAlert();
 
-    [user, error]
-  );
-
-  const url = useMemo(
-    () => globalThis.location && new URL(globalThis.location.href),
-    []
-  );
-  const hasRedirectError = url?.searchParams.get("error") !== null;
-
-  const refresh = useCallback(async () => {
-    const response = await fetch("/api/auth/refresh", { method: "POST" });
-    if (response.ok) {
-      await mutate();
-    } else {
-      await mutate(undefined);
-      if (response.status === 401 && !hasRedirectError)
-        dispatch("unauthorized");
-    }
-  }, [mutate, dispatch, hasRedirectError]);
-
-  useEffect(() => {
-    if (state.type === "refreshing") refresh();
-  }, [state, refresh]);
-
-  useEffect(() => {
-    if (hasRedirectError) {
-      const description = url.searchParams.get("error_description");
-      console.log(description);
-      if (description?.includes("role")) {
-        errorAlert("必要なロールが付与されていません");
-      } else if (description?.includes("Unknown Guild")) {
-        errorAlert("サーバーに参加していません");
-      } else {
-        errorAlert("ログインに失敗しました");
+  const onError = useCallback(
+    async (e: unknown) => {
+      if (!(e instanceof UnauthorizedError)) {
+        setState({ type: "error" });
+        inner.current = "error";
+        return;
       }
+
+      switch (inner.current) {
+        case "unauthorized":
+          return;
+        case "refreshing":
+          setState({ type: "unauthorized" });
+          inner.current = "unauthorized";
+          error("サインインしてください");
+          return;
+        default:
+          setState((state) => ({ ...state, type: "refreshing" }));
+          inner.current = "refreshing";
+          await trigger(null).catch(() => {});
+          return;
+      }
+    },
+    // `trigger` must be declared after `onError`
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [error]
+  );
+
+  const { mutate } = useSWR(readUsersMe.path, fetcher, {
+    refreshInterval: 10000,
+    onSuccess: (user) => {
+      setState({ type: "authorized", user });
+      inner.current = "authorized";
+      resolves.current.forEach((resolve) => resolve(true));
+      resolves.current = [];
+    },
+    onError,
+  });
+  const { trigger } = useSWRMutation(refreshInPlace.path, refresher, {
+    onSuccess: useCallback(() => mutate(), [mutate]),
+    onError,
+  });
+
+  const url = useMemo(() => global.location && new URL(location.href), []);
+
+  useEffect(() => {
+    if (!url?.searchParams.get("error")) return;
+    setState({ type: "error" });
+    inner.current = "error";
+
+    const description = url.searchParams.get("error_description");
+    console.error(description);
+
+    const message = description?.includes("Unknown Guild")
+      ? "サーバーに参加していません"
+      : "ログインに失敗しました";
+    error(message);
+  }, [url, error]);
+
+  const resolves = useRef<((success: boolean) => void)[]>([]);
+  const waitUntilAuthorized = useCallback(async () => {
+    switch (inner.current) {
+      case "unauthorized":
+      case "error":
+        return false;
+      case "authorized":
+        try {
+          setState((state) => ({ ...state, type: "refreshing" }));
+          inner.current = "refreshing";
+          await trigger(null);
+          return true;
+        } catch {
+          return false;
+        }
+      case "refreshing":
+      case "loading":
+        return new Promise<boolean>((resolve) =>
+          resolves.current.push(resolve)
+        );
     }
-  }, [url, hasRedirectError, errorAlert]);
+  }, [trigger]);
 
   return (
-    <UserStateContext.Provider value={{ state, refresh }}>
+    <UserStateContext.Provider value={{ state: state, waitUntilAuthorized }}>
       {children}
     </UserStateContext.Provider>
   );
@@ -109,7 +140,7 @@ export function useWritable() {
   );
 }
 
-export function useRefresh() {
-  const { refresh } = useContext(UserStateContext);
-  return refresh;
+export function useWaitUntilAuthorized() {
+  const { waitUntilAuthorized } = useContext(UserStateContext);
+  return waitUntilAuthorized;
 }

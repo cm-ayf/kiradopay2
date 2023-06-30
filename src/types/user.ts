@@ -18,4 +18,10 @@ export const readUsersMe = {
   response: Token,
 } satisfies Route;
 
+export const refreshInPlace = {
+  method: "POST",
+  path: "/api/auth/refresh",
+  response: Type.Unknown(),
+} satisfies Route;
+
 export type Scope = "read" | "write";
