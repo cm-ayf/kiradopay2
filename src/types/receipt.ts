@@ -23,6 +23,7 @@ export type Receipt = Static<typeof Receipt>;
 export const createReceipts = {
   method: "POST",
   path: "/api/events/[eventcode]/receipts",
+  scopes: ["write"],
   params: Type.Object({
     eventcode: Type.String(),
   }),
@@ -33,6 +34,7 @@ export const createReceipts = {
 export const readReceipts = {
   method: "GET",
   path: "/api/events/[eventcode]/receipts",
+  scopes: ["read"],
   params: Type.Object({
     eventcode: Type.String(),
   }),
@@ -42,6 +44,7 @@ export const readReceipts = {
 export const exportReceipts = {
   method: "GET",
   path: "/api/events/[eventcode]/receipts/export",
+  scopes: ["read"],
   params: Type.Object({
     eventcode: Type.String(),
   }),
@@ -51,6 +54,7 @@ export const exportReceipts = {
 export const deleteReceipts = {
   method: "POST",
   path: "/api/events/[eventcode]/receipts/delete",
+  scopes: ["write"],
   params: Type.Object({
     eventcode: Type.String(),
   }),

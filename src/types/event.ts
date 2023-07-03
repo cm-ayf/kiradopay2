@@ -30,12 +30,14 @@ export type UpdateEvent = Static<typeof UpdateEvent>;
 export const readEvents = {
   method: "GET",
   path: "/api/events",
+  scopes: ["read"],
   response: Type.Array(Event),
 } satisfies Route;
 
 export const createEvent = {
   method: "POST",
   path: "/api/events",
+  scopes: ["write"],
   body: CreateEvent,
   response: Event,
 } satisfies Route;
@@ -43,6 +45,7 @@ export const createEvent = {
 export const readEvent = {
   method: "GET",
   path: "/api/events/[eventcode]",
+  scopes: ["read"],
   params: Type.Object({ eventcode: Code }),
   response: Event,
 } satisfies Route;
@@ -50,6 +53,7 @@ export const readEvent = {
 export const updateEvent = {
   method: "PATCH",
   path: "/api/events/[eventcode]",
+  scopes: ["read", "write"],
   params: Type.Object({ eventcode: Code }),
   body: UpdateEvent,
   response: Event,
@@ -58,6 +62,7 @@ export const updateEvent = {
 export const deleteEvent = {
   method: "DELETE",
   path: "/api/events/[eventcode]",
+  scopes: ["write"],
   params: Type.Object({ eventcode: Code }),
   response: Type.Null(),
 } satisfies Route;

@@ -1,5 +1,4 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { verify } from "@/lib/auth";
 import { createHandler } from "@/lib/handler";
 import { prisma } from "@/lib/prisma";
 import { createReceipts, readReceipts } from "@/types/receipt";
@@ -25,12 +24,6 @@ export default async function handler(
 }
 
 const readReceiptsHandler = createHandler(readReceipts, async (req, res) => {
-  const token = verify(req, ["read"]);
-  if (!token) {
-    res.status(401).end();
-    return;
-  }
-
   const receipts = await prisma.receipt.findMany({
     where: { eventcode: req.query.eventcode },
     include: { records: true },
@@ -41,13 +34,7 @@ const readReceiptsHandler = createHandler(readReceipts, async (req, res) => {
 
 const createReceiptsHandler = createHandler(
   createReceipts,
-  async (req, res) => {
-    const token = verify(req, ["write"]);
-    if (!token) {
-      res.status(401).end();
-      return;
-    }
-
+  async (req, res, token) => {
     const { eventcode } = req.query;
     const receipts = await prisma.$transaction(
       req.body.map(({ records, ...rest }) =>

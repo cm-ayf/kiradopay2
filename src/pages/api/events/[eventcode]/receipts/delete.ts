@@ -1,5 +1,4 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { verify } from "@/lib/auth";
 import { createHandler } from "@/lib/handler";
 import { prisma } from "@/lib/prisma";
 import { deleteReceipts } from "@/types/receipt";
@@ -25,12 +24,6 @@ export default async function handler(
 const deleteReceiptsHandler = createHandler(
   deleteReceipts,
   async (req, res) => {
-    const token = verify(req, ["write"]);
-    if (!token) {
-      res.status(401).end();
-      return;
-    }
-
     const { eventcode } = req.query;
     const ids = req.body;
     const [, { count }] = await prisma.$transaction([

@@ -1,5 +1,4 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { verify } from "@/lib/auth";
 import { createHandler } from "@/lib/handler";
 import { readUsersMe } from "@/types/user";
 
@@ -20,12 +19,9 @@ export default async function handler(
   }
 }
 
-const readUsersMeHandler = createHandler(readUsersMe, async (req, res) => {
-  const token = verify(req);
-  if (!token) {
-    res.status(401).end();
-    return;
+const readUsersMeHandler = createHandler(
+  readUsersMe,
+  async (_req, res, token) => {
+    res.status(200).json(token);
   }
-
-  res.status(200).json(token);
-});
+);

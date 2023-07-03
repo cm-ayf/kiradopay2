@@ -1,5 +1,4 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { verify } from "@/lib/auth";
 import { createHandler } from "@/lib/handler";
 import { prisma } from "@/lib/prisma";
 import { deleteItem, updateItem } from "@/types/item";
@@ -26,12 +25,6 @@ export default async function handler(
 }
 
 const updateItemHandler = createHandler(updateItem, async (req, res) => {
-  const token = verify(req, ["read", "write"]);
-  if (!token) {
-    res.status(401).end();
-    return;
-  }
-
   const item = await prisma.item.update({
     where: { code: req.query.itemcode },
     data: req.body,
@@ -41,12 +34,6 @@ const updateItemHandler = createHandler(updateItem, async (req, res) => {
 });
 
 const deleteItemHandler = createHandler(deleteItem, async (req, res) => {
-  const token = verify(req, ["write"]);
-  if (!token) {
-    res.status(401).end();
-    return;
-  }
-
   await prisma.item.delete({
     where: { code: req.query.itemcode },
   });

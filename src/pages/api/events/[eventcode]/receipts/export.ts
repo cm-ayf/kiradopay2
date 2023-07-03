@@ -1,6 +1,5 @@
 import { stringify } from "csv-stringify";
 import type { NextApiRequest, NextApiResponse } from "next";
-import { verify } from "@/lib/auth";
 import { createHandler } from "@/lib/handler";
 import { prisma } from "@/lib/prisma";
 import { exportReceipts } from "@/types/receipt";
@@ -23,12 +22,6 @@ export default async function handler(
 }
 
 const readReceiptsHandler = createHandler(exportReceipts, async (req, res) => {
-  const token = verify(req, ["read"]);
-  if (!token) {
-    res.status(401).end();
-    return;
-  }
-
   const { eventcode } = req.query;
   const [displays, receipts] = await prisma.$transaction([
     prisma.display.findMany({

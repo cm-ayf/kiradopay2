@@ -21,12 +21,14 @@ export type UpdateItem = Static<typeof UpdateItem>;
 export const readItems = {
   method: "GET",
   path: "/api/items",
+  scopes: ["read"],
   response: Type.Array(Item),
 } satisfies Route;
 
 export const createItem = {
   method: "POST",
   path: "/api/items",
+  scopes: ["write"],
   body: CreateItem,
   response: Item,
 } satisfies Route;
@@ -34,6 +36,7 @@ export const createItem = {
 export const updateItem = {
   method: "PATCH",
   path: "/api/items/[itemcode]",
+  scopes: ["read", "write"],
   params: Type.Object({ itemcode: Code }),
   body: UpdateItem,
   response: Item,
@@ -42,6 +45,7 @@ export const updateItem = {
 export const deleteItem = {
   method: "DELETE",
   path: "/api/items/[itemcode]",
+  scopes: ["write"],
   params: Type.Object({ itemcode: Code }),
   response: Type.Null(),
 } satisfies Route;
