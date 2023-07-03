@@ -1,6 +1,8 @@
 import { TypeCompiler } from "@sinclair/typebox/compiler";
 import type { NextApiRequest, NextApiResponse } from "next";
 import type { Route } from "../types/route";
+import { verify } from "./auth";
+import { Token } from "@/types/user";
 
 export interface RouteRequest<R extends Route> extends NextApiRequest {
   method: R["method"];
@@ -13,7 +15,11 @@ export interface RouteResponse<R extends Route>
 
 export function createHandler<R extends Route>(
   route: R,
-  handler: (req: RouteRequest<R>, res: RouteResponse<R>) => Promise<void>
+  handler: (
+    req: RouteRequest<R>,
+    res: RouteResponse<R>,
+    token: Token
+  ) => Promise<void>
 ) {
   const params = route.params && TypeCompiler.Compile(route.params);
   const body = route.body && TypeCompiler.Compile(route.body);
@@ -29,6 +35,12 @@ export function createHandler<R extends Route>(
       return;
     }
 
+    const token = verify(req, route.scopes);
+    if (!token) {
+      res.status(401).end();
+      return;
+    }
+
     if (body && !body.Check(req.body)) {
       console.log(
         [...body.Errors(req.body)]
@@ -40,7 +52,7 @@ export function createHandler<R extends Route>(
     }
 
     try {
-      await handler(req as RouteRequest<R>, res as RouteResponse<R>);
+      await handler(req as RouteRequest<R>, res as RouteResponse<R>, token);
     } catch (error: any) {
       // https://www.prisma.io/docs/reference/api-reference/error-reference#prisma-client-query-engine
       switch (error.code) {

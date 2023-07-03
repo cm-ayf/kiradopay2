@@ -1,10 +1,12 @@
 import type { Static, TObject, TSchema, TString } from "@sinclair/typebox";
+import { Scope } from "./user";
 
 export type TParams = TObject<{ [param: string]: TString }>;
 
 export interface Route {
   method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   path: string;
+  scopes?: Scope[];
   params?: TParams;
   body?: TSchema;
   response: TSchema;
