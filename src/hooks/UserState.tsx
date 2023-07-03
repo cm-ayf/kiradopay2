@@ -11,7 +11,7 @@ import {
 import useSWR from "swr";
 import useSWRMutation from "swr/mutation";
 import { useAlert } from "../components/Alert";
-import { createFetcher, UnauthorizedError } from "@/hooks/swr";
+import { createFetcher, RouteError } from "@/hooks/swr";
 import { readUsersMe, refreshInPlace, Token } from "@/types/user";
 
 export type UserState =
@@ -39,8 +39,8 @@ export function UserStateProvider({ children }: PropsWithChildren) {
   const { error } = useAlert();
 
   const onError = useCallback(
-    async (e: unknown) => {
-      if (!(e instanceof UnauthorizedError)) {
+    async (e: RouteError) => {
+      if (e.code !== "UNAUTHORIZED") {
         setState({ type: "error" });
         inner.current = "error";
         return;

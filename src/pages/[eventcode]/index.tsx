@@ -23,7 +23,7 @@ import ItemCard from "@/components/ItemCard";
 import Layout from "@/components/Layout";
 import { useWritable } from "@/hooks/UserState";
 import {
-  ConflictError,
+  RouteError,
   useDeleteEvent,
   useEvent,
   useItems,
@@ -128,7 +128,8 @@ function UpdateEventDialog({
       onClose();
       if (body.code) router.replace(`/${body.code}`);
     } catch (e) {
-      if (e instanceof ConflictError) error("イベントコードが重複しています");
+      if ((e as RouteError)?.code === "CONFLICT")
+        error("イベントコードが重複しています");
       else error("イベントの更新に失敗しました");
       throw e;
     }
@@ -140,7 +141,7 @@ function UpdateEventDialog({
       router.push("/");
     } catch (e) {
       console.error(e);
-      if (e instanceof ConflictError)
+      if ((e as RouteError)?.code === "CONFLICT")
         error("このイベントにはすでに購入履歴があります");
       error("イベントの削除に失敗しました");
       throw e;
@@ -379,7 +380,7 @@ function DisplayDialog({
               success("お品書きを更新しました");
               onClose();
             } catch (e) {
-              if (e instanceof ConflictError)
+              if ((e as RouteError)?.code === "CONFLICT")
                 error("この商品はすでに購入されています");
               else error("お品書きの更新に失敗しました");
               throw e;

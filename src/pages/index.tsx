@@ -14,7 +14,7 @@ import ItemDialog from "@/components/ItemDialog";
 import Layout from "@/components/Layout";
 import { useWritable } from "@/hooks/UserState";
 import {
-  ConflictError,
+  RouteError,
   useCreateEvent,
   useCreateItem,
   useDeleteItem,
@@ -93,7 +93,8 @@ function CreateEventDialog({
       await trigger(body);
       router.push(`/${body.code}`);
     } catch (e) {
-      if (e instanceof ConflictError) error("イベントコードが重複しています");
+      if ((e as RouteError)?.code === "CONFLICT")
+        error("イベントコードが重複しています");
       else error("イベントの作成に失敗しました");
       throw e;
     }
@@ -171,7 +172,8 @@ function CreateItemDialog({
       success("商品を作成しました");
       onClose();
     } catch (e) {
-      if (e instanceof ConflictError) error("商品コードが重複しています");
+      if ((e as RouteError)?.code === "CONFLICT")
+        error("商品コードが重複しています");
       else error("商品の作成に失敗しました");
       throw e;
     }
@@ -211,7 +213,8 @@ function MutateItemDialog({
       success("商品を更新しました");
       onClose();
     } catch (e) {
-      if (e instanceof ConflictError) error("商品コードが重複しています");
+      if ((e as RouteError)?.code === "CONFLICT")
+        error("商品コードが重複しています");
       else error("商品の更新に失敗しました");
       throw e;
     }
@@ -223,7 +226,7 @@ function MutateItemDialog({
       success("商品を削除しました");
       onClose();
     } catch (e) {
-      if (e instanceof ConflictError)
+      if ((e as RouteError)?.code === "CONFLICT")
         error("この商品は1つ以上のイベントのお品書きにあります");
       else error("商品の削除に失敗しました");
       throw e;
