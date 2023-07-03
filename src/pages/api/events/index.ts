@@ -1,5 +1,4 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { verify } from "@/lib/auth";
 import { createHandler } from "@/lib/handler";
 import { eventInclude, prisma, toEvent } from "@/lib/prisma";
 import { createEvent, readEvents } from "@/types/event";
@@ -25,12 +24,6 @@ export default async function handler(
 }
 
 const createEventHandler = createHandler(createEvent, async (req, res) => {
-  const token = verify(req, ["write"]);
-  if (!token) {
-    res.status(401).end();
-    return;
-  }
-
   if (req.body.calculator) {
     try {
       new Function("state", req.body.calculator);
@@ -58,13 +51,7 @@ const createEventHandler = createHandler(createEvent, async (req, res) => {
   res.status(200).json(toEvent(event));
 });
 
-const readEventsHandler = createHandler(readEvents, async (req, res) => {
-  const token = verify(req, ["read"]);
-  if (!token) {
-    res.status(401).end();
-    return;
-  }
-
+const readEventsHandler = createHandler(readEvents, async (_req, res) => {
   const events = await prisma.event.findMany({
     include: eventInclude,
     orderBy: { date: "desc" },

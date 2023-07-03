@@ -1,5 +1,4 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { verify } from "@/lib/auth";
 import { createHandler } from "@/lib/handler";
 import { prisma } from "@/lib/prisma";
 import { createItem, readItems } from "@/types/item";
@@ -25,12 +24,6 @@ export default async function handler(
 }
 
 const createItemHandler = createHandler(createItem, async (req, res) => {
-  const token = verify(req, ["write"]);
-  if (!token) {
-    res.status(401).end();
-    return;
-  }
-
   const item = await prisma.item.create({
     data: req.body,
   });
@@ -38,13 +31,7 @@ const createItemHandler = createHandler(createItem, async (req, res) => {
   res.status(200).json(item);
 });
 
-const readItemsHandler = createHandler(readItems, async (req, res) => {
-  const token = verify(req, ["read"]);
-  if (!token) {
-    res.status(401).end();
-    return;
-  }
-
+const readItemsHandler = createHandler(readItems, async (_req, res) => {
   const items = await prisma.item.findMany({
     orderBy: { code: "asc" },
   });

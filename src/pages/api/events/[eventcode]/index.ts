@@ -1,5 +1,4 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { verify } from "@/lib/auth";
 import { createHandler } from "@/lib/handler";
 import { eventInclude, prisma, toEvent } from "@/lib/prisma";
 import { deleteEvent, readEvent, updateEvent } from "@/types/event";
@@ -28,12 +27,6 @@ export default async function handler(
 }
 
 const readEventHandler = createHandler(readEvent, async (req, res) => {
-  const token = verify(req, ["read"]);
-  if (!token) {
-    res.status(401).end();
-    return;
-  }
-
   const event = await prisma.event.findUniqueOrThrow({
     where: { code: req.query.eventcode },
     include: eventInclude,
@@ -43,12 +36,6 @@ const readEventHandler = createHandler(readEvent, async (req, res) => {
 });
 
 const updateEventHandler = createHandler(updateEvent, async (req, res) => {
-  const token = verify(req, ["read", "write"]);
-  if (!token) {
-    res.status(401).end();
-    return;
-  }
-
   if (req.body.calculator) {
     try {
       new Function("state", req.body.calculator);
@@ -82,12 +69,6 @@ const updateEventHandler = createHandler(updateEvent, async (req, res) => {
 });
 
 const deleteEventHandler = createHandler(deleteEvent, async (req, res) => {
-  const token = verify(req, ["write"]);
-  if (!token) {
-    res.status(401).end();
-    return;
-  }
-
   await prisma.$transaction([
     prisma.display.deleteMany({
       where: { eventcode: req.query.eventcode },
