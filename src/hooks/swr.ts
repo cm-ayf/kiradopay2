@@ -20,27 +20,36 @@ import { createReceipts, deleteReceipts, readReceipts } from "@/types/receipt";
 import type { Route, TParams } from "@/types/route";
 
 export class UnauthorizedError extends Error {
-  code = "UNAUTHORIZED";
+  code = "UNAUTHORIZED" as const;
 }
 
-export class InvalidResponseError extends Error {
-  code = "INVALID_RESPONSE";
+export class ServerError extends Error {
+  code = "SERVER_ERROR" as const;
 }
 
 export class NotFoundError extends Error {
-  code = "NOT_FOUND";
+  code = "NOT_FOUND" as const;
 }
 
 export class ConflictError extends Error {
-  code = "CONFLICT";
+  code = "CONFLICT" as const;
 }
+
+export type RouteError =
+  | UnauthorizedError
+  | ServerError
+  | NotFoundError
+  | ConflictError;
 
 type ParamsArg<P> = Static<TParams> extends P ? [params?: P] : [params: P];
 
 type GetRoute = Route & { method: "GET" };
 
 type UseRoute<R extends GetRoute> = {
-  (...args: ParamsArg<Route.Params<R>>): SWRResponse<Route.Response<R>, Error>;
+  (...args: ParamsArg<Route.Params<R>>): SWRResponse<
+    Route.Response<R>,
+    RouteError
+  >;
 };
 
 function createPathGenerator<R extends Route>(route: R) {
@@ -65,13 +74,17 @@ export function createFetcher<R extends Route>(route: R): Fetcher<R> {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(options.arg),
       }),
+    }).catch(() => {
+      throw new ServerError("Network error");
     });
 
     switch (res.status) {
       case 200:
       case 201:
-        const json = await res.json();
-        if (!response.Check(json)) throw new InvalidResponseError();
+        const json = await res.json().catch(() => {
+          throw new ServerError("Invalid json");
+        });
+        if (!response.Check(json)) throw new ServerError("Invalid response");
         return json;
       case 204:
         return;
@@ -82,14 +95,14 @@ export function createFetcher<R extends Route>(route: R): Fetcher<R> {
       case 409:
         throw new ConflictError();
       default:
-        throw new Error(res.statusText);
+        throw new ServerError(res.statusText);
     }
   };
 }
 
 function createUseRoute<R extends GetRoute>(
   route: R,
-  config?: SWRConfiguration<Route.Response<R>>
+  config?: SWRConfiguration<Route.Response<R>, RouteError>
 ): UseRoute<R> {
   const pathGenerator = createPathGenerator(route);
   const fetcher = createFetcher(route);
@@ -98,8 +111,8 @@ function createUseRoute<R extends GetRoute>(
     const waitUntilAuthorized = useWaitUntilAuthorized();
     return useSWR(pathGenerator(...args), fetcher, {
       ...config,
-      async onError(error: unknown, key: string) {
-        if (!(error instanceof UnauthorizedError)) return;
+      async onError(error: RouteError, key: string) {
+        if (error.code !== "UNAUTHORIZED") return;
         const authorized = await waitUntilAuthorized();
         if (!authorized) return;
         mutate(key).catch(() => {});
@@ -110,13 +123,13 @@ function createUseRoute<R extends GetRoute>(
 
 type UseRouteMutation<R extends Route> = (
   ...args: ParamsArg<Route.Params<R>>
-) => SWRMutationResponse<Route.Response<R>, any, string, Route.Body<R>>;
+) => SWRMutationResponse<Route.Response<R>, RouteError, string, Route.Body<R>>;
 
 function createUseRouteMutation<R extends Route>(
   route: R,
   config?: SWRMutationConfiguration<
     Route.Response<R>,
-    any,
+    RouteError,
     string,
     Route.Body<R>
   >
@@ -129,7 +142,7 @@ function createUseRouteMutation<R extends Route>(
     return useSWRMutation(pathGenerator(...args), fetcher, {
       ...config,
       async onError(error) {
-        if (!(error instanceof UnauthorizedError)) return;
+        if (error.code !== "UNAUTHORIZED") return;
         await waitUntilAuthorized();
       },
     });
