@@ -13,27 +13,20 @@ export const Date = Type.Union([
 export const Uri = Type.String({ format: "uri" });
 export const Calculator = Type.String({ format: "calculator" });
 
-declare global {
-  var formatSet: boolean;
-}
-
-if (!global.formatSet) {
-  global.formatSet = true;
-  TypeSystem.Format("date-time", (value) => isFinite(global.Date.parse(value)));
-  TypeSystem.Format("uri", (value) => {
-    try {
-      new URL(value);
-      return true;
-    } catch {
-      return false;
-    }
-  });
-  TypeSystem.Format("calculator", (value) => {
-    try {
-      new Function("state", value);
-      return true;
-    } catch (error) {
-      return false;
-    }
-  });
-}
+TypeSystem.Format("date-time", (value) => isFinite(global.Date.parse(value)));
+TypeSystem.Format("uri", (value) => {
+  try {
+    new URL(value);
+    return true;
+  } catch {
+    return false;
+  }
+});
+TypeSystem.Format("calculator", (value) => {
+  try {
+    new Function("state", value);
+    return true;
+  } catch (error) {
+    return false;
+  }
+});

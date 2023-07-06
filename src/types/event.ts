@@ -17,7 +17,7 @@ export const CreateEvent = Type.Object({
   code: Code,
   name: Name,
   date: Date,
-  calculator: Type.Optional(Type.String()),
+  calculator: Type.Optional(Calculator),
   items: Type.Optional(Type.Array(Code)),
 });
 
