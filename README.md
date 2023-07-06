@@ -51,6 +51,10 @@
 
 また，[Prismaスキーマ](prisma/schema.prisma)を変更することで，他のデータベースでも動作すると考えられます．スキーマはVercel Postgres向けに調整されていることに注意してください．
 
+#### マイグレーション
+
+マイグレーションは自動化されていません．適宜`npm run migrate:deploy`を実行してください．詳しくは[公式ドキュメント](https://www.prisma.io/docs/concepts/components/prisma-migrate)を参照してください．
+
 ### 認証
 
 認証には[Discord](https://discord.com/)を利用します．  
@@ -72,14 +76,15 @@ Vercel上で設定し，[Vercel CLI](https://vercel.com/docs/cli)でダウンロ
 - `JWT_SECRET`：JWTの署名・検証に利用する共通鍵です．
   - `crypto.randomBytes(64).toString('base64')`などとして生成してください．
 - `DISCORD_GUILD_ID`：サインインを許可するDiscordサーバーのIDです．
-- `DISCORD_ROLE_ID`（省略可）：サインインを許可するロールのIDです．
-  - 省略した場合，そのサーバーの全てのユーザーがサインインできます．
+- `DISCORD_ROLE_ID`（省略可）：
+  - 設定した場合，そのロールを持っている人は`read write`権限を与えられ，持っていない人は`read`権限を与えられます．
+  - 省略した場合，そのサーバーの全てのユーザーが`read write`権限を与えられます．
 
 ### ダウンロードする
 
 - `vercel login`が完了していることを確認してください．
 - `vercel link`を実行してください．
-- `vercel env pull`を実行してください．
+- `vercel env pull .env`を実行してください．
 
 ## ライセンス
 
