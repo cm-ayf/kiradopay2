@@ -1,7 +1,6 @@
 import Box from "@mui/material/Box";
 import Container from "@mui/material/Container";
-import Head from "next/head";
-import type { PropsWithChildren } from "react";
+import { type PropsWithChildren } from "react";
 import Navigation, { NavigationProps } from "./Navigation";
 
 export interface LayoutProps extends NavigationProps {
@@ -15,11 +14,6 @@ export default function Layout({
 }: PropsWithChildren<LayoutProps>) {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <Head>
-        <title>
-          {navigation.title ? `${navigation.title} | Kiradopay` : "Kiradopay"}
-        </title>
-      </Head>
       <Navigation {...navigation} />
       <Container
         sx={{

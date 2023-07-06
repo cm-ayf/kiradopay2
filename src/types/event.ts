@@ -1,5 +1,5 @@
 import { Static, Type } from "@sinclair/typebox";
-import { Code, Date, Name } from "./common";
+import { Calculator, Code, Date, Name } from "./common";
 import { Item } from "./item";
 import type { Route } from "./route";
 
@@ -7,7 +7,7 @@ export const Event = Type.Object({
   code: Code,
   name: Name,
   date: Date,
-  calculator: Type.String(),
+  calculator: Calculator,
   items: Type.Array(Item),
 });
 

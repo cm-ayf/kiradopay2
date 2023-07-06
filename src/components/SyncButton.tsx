@@ -2,9 +2,9 @@ import CloudDone from "@mui/icons-material/CloudDone";
 import CloudUpload from "@mui/icons-material/CloudUpload";
 import LoadingButton, { type LoadingButtonProps } from "@mui/lab/LoadingButton";
 import { useEffect } from "react";
-import { useIDBDeleteReceipts, useIDBReceipts } from "../hooks/idb";
-import { useCreateReceipts } from "../hooks/swr";
-import { useAlert } from "./Alert";
+import { useAlert } from "@/hooks/Alert";
+import { useIDBDeleteReceipts, useIDBReceipts } from "@/hooks/idb";
+import { useCreateReceipts } from "@/hooks/swr";
 
 interface SyncButtonProps extends LoadingButtonProps {
   eventcode: string;
