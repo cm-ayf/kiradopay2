@@ -11,6 +11,7 @@ export const Date = Type.Union([
   Type.Date(),
 ]);
 export const Uri = Type.String({ format: "uri" });
+export const Calculator = Type.String({ format: "calculator" });
 
 declare global {
   var formatSet: boolean;
@@ -24,6 +25,14 @@ if (!global.formatSet) {
       new URL(value);
       return true;
     } catch {
+      return false;
+    }
+  });
+  TypeSystem.Format("calculator", (value) => {
+    try {
+      new Function("state", value);
+      return true;
+    } catch (error) {
       return false;
     }
   });

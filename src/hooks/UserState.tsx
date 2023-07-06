@@ -1,3 +1,5 @@
+"use client";
+
 import {
   createContext,
   PropsWithChildren,
@@ -8,14 +10,14 @@ import {
   useRef,
   useState,
 } from "react";
-import { useAlert } from "../components/Alert";
+import { useAlert } from "./Alert";
 import { RouteError, useRefreshInPlace, useUsersMe } from "@/hooks/swr";
 import type { Token } from "@/types/user";
 
 export type UserState =
   | { type: "authorized"; user: Token }
-  | { type: "refreshing"; user?: Token }
-  | { type: "unauthorized" | "loading" | "error"; user?: never };
+  | { type: "refreshing" | "error"; user?: Token }
+  | { type: "unauthorized" | "loading"; user?: never };
 
 interface UserStateContext {
   state: UserState;
@@ -36,7 +38,7 @@ export function UserStateProvider({ children }: PropsWithChildren) {
   const onError = useCallback(
     async (e: RouteError) => {
       if (e.code !== "UNAUTHORIZED") {
-        setState({ type: "error" });
+        setState((state) => ({ ...state, type: "error" }));
         inner.current = "error";
         return;
       }
@@ -129,10 +131,8 @@ export function useUserState() {
 
 export function useWritable() {
   const state = useUserState();
-  return (
-    state.type === "authorized" &&
-    (state.user.scope ?? "").split(" ").includes("write")
-  );
+  if (!state.user?.scope) return false;
+  return state.user.scope.split(" ").includes("write");
 }
 
 export function useWaitUntilAuthorized() {

@@ -10,9 +10,9 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
-import { useRouter } from "next/router";
-import { useRef, useState } from "react";
-import { useUserState } from "../hooks/UserState";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import { useUserState } from "@/hooks/UserState";
 import type { Token } from "@/types/user";
 
 export interface NavigationProps {
@@ -24,6 +24,10 @@ export default function Navigation({ title, back }: NavigationProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (title) document.title = title + " | Kiradopay";
+  }, [title]);
 
   return (
     <AppBar position="static" ref={ref}>
@@ -43,7 +47,7 @@ export default function Navigation({ title, back }: NavigationProps) {
           anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
           transformOrigin={{ vertical: "top", horizontal: "right" }}
         >
-          <MenuItem onClick={() => router.push("/api/auth/signout")}>
+          <MenuItem onClick={() => (location.pathname = "/api/auth/signout")}>
             サインアウト
           </MenuItem>
         </Menu>
@@ -54,37 +58,57 @@ export default function Navigation({ title, back }: NavigationProps) {
 
 function MenuButton({ onClick }: { onClick: () => void }) {
   const state = useUserState();
-  const router = useRouter();
-  // includes auth and refreshing
-  if (state.user) {
-    return (
-      <Button
-        color="inherit"
-        onClick={onClick}
-        endIcon={<UserAvatar user={state.user} />}
-      >
-        <UserButton user={state.user} />
-      </Button>
-    );
-  }
+
   switch (state.type) {
-    case "unauthorized":
-      return (
-        <Button color="inherit" onClick={() => router.push("/api/auth/signin")}>
-          サインイン
-        </Button>
-      );
-    case "error":
-      return (
-        <Button color="inherit" disabled endIcon={<CloudOff />}>
-          接続されていません
-        </Button>
-      );
-    case "loading":
-    // refreshing without user
+    case "authorized":
+      return <UserButton user={state.user} onClick={onClick} />;
     case "refreshing":
-      return <Button color="inherit" disabled endIcon={<CircularProgress />} />;
+      return state.user ? (
+        <UserButton user={state.user} onClick={onClick} />
+      ) : (
+        <LoadingButton />
+      );
+    case "unauthorized":
+      return <SigninButton />;
+    case "error":
+      return <NoConnectionButton />;
+    case "loading":
+      return <LoadingButton />;
   }
+}
+
+function UserButton({ user, onClick }: { user: Token; onClick: () => void }) {
+  return (
+    <Button
+      color="inherit"
+      onClick={onClick}
+      endIcon={<UserAvatar user={user} />}
+    >
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "flex-start",
+          textTransform: "none",
+        }}
+      >
+        {user.nick ? (
+          <>
+            <Typography variant="body2" component="span">
+              {user.nick}
+            </Typography>
+            <Typography variant="caption" component="span">
+              {user.username}
+            </Typography>
+          </>
+        ) : (
+          <Typography variant="body2" component="span">
+            {user.username}
+          </Typography>
+        )}
+      </Box>
+    </Button>
+  );
 }
 
 function UserAvatar({ user }: { user: Token }) {
@@ -94,30 +118,25 @@ function UserAvatar({ user }: { user: Token }) {
   return <Avatar src={url} />;
 }
 
-function UserButton({ user }: { user: Token }) {
+function SigninButton() {
   return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "flex-start",
-        textTransform: "none",
-      }}
+    <Button
+      color="inherit"
+      onClick={() => (location.pathname = "/api/auth/signin")}
     >
-      {user.nick ? (
-        <>
-          <Typography variant="body2" component="span">
-            {user.nick}
-          </Typography>
-          <Typography variant="caption" component="span">
-            {user.username}
-          </Typography>
-        </>
-      ) : (
-        <Typography variant="body2" component="span">
-          {user.username}
-        </Typography>
-      )}
-    </Box>
+      サインイン
+    </Button>
   );
+}
+
+function NoConnectionButton() {
+  return (
+    <Button color="inherit" disabled endIcon={<CloudOff />}>
+      接続されていません
+    </Button>
+  );
+}
+
+function LoadingButton() {
+  return <Button color="inherit" disabled endIcon={<CircularProgress />} />;
 }

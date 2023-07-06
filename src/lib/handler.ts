@@ -1,73 +1,85 @@
 import { TypeCompiler } from "@sinclair/typebox/compiler";
-import type { NextApiRequest, NextApiResponse } from "next";
-import type { Route } from "../types/route";
+import { NextRequest, NextResponse } from "next/server";
 import { verify } from "./auth";
+import { Route } from "@/types/route";
 import { Token } from "@/types/user";
 
-export interface RouteRequest<R extends Route> extends NextApiRequest {
-  method: R["method"];
-  query: Route.Params<R>;
-  body: Route.Body<R>;
+type RequestData<R extends Route> = Pick<
+  {
+    params: Route.Params<R>;
+    body: Route.Body<R>;
+    token: Token;
+  },
+  Extract<keyof R, "params" | "body"> | "token"
+>;
+
+interface Handler<R extends Route> {
+  (data: RequestData<R>, request: NextRequest): Promise<
+    Route.Response<R> | NextResponse<Route.Response<R>>
+  >;
 }
 
-export interface RouteResponse<R extends Route>
-  extends NextApiResponse<Route.Response<R>> {}
+function createPathParser<R extends Route>(route: R) {
+  if (!route.params) return;
+  const params = TypeCompiler.Compile(route.params);
+  const regex = new RegExp(
+    "^" + route.path.replace(/\[(\w+?)\]/g, "(?<$1>[\\w-]+)") + "\\/?$"
+  );
 
-export function createHandler<R extends Route>(
-  route: R,
-  handler: (
-    req: RouteRequest<R>,
-    res: RouteResponse<R>,
-    token: Token
-  ) => Promise<void>
-) {
-  const params = route.params && TypeCompiler.Compile(route.params);
+  return (request: NextRequest): Route.Params<R> | undefined => {
+    const match = request.nextUrl.pathname.match(regex);
+    return params.Check(match?.groups) ? match?.groups : undefined;
+  };
+}
+
+export function createHandler<R extends Route>(route: R, handler: Handler<R>) {
+  const parser = createPathParser(route);
   const body = route.body && TypeCompiler.Compile(route.body);
 
-  return async (req: NextApiRequest, res: NextApiResponse) => {
-    if (req.method !== route.method) {
-      res.status(405).end();
-      return;
+  return async (request: NextRequest) => {
+    if (request.method !== route.method) {
+      return new NextResponse("Method not allowed", { status: 405 });
     }
 
-    if (params && !params.Check(req.query)) {
-      res.status(400).end();
-      return;
-    }
-
-    const token = verify(req, route.scopes);
+    const token = verify(request.cookies, route.scopes);
     if (!token) {
-      res.status(401).end();
-      return;
+      return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    if (body && !body.Check(req.body)) {
-      console.log(
-        [...body.Errors(req.body)]
-          .map(({ path, message }) => `${path}: ${message}`)
-          .join("\n")
-      );
-      res.status(400).end();
-      return;
+    const data = { token } as RequestData<R>;
+    if (parser) {
+      const params = parser(request);
+      if (!params) return new NextResponse("Invalid params", { status: 400 });
+      data.params = params;
+    }
+    if (body) {
+      const json = await request.json();
+      if (!body.Check(json))
+        return new NextResponse("Invalid body", { status: 400 });
+      data.body = json as Route.Body<R>;
     }
 
     try {
-      await handler(req as RouteRequest<R>, res as RouteResponse<R>, token);
+      const response = await handler(data, request);
+      return response instanceof NextResponse
+        ? response
+        : NextResponse.json(response);
     } catch (error: any) {
       // https://www.prisma.io/docs/reference/api-reference/error-reference#prisma-client-query-engine
       switch (error.code) {
         case "P2001": // record does not exist
         case "P2025": // no record found
-          res.status(404).end();
-          return;
+          return NextResponse.json("Record not found", { status: 404 });
         case "P2002": // unique constraint failed
         case "P2003": // foreign key constraint failed
         case "P2014": // would violate required relation
-          res.status(409).end();
-          return;
+          return NextResponse.json("Database constraint failed", {
+            status: 409,
+          });
       }
+
       console.error(error);
-      res.status(500).end();
+      return NextResponse.json("Internal server error", { status: 500 });
     }
   };
 }

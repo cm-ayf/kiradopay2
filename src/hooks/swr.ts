@@ -86,6 +86,10 @@ function createFetcher<R extends Route>(route: R): Fetcher<R> {
       throw new ServerError("Network error");
     });
 
+    if (path === "/api/auth/refresh" && res.status === 400) {
+      throw new UnauthorizedError();
+    }
+
     switch (res.status) {
       case 200:
       case 201:

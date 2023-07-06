@@ -48,7 +48,7 @@ export const exportReceipts = {
   params: Type.Object({
     eventcode: Type.String(),
   }),
-  response: Type.String(),
+  response: Type.Unknown(),
 } satisfies Route;
 
 export const deleteReceipts = {
