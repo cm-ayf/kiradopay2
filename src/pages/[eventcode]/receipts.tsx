@@ -72,7 +72,10 @@ interface ReceiptExt extends Receipt {
 }
 
 function useReceiptExts(eventcode: string) {
-  const { data: onServer, mutate: mutateServer } = useReceipts({ eventcode });
+  const { data: onServer, mutate: mutateServer } = useReceipts(
+    { eventcode },
+    { refreshInterval: 10000 }
+  );
   const { data: onBrowser, mutate: mutateBrowser } = useIDBReceipts(eventcode);
   const receipts = useMemo<ReceiptExt[] | undefined>(
     () =>

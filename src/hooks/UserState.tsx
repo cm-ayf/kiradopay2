@@ -8,11 +8,9 @@ import {
   useRef,
   useState,
 } from "react";
-import useSWR from "swr";
-import useSWRMutation from "swr/mutation";
 import { useAlert } from "../components/Alert";
-import { createFetcher, RouteError } from "@/hooks/swr";
-import { readUsersMe, refreshInPlace, Token } from "@/types/user";
+import { RouteError, useRefreshInPlace, useUsersMe } from "@/hooks/swr";
+import type { Token } from "@/types/user";
 
 export type UserState =
   | { type: "authorized"; user: Token }
@@ -28,9 +26,6 @@ const UserStateContext = createContext<UserStateContext>({
   state: { type: "loading" },
   waitUntilAuthorized: () => Promise.reject(),
 });
-
-const fetcher = createFetcher(readUsersMe);
-const refresher = createFetcher(refreshInPlace);
 
 export function UserStateProvider({ children }: PropsWithChildren) {
   const [state, setState] = useState<UserState>({ type: "loading" });
@@ -66,17 +61,17 @@ export function UserStateProvider({ children }: PropsWithChildren) {
     [error]
   );
 
-  const { mutate } = useSWR(readUsersMe.path, fetcher, {
+  const { mutate } = useUsersMe(undefined, {
     refreshInterval: 10000,
-    onSuccess: (user) => {
+    onSuccess: useCallback((user: Token) => {
       setState({ type: "authorized", user });
       inner.current = "authorized";
       resolves.current.forEach((resolve) => resolve(true));
       resolves.current = [];
-    },
+    }, []),
     onError,
   });
-  const { trigger } = useSWRMutation(refreshInPlace.path, refresher, {
+  const { trigger } = useRefreshInPlace(undefined, {
     onSuccess: useCallback(() => mutate(), [mutate]),
     onError,
   });

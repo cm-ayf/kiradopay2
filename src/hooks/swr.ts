@@ -18,6 +18,7 @@ import {
 import { createItem, deleteItem, readItems, updateItem } from "@/types/item";
 import { createReceipts, deleteReceipts, readReceipts } from "@/types/receipt";
 import type { Route, TParams } from "@/types/route";
+import { readUsersMe, refreshInPlace } from "@/types/user";
 
 export class UnauthorizedError extends Error {
   code = "UNAUTHORIZED" as const;
@@ -41,20 +42,27 @@ export type RouteError =
   | NotFoundError
   | ConflictError;
 
-type ParamsArg<P> = Static<TParams> extends P ? [params?: P] : [params: P];
+type ParamsArg<P, C> = Static<TParams> extends P
+  ? [params?: P, config?: C]
+  : [params: P, config?: C];
 
 type GetRoute = Route & { method: "GET" };
 
 type UseRoute<R extends GetRoute> = {
-  (...args: ParamsArg<Route.Params<R>>): SWRResponse<
-    Route.Response<R>,
-    RouteError
-  >;
+  (
+    ...args: ParamsArg<
+      Route.Params<R>,
+      SWRConfiguration<Route.Response<R>, RouteError>
+    >
+  ): SWRResponse<Route.Response<R>, RouteError>;
 };
 
 function createPathGenerator<R extends Route>(route: R) {
-  return (params = {} as Route.Params<R>) =>
-    route.path.replace(/\[(\w+)\]/g, (_, key: string) => params[key] as string);
+  return (params: Route.Params<R> | undefined) =>
+    route.path.replace(
+      /\[(\w+)\]/g,
+      (_, key: string) => params?.[key] as string
+    );
 }
 
 type Fetcher<R extends Route> = R["method"] extends "GET"
@@ -64,7 +72,7 @@ type Fetcher<R extends Route> = R["method"] extends "GET"
       options: { arg: Route.Body<R> }
     ) => Promise<Route.Response<R>>;
 
-export function createFetcher<R extends Route>(route: R): Fetcher<R> {
+function createFetcher<R extends Route>(route: R): Fetcher<R> {
   const response = TypeCompiler.Compile(route.response);
 
   return async (path: string, options?: { arg: Route.Body<R> }) => {
@@ -100,61 +108,61 @@ export function createFetcher<R extends Route>(route: R): Fetcher<R> {
   };
 }
 
-function createUseRoute<R extends GetRoute>(
-  route: R,
-  config?: SWRConfiguration<Route.Response<R>, RouteError>
-): UseRoute<R> {
+function createUseRoute<R extends GetRoute>(route: R): UseRoute<R> {
   const pathGenerator = createPathGenerator(route);
   const fetcher = createFetcher(route);
 
-  return (...args) => {
+  return (...[params, config]) => {
     const waitUntilAuthorized = useWaitUntilAuthorized();
-    return useSWR(pathGenerator(...args), fetcher, {
-      ...config,
+    return useSWR(pathGenerator(params), fetcher, {
       async onError(error: RouteError, key: string) {
         if (error.code !== "UNAUTHORIZED") return;
         const authorized = await waitUntilAuthorized();
         if (!authorized) return;
         mutate(key).catch(() => {});
       },
+      ...config,
     });
   };
 }
 
 type UseRouteMutation<R extends Route> = (
-  ...args: ParamsArg<Route.Params<R>>
+  ...args: ParamsArg<
+    Route.Params<R>,
+    SWRMutationConfiguration<
+      Route.Response<R>,
+      RouteError,
+      string,
+      Route.Body<R>
+    >
+  >
 ) => SWRMutationResponse<Route.Response<R>, RouteError, string, Route.Body<R>>;
 
 function createUseRouteMutation<R extends Route>(
-  route: R,
-  config?: SWRMutationConfiguration<
-    Route.Response<R>,
-    RouteError,
-    string,
-    Route.Body<R>
-  >
+  route: R
 ): UseRouteMutation<R> {
   const pathGenerator = createPathGenerator(route);
   const fetcher = createFetcher(route);
 
-  return (...args) => {
+  return (...[params, config]) => {
     const waitUntilAuthorized = useWaitUntilAuthorized();
-    return useSWRMutation(pathGenerator(...args), fetcher, {
-      ...config,
+    return useSWRMutation(pathGenerator(params), fetcher, {
       async onError(error) {
         if (error.code !== "UNAUTHORIZED") return;
         await waitUntilAuthorized();
       },
+      ...config,
     });
   };
 }
 
+export const useUsersMe = createUseRoute(readUsersMe);
+export const useRefreshInPlace = createUseRouteMutation(refreshInPlace);
+
 export const useItems = createUseRoute(readItems);
 export const useEvents = createUseRoute(readEvents);
 export const useEvent = createUseRoute(readEvent);
-export const useReceipts = createUseRoute(readReceipts, {
-  refreshInterval: 10000,
-});
+export const useReceipts = createUseRoute(readReceipts);
 
 export function useTitle(eventcode: string) {
   const { data: event } = useEvent({ eventcode });
