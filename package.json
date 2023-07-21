@@ -11,7 +11,7 @@
     "start": "next start",
     "check": "tsc --noEmit",
     "format": "prettier --write .",
-    "lint": "prettier --check . next lint"
+    "lint": "prettier --check . && next lint"
   },
   "dependencies": {
     "@emotion/react": "^11.11.1",
