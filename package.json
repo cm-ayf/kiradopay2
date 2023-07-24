@@ -24,7 +24,7 @@
     "@sinclair/typebox": "^0.28.20",
     "@types/node": "^18.16.18",
     "@types/react": "^18.2.14",
-    "@types/react-dom": "^18.2.6",
+    "@types/react-dom": "^18.2.7",
     "@types/uuid": "^9.0.2",
     "cookie": "^0.5.0",
     "csv-stringify": "^6.4.0",
