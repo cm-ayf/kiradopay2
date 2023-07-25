@@ -20,7 +20,7 @@
     "@mui/lab": "^5.0.0-alpha.137",
     "@mui/material": "^5.14.1",
     "@mui/x-data-grid": "^6.9.1",
-    "@prisma/client": "^4.16.2",
+    "@prisma/client": "^5.0.0",
     "@sinclair/typebox": "^0.28.20",
     "@types/node": "^18.16.18",
     "@types/react": "^18.2.14",
@@ -51,7 +51,7 @@
     "eslint-plugin-mui-path-imports": "^0.0.15",
     "lint-staged": "^13.2.3",
     "prettier": "^2.8.8",
-    "prisma": "^4.16.2",
+    "prisma": "^5.0.0",
     "simple-git-hooks": "^2.8.1"
   }
 }
