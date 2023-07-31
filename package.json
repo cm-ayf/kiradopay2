@@ -30,7 +30,7 @@
     "csv-stringify": "^6.4.0",
     "discord-oauth2": "^2.11.0",
     "eslint": "^8.43.0",
-    "eslint-config-next": "^13.4.7",
+    "eslint-config-next": "^13.4.12",
     "idb": "^7.1.1",
     "jsonwebtoken": "^9.0.0",
     "lz-string": "^1.5.0",
