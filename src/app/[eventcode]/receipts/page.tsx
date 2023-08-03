@@ -40,7 +40,7 @@ export default function Receipts({
 
   return (
     <DBStateProvider>
-      <Layout title={title} back={`/${eventcode}`}>
+      <Layout title={title} back={`/${eventcode}`} docs="receipts">
         <Tabs value={tab} onChange={(_, value) => setTab(value)}>
           <Tab label="概要" value="summary" />
           <Tab label="表" value="table" />
