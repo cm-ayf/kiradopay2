@@ -11,6 +11,7 @@ import {
   useState,
 } from "react";
 import { useAlert } from "./Alert";
+import { SigninMessage } from "@/components/SigninMessage";
 import { RouteError, useRefreshInPlace, useUsersMe } from "@/hooks/swr";
 import type { Token } from "@/types/user";
 
@@ -49,7 +50,7 @@ export function UserStateProvider({ children }: PropsWithChildren) {
         case "refreshing":
           setState({ type: "unauthorized" });
           inner.current = "unauthorized";
-          error("サインインしてください");
+          error(<SigninMessage />);
           return;
         default:
           setState((state) => ({ ...state, type: "refreshing" }));
@@ -60,7 +61,7 @@ export function UserStateProvider({ children }: PropsWithChildren) {
     },
     // `trigger` must be declared after `onError`
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [error]
+    []
   );
 
   const { mutate } = useUsersMe(undefined, {

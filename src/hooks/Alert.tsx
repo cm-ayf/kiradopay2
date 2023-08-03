@@ -3,45 +3,38 @@
 import Alert, { type AlertColor } from "@mui/material/Alert";
 import Snackbar from "@mui/material/Snackbar";
 import Stack from "@mui/material/Stack";
-import { createContext, useCallback, useContext, useReducer } from "react";
-
-export type CommonAlert = keyof typeof commonAlerts;
+import {
+  PropsWithChildren,
+  ReactNode,
+  createContext,
+  useCallback,
+  useContext,
+  useReducer,
+} from "react";
 
 export interface AlertData {
   severity: AlertColor;
-  message: string;
+  message: ReactNode;
 }
-
-const commonAlerts = {
-  unauthorized: {
-    severity: "error",
-    message: "サインインしてください",
-  },
-} satisfies { [key: string]: AlertData };
 
 interface AlertState extends AlertData {
   id: string;
-  is?: CommonAlert;
 }
 
-type Action = AlertData | CommonAlert | { delete: string };
+type Action = AlertData | { delete: string };
 
 function reducer(state: AlertState[], action: Action): AlertState[] {
-  const id = Math.random().toString(36).slice(-8);
-  if (typeof action === "string") {
-    const isDuplicate = state.some((alert) => alert.is === action);
-    if (isDuplicate) return state;
-    return [...state, { id, is: action, ...commonAlerts[action] }];
-  } else if ("delete" in action) {
+  if ("delete" in action) {
     return state.filter((alert) => alert.id !== action.delete);
   } else {
+    const id = Math.random().toString(36).slice(-8);
     return [...state, { id, ...action }];
   }
 }
 
 const AlertContext = createContext({ dispatch: (_: Action) => {} });
 
-export function AlertProvider({ children }: { children: React.ReactNode }) {
+export function AlertProvider({ children }: PropsWithChildren) {
   const [state, dispatch] = useReducer(reducer, []);
   return (
     <>
@@ -69,23 +62,23 @@ export function AlertProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function useAlert() {
+export function useAlert(): Record<AlertColor, (message: ReactNode) => void> {
   const { dispatch } = useContext(AlertContext);
   return {
     success: useCallback(
-      (message: string) => dispatch({ severity: "success", message }),
+      (message) => dispatch({ severity: "success", message }),
       [dispatch]
     ),
     info: useCallback(
-      (message: string) => dispatch({ severity: "info", message }),
+      (message) => dispatch({ severity: "info", message }),
       [dispatch]
     ),
     warning: useCallback(
-      (message: string) => dispatch({ severity: "warning", message }),
+      (message) => dispatch({ severity: "warning", message }),
       [dispatch]
     ),
     error: useCallback(
-      (message: string) => dispatch({ severity: "error", message }),
+      (message) => dispatch({ severity: "error", message }),
       [dispatch]
     ),
   };
