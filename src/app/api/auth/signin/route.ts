@@ -1,7 +1,8 @@
 import { randomUUID } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
-import { OAuth2Error, generateAuthUrl, withCookies } from "@/lib/auth";
+import { generateAuthUrl, withCookies } from "@/lib/auth";
 import { env } from "@/lib/env";
+import { OAuth2Error } from "@/shared/error";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +17,7 @@ export async function GET(request: NextRequest) {
 
     return withCookies(NextResponse.redirect(url), { state });
   } catch (e) {
-    const error = OAuth2Error.from(e);
+    const error = OAuth2Error.fromError(e);
     return NextResponse.redirect(error.toRedirectURL());
   }
 }

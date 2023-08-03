@@ -1,11 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import {
-  OAuth2Error,
-  createSession,
-  refreshTokens,
-  withCookies,
-} from "@/lib/auth";
+import { createSession, refreshTokens, withCookies } from "@/lib/auth";
 import { env } from "@/lib/env";
+import { OAuth2Error } from "@/shared/error";
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const accessToken = request.cookies.get("access_token");
@@ -29,7 +25,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       return withCookies(NextResponse.redirect(env.HOST), { state: "" });
     }
   } catch (e) {
-    const error = OAuth2Error.from(e);
+    const error = OAuth2Error.fromError(e);
     return withCookies(
       NextResponse.redirect(error.toRedirectURL()),
       error.code === "server_error"
@@ -63,7 +59,7 @@ export async function POST(request: NextRequest) {
       });
     }
   } catch (e) {
-    const error = OAuth2Error.from(e);
+    const error = OAuth2Error.fromError(e);
     return withCookies(
       NextResponse.json(error, { status: error.status }),
       error.code === "server_error"

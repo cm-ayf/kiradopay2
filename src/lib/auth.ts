@@ -7,6 +7,7 @@ import jwt from "jsonwebtoken";
 import { NextRequest, NextResponse } from "next/server";
 import { env } from "./env";
 import { prisma } from "./prisma";
+import { OAuth2Error } from "@/shared/error";
 import type { Token, Scope } from "@/types/user";
 
 const clientId = env.DISCORD_CLIENT_ID;
@@ -123,62 +124,6 @@ export async function createSession(accessToken: string, upsert = false) {
 
 export async function revokeToken(accessToken: string) {
   return client.revokeToken(accessToken).catch(handleTokenRequestError);
-}
-
-export class OAuth2Error extends Error {
-  static from(e: unknown) {
-    if (e instanceof this) {
-      return e;
-    } else {
-      return new this("server_error", undefined, { cause: e });
-    }
-  }
-
-  constructor(
-    public code:
-      | "unknown_guild"
-      | "invalid_credentials"
-      | "invalid_request"
-      | "server_error",
-    public description?: string,
-    options?: ErrorOptions
-  ) {
-    super(description ?? code, options);
-  }
-
-  get status() {
-    return this.code === "server_error" ? 500 : 400;
-  }
-
-  toJSON() {
-    const error = {
-      invalid_request: "invalid_request",
-      invalid_credentials: "invalid_grant",
-      unknown_guild: "invalid_grant",
-      server_error: undefined,
-    }[this.code];
-    return {
-      error,
-      error_description: this.description,
-      code: this.code,
-    };
-  }
-
-  toRedirectURL() {
-    const url = new URL("/", host);
-    const error = {
-      invalid_request: "invalid_request",
-      invalid_credentials: "access_denied",
-      unknown_guild: "access_denied",
-      server_error: "server_error",
-    }[this.code];
-    url.searchParams.append("error", error);
-    if (this.description) {
-      url.searchParams.append("error_description", this.description);
-    }
-    url.searchParams.append("code", this.code);
-    return url;
-  }
 }
 
 export function verify(
