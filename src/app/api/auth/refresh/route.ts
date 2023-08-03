@@ -13,7 +13,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       return withCookies(NextResponse.redirect(env.HOST), { session });
     } else if (refreshToken) {
       const { access_token, refresh_token } = await refreshTokens(
-        refreshToken.value
+        refreshToken.value,
       );
       const session = await createSession(access_token);
       return withCookies(NextResponse.redirect(env.HOST), {
@@ -30,7 +30,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       NextResponse.redirect(error.toRedirectURL()),
       error.code === "server_error"
         ? {}
-        : { state: "", access_token: "", refresh_token: "" }
+        : { state: "", access_token: "", refresh_token: "" },
     );
   }
 }
@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
       return withCookies(new NextResponse(null, { status: 204 }), { session });
     } else if (refreshToken) {
       const { access_token, refresh_token } = await refreshTokens(
-        refreshToken.value
+        refreshToken.value,
       );
       const session = await createSession(access_token);
       return withCookies(new NextResponse(null, { status: 204 }), {
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
       NextResponse.json(error, { status: error.status }),
       error.code === "server_error"
         ? {}
-        : { state: "", access_token: "", refresh_token: "" }
+        : { state: "", access_token: "", refresh_token: "" },
     );
   }
 }

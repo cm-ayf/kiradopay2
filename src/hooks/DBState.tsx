@@ -57,7 +57,7 @@ export function DBStateProvider({ children }: PropsWithChildren) {
     openDB<DB>("receipts", migrations.length, {
       upgrade,
       terminated: () => setType("error"),
-    })
+    }),
   );
   const db = useRef<IDB>();
   const error = useRef<any>();
@@ -82,7 +82,7 @@ export function DBStateProvider({ children }: PropsWithChildren) {
       (e) => {
         setType("error");
         error.current = e;
-      }
+      },
     );
   }, []);
 

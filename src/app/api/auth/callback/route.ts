@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
     const error = OAuth2Error.fromError(e);
     return withCookies(
       NextResponse.redirect(error.toRedirectURL()),
-      error.code === "server_error" ? {} : { state: "" }
+      error.code === "server_error" ? {} : { state: "" },
     );
   }
 }

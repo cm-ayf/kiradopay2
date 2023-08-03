@@ -128,7 +128,7 @@ export async function revokeToken(accessToken: string) {
 
 export function verify(
   cookies: Pick<NextRequest["cookies"], "get">,
-  scope?: Scope[]
+  scope?: Scope[],
 ) {
   const session = cookies.get("session");
   if (!session) return null;
@@ -184,10 +184,10 @@ type Cookies = {
 
 export function withCookies(
   response: NextResponse,
-  cookies: Cookies
+  cookies: Cookies,
 ): NextResponse {
   for (const [name, value] of Object.entries(cookies).filter(
-    (entry): entry is [keyof Cookies, string] => entry[0] in cookieOptions
+    (entry): entry is [keyof Cookies, string] => entry[0] in cookieOptions,
   )) {
     if (value) response.cookies.set(name, value, cookieOptions[name]);
     else response.cookies.delete(name);

@@ -37,10 +37,10 @@ export const POST = createHandler(
             },
           },
           include: { records: true },
-        })
-      )
+        }),
+      ),
     );
 
     return NextResponse.json(receipts, { status: 201 });
-  }
+  },
 );

@@ -61,7 +61,7 @@ function createPathGenerator<R extends Route>(route: R) {
   return (params: Route.Params<R> | undefined) =>
     route.path.replace(
       /\[(\w+)\]/g,
-      (_, key: string) => params?.[key] as string
+      (_, key: string) => params?.[key] as string,
     );
 }
 
@@ -69,7 +69,7 @@ type Fetcher<R extends Route> = R["method"] extends "GET"
   ? (path: string) => Promise<Route.Response<R>>
   : (
       path: string,
-      options: { arg: Route.Body<R> }
+      options: { arg: Route.Body<R> },
     ) => Promise<Route.Response<R>>;
 
 function createFetcher<R extends Route>(route: R): Fetcher<R> {
@@ -143,7 +143,7 @@ type UseRouteMutation<R extends Route> = (
 ) => SWRMutationResponse<Route.Response<R>, RouteError, string, Route.Body<R>>;
 
 function createUseRouteMutation<R extends Route>(
-  route: R
+  route: R,
 ): UseRouteMutation<R> {
   const pathGenerator = createPathGenerator(route);
   const fetcher = createFetcher(route);

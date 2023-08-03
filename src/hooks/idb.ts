@@ -17,7 +17,7 @@ type CreateReceipt = Pick<Receipt, "total" | "records">;
 
 function createFetcher<A extends any[], R>(
   state: DBState,
-  fn: (db: IDB, ...args: A) => Promise<R>
+  fn: (db: IDB, ...args: A) => Promise<R>,
 ): (...args: A) => Promise<R | undefined> {
   switch (state.type) {
     case "error":
@@ -35,7 +35,7 @@ function createFetcher<A extends any[], R>(
 async function fetchCreateReceipt(
   db: IDB,
   key: string,
-  { arg }: { arg: CreateReceipt }
+  { arg }: { arg: CreateReceipt },
 ) {
   const receipt: Receipt = {
     id: uuidv4(),
@@ -52,7 +52,7 @@ export function useIDBCreateReceipt(eventcode: string) {
   const state = useDBState();
   const fetcher = useMemo(
     () => createFetcher(state, fetchCreateReceipt),
-    [state]
+    [state],
   );
   return useSWRMutation(key(eventcode), fetcher);
 }
@@ -70,7 +70,7 @@ export function useIDBReceipts(eventcode: string) {
 async function fetchDeleteReceipts(
   db: IDB,
   _: string,
-  { arg }: { arg: { id: string }[] }
+  { arg }: { arg: { id: string }[] },
 ) {
   const tx = db.transaction("receipts", "readwrite");
   const store = tx.objectStore("receipts");
@@ -84,7 +84,7 @@ export function useIDBDeleteReceipts(eventcode: string) {
   const state = useDBState();
   const fetcher = useMemo(
     () => createFetcher(state, fetchDeleteReceipts),
-    [state]
+    [state],
   );
   return useSWRMutation(key(eventcode), fetcher);
 }
