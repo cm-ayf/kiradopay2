@@ -213,7 +213,7 @@ function UpdateCalculator({ eventcode }: { eventcode: string }) {
 
   const hash = useMemo(
     () => event && compressToEncodedURIComponent(playground(event)),
-    [event]
+    [event],
   );
 
   async function onClick() {

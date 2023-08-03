@@ -14,16 +14,17 @@ type RequestData<R extends Route> = Pick<
 >;
 
 interface Handler<R extends Route> {
-  (data: RequestData<R>, request: NextRequest): Promise<
-    Route.Response<R> | NextResponse<Route.Response<R>>
-  >;
+  (
+    data: RequestData<R>,
+    request: NextRequest,
+  ): Promise<Route.Response<R> | NextResponse<Route.Response<R>>>;
 }
 
 function createPathParser<R extends Route>(route: R) {
   if (!route.params) return;
   const params = TypeCompiler.Compile(route.params);
   const regex = new RegExp(
-    "^" + route.path.replace(/\[(\w+?)\]/g, "(?<$1>[\\w-]+)") + "\\/?$"
+    "^" + route.path.replace(/\[(\w+?)\]/g, "(?<$1>[\\w-]+)") + "\\/?$",
   );
 
   return (request: NextRequest): Route.Params<R> | undefined => {

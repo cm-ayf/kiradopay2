@@ -32,7 +32,7 @@ export function SyncButton({ eventcode, ...props }: SyncButtonProps) {
         error("同期に失敗しました");
       }
     },
-    [triggerCreate, triggerDelete, error]
+    [triggerCreate, triggerDelete, error],
   );
 
   useEffect(() => {

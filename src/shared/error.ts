@@ -52,7 +52,7 @@ export class OAuth2Error extends Error {
   constructor(
     public code: OAuth2ErrorCode,
     public description?: string,
-    options?: ErrorOptions
+    options?: ErrorOptions,
   ) {
     super(description ?? code, options);
   }

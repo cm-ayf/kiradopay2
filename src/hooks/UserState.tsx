@@ -63,7 +63,7 @@ export function UserStateProvider({ children }: PropsWithChildren) {
     },
     // `trigger` must be declared after `onError`
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
+    [error],
   );
 
   const { mutate } = useUsersMe(undefined, {
@@ -110,7 +110,7 @@ export function UserStateProvider({ children }: PropsWithChildren) {
       case "refreshing":
       case "loading":
         return new Promise<boolean>((resolve) =>
-          resolves.current.push(resolve)
+          resolves.current.push(resolve),
         );
     }
   }, [trigger]);

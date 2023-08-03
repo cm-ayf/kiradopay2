@@ -17,7 +17,7 @@ export const GET = createHandler(exportReceipts, async ({ params }) => {
   const rows = receipts.map(({ records, ...rest }) => ({
     ...rest,
     ...Object.fromEntries(
-      records.map(({ itemcode, count }) => [itemcode, count])
+      records.map(({ itemcode, count }) => [itemcode, count]),
     ),
   }));
   const columns = [

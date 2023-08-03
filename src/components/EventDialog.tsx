@@ -114,7 +114,7 @@ export default function EventDialog<T extends TSchema>({
             >
               {label}
             </LoadingButton>
-          )
+          ),
         )}
       </DialogActions>
     </Dialog>

@@ -69,7 +69,7 @@ interface ReceiptExt extends Receipt {
 function useReceiptExts(eventcode: string) {
   const { data: onServer, mutate: mutateServer } = useReceipts(
     { eventcode },
-    { refreshInterval: 10000 }
+    { refreshInterval: 10000 },
   );
   const { data: onBrowser, mutate: mutateBrowser } = useIDBReceipts(eventcode);
   const receipts = useMemo<ReceiptExt[] | undefined>(
@@ -79,7 +79,7 @@ function useReceiptExts(eventcode: string) {
         ...onServer.map((receipt) => ({ ...receipt, onServer: true })),
         ...onBrowser.map((receipt) => ({ ...receipt, onServer: false })),
       ],
-    [onServer, onBrowser]
+    [onServer, onBrowser],
   );
   async function reload() {
     await Promise.all([mutateServer(), mutateBrowser()]);
@@ -91,7 +91,7 @@ function useReceiptExts(eventcode: string) {
 function useTotal(receipts: ReceiptExt[]) {
   return useMemo(
     () => receipts.reduce((t, { total }) => t + total, 0),
-    [receipts]
+    [receipts],
   );
 }
 
@@ -159,7 +159,7 @@ function useColumns(eventcode: string) {
         align: "right",
       })) ?? []),
     ],
-    [event]
+    [event],
   );
 }
 
@@ -169,7 +169,7 @@ function toRow({ records, createdAt, onServer, ...rest }: ReceiptExt) {
     createdAt: new Date(createdAt),
     onServer,
     ...Object.fromEntries(
-      records.map(({ itemcode, count }) => [itemcode, count])
+      records.map(({ itemcode, count }) => [itemcode, count]),
     ),
   };
 }

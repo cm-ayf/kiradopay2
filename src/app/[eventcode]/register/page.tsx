@@ -220,7 +220,7 @@ function useCalculator({ calculator, items }: Event): Calculator {
   return useMemo(() => {
     const raw = new Function("state", calculator) as (state: State) => unknown;
     const defaults = Object.fromEntries(
-      items.map((item) => [item.code, { count: 0 }])
+      items.map((item) => [item.code, { count: 0 }]),
     );
     return (state) => Number(raw({ ...defaults, ...state }));
   }, [calculator, items]);
@@ -238,13 +238,13 @@ function ItemPanel({
   const setCount = useCallback(
     (count: number) =>
       dispatch({ type: "setCount", itemcode: item.code, count }),
-    [dispatch, item.code]
+    [dispatch, item.code],
   );
 
   const setDedication = useCallback(
     (dedication: boolean) =>
       dispatch({ type: "setDedication", itemcode: item.code, dedication }),
-    [dispatch, item.code]
+    [dispatch, item.code],
   );
 
   return (

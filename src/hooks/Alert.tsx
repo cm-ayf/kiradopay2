@@ -67,19 +67,19 @@ export function useAlert(): Record<AlertColor, (message: ReactNode) => void> {
   return {
     success: useCallback(
       (message) => dispatch({ severity: "success", message }),
-      [dispatch]
+      [dispatch],
     ),
     info: useCallback(
       (message) => dispatch({ severity: "info", message }),
-      [dispatch]
+      [dispatch],
     ),
     warning: useCallback(
       (message) => dispatch({ severity: "warning", message }),
-      [dispatch]
+      [dispatch],
     ),
     error: useCallback(
       (message) => dispatch({ severity: "error", message }),
-      [dispatch]
+      [dispatch],
     ),
   };
 }
