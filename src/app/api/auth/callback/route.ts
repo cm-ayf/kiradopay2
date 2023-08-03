@@ -1,11 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import {
-  OAuth2Error,
-  createSession,
-  exchangeCode,
-  withCookies,
-} from "@/lib/auth";
+import { createSession, exchangeCode, withCookies } from "@/lib/auth";
 import { env } from "@/lib/env";
+import { OAuth2Error } from "@/shared/error";
 
 export const dynamic = "force-dynamic";
 
@@ -30,7 +26,7 @@ export async function GET(request: NextRequest) {
       state: "",
     });
   } catch (e) {
-    const error = OAuth2Error.from(e);
+    const error = OAuth2Error.fromError(e);
     return withCookies(
       NextResponse.redirect(error.toRedirectURL()),
       error.code === "server_error" ? {} : { state: "" }

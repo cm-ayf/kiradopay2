@@ -11,7 +11,10 @@ import {
   useState,
 } from "react";
 import { useAlert } from "./Alert";
+import { SigninErrorMessage } from "@/components/SigninErrorMessage";
+import { SigninMessage } from "@/components/SigninMessage";
 import { RouteError, useRefreshInPlace, useUsersMe } from "@/hooks/swr";
+import { OAuth2Error } from "@/shared/error";
 import type { Token } from "@/types/user";
 
 export type UserState =
@@ -49,7 +52,7 @@ export function UserStateProvider({ children }: PropsWithChildren) {
         case "refreshing":
           setState({ type: "unauthorized" });
           inner.current = "unauthorized";
-          error("サインインしてください");
+          error(<SigninMessage />);
           return;
         default:
           setState((state) => ({ ...state, type: "refreshing" }));
@@ -60,7 +63,7 @@ export function UserStateProvider({ children }: PropsWithChildren) {
     },
     // `trigger` must be declared after `onError`
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [error]
+    []
   );
 
   const { mutate } = useUsersMe(undefined, {
@@ -85,13 +88,8 @@ export function UserStateProvider({ children }: PropsWithChildren) {
     setState({ type: "error" });
     inner.current = "error";
 
-    const description = url.searchParams.get("error_description");
-    console.error(description);
-
-    const message = description?.includes("Unknown Guild")
-      ? "サーバーに参加していません"
-      : "ログインに失敗しました";
-    error(message);
+    const e = OAuth2Error.fromSearchParams(url.searchParams);
+    error(<SigninErrorMessage error={e} />);
   }, [url, error]);
 
   const resolves = useRef<((success: boolean) => void)[]>([]);

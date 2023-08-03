@@ -99,6 +99,7 @@ export default function Register({
       <Layout
         title={title}
         back={`/${eventcode}`}
+        docs="register"
         bottom={
           event && <Bottom event={event} state={state} dispatch={dispatch} />
         }

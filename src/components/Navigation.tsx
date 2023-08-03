@@ -4,6 +4,7 @@ import AppBar from "@mui/material/AppBar";
 import Avatar from "@mui/material/Avatar";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import ButtonBase, { type ButtonBaseProps } from "@mui/material/ButtonBase";
 import CircularProgress from "@mui/material/CircularProgress";
 import IconButton from "@mui/material/IconButton";
 import Menu from "@mui/material/Menu";
@@ -11,16 +12,22 @@ import MenuItem from "@mui/material/MenuItem";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { PropsWithChildren, useEffect, useRef, useState } from "react";
+import { DOCS } from "@/constant";
 import { useUserState } from "@/hooks/UserState";
 import type { Token } from "@/types/user";
 
 export interface NavigationProps {
   title?: string;
   back?: string;
+  docs?: "register" | "receipts" | "index";
 }
 
-export default function Navigation({ title, back }: NavigationProps) {
+export default function Navigation({
+  title,
+  back,
+  docs = "index",
+}: NavigationProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -47,9 +54,10 @@ export default function Navigation({ title, back }: NavigationProps) {
           anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
           transformOrigin={{ vertical: "top", horizontal: "right" }}
         >
-          <MenuItem onClick={() => (location.pathname = "/api/auth/signout")}>
-            サインアウト
-          </MenuItem>
+          <MenuLinkItem href="/api/auth/signout">サインアウト</MenuLinkItem>
+          <MenuLinkItem href={`${DOCS}/${docs}.md`} target="_blank">
+            マニュアル
+          </MenuLinkItem>
         </Menu>
       </Toolbar>
     </AppBar>
@@ -120,10 +128,7 @@ function UserAvatar({ user }: { user: Token }) {
 
 function SigninButton() {
   return (
-    <Button
-      color="inherit"
-      onClick={() => (location.pathname = "/api/auth/signin")}
-    >
+    <Button color="inherit" href="/api/auth/signin">
       サインイン
     </Button>
   );
@@ -139,4 +144,21 @@ function NoConnectionButton() {
 
 function LoadingButton() {
   return <Button color="inherit" disabled endIcon={<CircularProgress />} />;
+}
+
+function MenuLinkItem({
+  children,
+  sx,
+  ...props
+}: PropsWithChildren<ButtonBaseProps<"a"> & { href: string }>) {
+  return (
+    <MenuItem sx={{ padding: 0 }}>
+      <ButtonBase
+        {...props}
+        sx={{ px: 2, py: "6px", width: "100%", justifyContent: "left", ...sx }}
+      >
+        {children}
+      </ButtonBase>
+    </MenuItem>
+  );
 }
