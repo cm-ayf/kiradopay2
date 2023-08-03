@@ -31,9 +31,9 @@ export class OAuth2Error extends Error {
     }
   }
 
-  static fromSearch(search: URLSearchParams) {
-    const description = search.get("error_description") ?? undefined;
-    const code = search.get("code");
+  static fromSearchParams(searchParams: URLSearchParams) {
+    const description = searchParams.get("error_description") ?? undefined;
+    const code = searchParams.get("code");
     if (typeCheckCode.Check(code)) {
       return new this(code, description);
     } else {
