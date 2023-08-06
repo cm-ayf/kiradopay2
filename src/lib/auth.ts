@@ -10,6 +10,18 @@ import { prisma } from "./prisma";
 import { OAuth2Error } from "@/shared/error";
 import type { Token, Scope } from "@/types/user";
 
+declare module "discord-oauth2" {
+  // https://discord.com/developers/docs/resources/user#user-object
+  interface User {
+    global_name: string;
+  }
+
+  // https://discord.com/developers/docs/resources/guild#guild-member-object
+  interface Member {
+    avatar: string | null | undefined;
+  }
+}
+
 const clientId = env.DISCORD_CLIENT_ID;
 const clientSecret = env.DISCORD_CLIENT_SECRET;
 const host = new URL(env.HOST);
@@ -86,7 +98,6 @@ export async function createSession(accessToken: string, upsert = false) {
     user,
     roles,
     nick = null,
-    // @ts-expect-error avatar is not defined in the type
     avatar: memberAvatar,
   } = await client
     .getGuildMember(accessToken, env.DISCORD_GUILD_ID)
