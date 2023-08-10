@@ -7,6 +7,7 @@ import TextField from "@mui/material/TextField";
 import type { TSchema } from "@sinclair/typebox";
 import { TypeCompiler } from "@sinclair/typebox/compiler";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { getISODateString } from "./utils";
 import type { DialogButton } from "@/types/dialog";
 import type { Event } from "@/types/event";
 
@@ -119,9 +120,4 @@ export default function EventDialog<T extends TSchema>({
       </DialogActions>
     </Dialog>
   );
-}
-
-function getISODateString(date: string | Date) {
-  const [d] = new Date(date).toISOString().split("T");
-  return d!;
 }
