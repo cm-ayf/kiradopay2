@@ -1,11 +1,12 @@
 import { Static, Type } from "@sinclair/typebox";
-import { Code, Name } from "./common";
+import { Code, Name, Date } from "./common";
 import type { Route } from "./route";
 
 export const Item = Type.Object({
   code: Code,
   name: Name,
   picture: Type.String(),
+  issuedAt: Date,
 });
 
 export type Item = Static<typeof Item>;

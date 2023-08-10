@@ -11,7 +11,9 @@ export var prisma = (global.prisma ??= new PrismaClient());
 export const eventInclude = {
   displays: {
     include: { item: true },
-    orderBy: { itemcode: "asc" },
+    orderBy: {
+      item: { issuedAt: "desc" },
+    },
   },
 } satisfies Prisma.EventInclude;
 

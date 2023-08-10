@@ -4,7 +4,7 @@ import { createItem, readItems } from "@/types/item";
 
 export const GET = createHandler(readItems, async () => {
   return await prisma.item.findMany({
-    orderBy: { code: "asc" },
+    orderBy: { issuedAt: "desc" },
   });
 });
 

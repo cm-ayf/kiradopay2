@@ -7,6 +7,7 @@ import TextField from "@mui/material/TextField";
 import type { TSchema } from "@sinclair/typebox";
 import { TypeCompiler } from "@sinclair/typebox/compiler";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { getISODateString } from "./utils";
 import type { DialogButton } from "@/types/dialog";
 import type { Item } from "@/types/item";
 
@@ -28,14 +29,20 @@ export default function ItemDialog<T extends TSchema>({
   buttons: DialogButton<T>[];
 }) {
   const check = useMemo(() => TypeCompiler.Compile(schema), [schema]);
+  const defaultIssuedAtString = item && getISODateString(item.issuedAt);
+  const todayString = getISODateString(new Date());
   const [code, setCode] = useState(item?.code ?? "");
   const [name, setName] = useState(item?.name ?? "");
   const [picture, setPicture] = useState(item?.picture ?? "");
+  const [issuedAt, setIssuedAt] = useState(
+    defaultIssuedAtString ?? todayString,
+  );
   const clear = useCallback(() => {
     setCode(item?.code ?? "");
     setName(item?.name ?? "");
     setPicture(item?.picture ?? "");
-  }, [item]);
+    setIssuedAt(defaultIssuedAtString ?? todayString);
+  }, [item, defaultIssuedAtString, todayString]);
 
   useEffect(() => {
     if (open) clear();
@@ -45,6 +52,7 @@ export default function ItemDialog<T extends TSchema>({
     ...(item?.code !== code && { code }),
     ...(item?.name !== name && { name }),
     ...(item?.picture !== picture && { picture }),
+    ...(defaultIssuedAtString !== issuedAt && { issuedAt: new Date(issuedAt) }),
   };
   const isValid = check.Check(body);
   const isUpdated = Object.keys(body).length > 0;
@@ -84,6 +92,13 @@ export default function ItemDialog<T extends TSchema>({
           variant="standard"
           value={picture}
           onChange={(e) => setPicture(e.target.value)}
+        />
+        <TextField
+          label="発行日"
+          type="date"
+          variant="standard"
+          value={issuedAt}
+          onChange={(e) => setIssuedAt(e.target.value)}
         />
       </DialogContent>
       <DialogActions>
