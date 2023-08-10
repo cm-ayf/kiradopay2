@@ -19,9 +19,10 @@ model User {
 }
 
 model Item {
-  code    String @id
-  name    String
-  picture String
+  code     String   @id
+  name     String
+  picture  String
+  issuedAt DateTime @default(now()) @map("issued_at")
 
   displays Display[]
 }
