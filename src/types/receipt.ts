@@ -28,7 +28,7 @@ export const createReceipts = {
     eventcode: Type.String(),
   }),
   body: Type.Array(Receipt),
-  response: Type.Array(Receipt),
+  response: Type.Object({ count: Type.Integer() }),
 } satisfies Route;
 
 export const readReceipts = {
