@@ -24,24 +24,40 @@ export default function Receipts({
 
   return (
     <DBStateProvider>
-      <Layout title={title} back={`/${eventcode}`} docs="receipts">
-        <Tabs value={tab} onChange={(_, value) => setTab(value)}>
-          <Tab label="概要" value="summary" />
-          <Tab label="表" value="table" />
-          <Tab label="出力" value="export" />
-        </Tabs>
-        <TabContext value={tab}>
-          <TabPanel value="summary">
-            <Summary eventcode={eventcode} />
-          </TabPanel>
-          <TabPanel value="table" sx={{ flex: 1 }}>
-            <Table eventcode={eventcode} />
-          </TabPanel>
-          <TabPanel value="export">
-            <Export eventcode={eventcode} />
-          </TabPanel>
-        </TabContext>
+      <Layout
+        title={title}
+        back={`/${eventcode}`}
+        docs="receipts"
+        top={<Top tab={tab} setTab={setTab} />}
+      >
+        <Panels eventcode={eventcode} tab={tab} />
       </Layout>
     </DBStateProvider>
+  );
+}
+
+function Top({ tab, setTab }: { tab: string; setTab: (tab: string) => void }) {
+  return (
+    <Tabs value={tab} onChange={(_, value) => setTab(value)}>
+      <Tab label="概要" value="summary" />
+      <Tab label="表" value="table" />
+      <Tab label="出力" value="export" />
+    </Tabs>
+  );
+}
+
+function Panels({ eventcode, tab }: { eventcode: string; tab: string }) {
+  return (
+    <TabContext value={tab}>
+      <TabPanel value="summary" sx={{ p: 0 }}>
+        <Summary eventcode={eventcode} />
+      </TabPanel>
+      <TabPanel value="table" sx={{ p: 0 }}>
+        <Table eventcode={eventcode} />
+      </TabPanel>
+      <TabPanel value="export" sx={{ p: 0 }}>
+        <Export eventcode={eventcode} />
+      </TabPanel>
+    </TabContext>
   );
 }
