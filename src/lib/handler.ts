@@ -42,7 +42,7 @@ export function createHandler<R extends Route>(route: R, handler: Handler<R>) {
       return new NextResponse("Method not allowed", { status: 405 });
     }
 
-    const token = verify(request.cookies, route.scopes);
+    const token = await verify(request.cookies, route.scopes);
     if (!token) {
       return new NextResponse("Unauthorized", { status: 401 });
     }

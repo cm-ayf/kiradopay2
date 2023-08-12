@@ -1,10 +1,13 @@
+import { TypeCompiler } from "@sinclair/typebox/compiler";
 import type { RESTGetCurrentUserGuildMemberResult } from "discord-api-types/v10";
-import jwt from "jsonwebtoken";
+import { jwtVerify, SignJWT } from "jose";
 import { NextRequest } from "next/server";
 import { env } from "../env";
 import { prisma } from "../prisma";
 import { OAuth2Error } from "@/shared/error";
-import type { Token, Scope } from "@/types/user";
+import { Token, Scope } from "@/types/user";
+
+const secret = new TextEncoder().encode(env.JWT_SECRET);
 
 export async function createSession(accessToken: string, upsert = false) {
   try {
@@ -25,7 +28,6 @@ export async function createSession(accessToken: string, upsert = false) {
     const { user, roles, nick = null, avatar: memberAvatar } = member;
     const { id, username, avatar: userAvatar = null } = user!;
     const avatar: string | null = memberAvatar ?? userAvatar;
-    const exp = Math.floor(Date.now() / 1000) + 60 * 60;
     const scope = env.DISCORD_ROLE_ID
       ? roles.includes(env.DISCORD_ROLE_ID)
         ? "read write"
@@ -40,7 +42,11 @@ export async function createSession(accessToken: string, upsert = false) {
       });
     }
 
-    return jwt.sign({ id, username, nick, avatar, exp, scope }, env.JWT_SECRET);
+    return await new SignJWT({ id, username, nick, avatar, scope })
+      .setProtectedHeader({ alg: "HS256" })
+      .setIssuedAt()
+      .setExpirationTime("1h")
+      .sign(secret);
   } catch (e) {
     if (e instanceof OAuth2Error) throw e;
     throw new OAuth2Error("server_error", "create session failed", {
@@ -49,7 +55,9 @@ export async function createSession(accessToken: string, upsert = false) {
   }
 }
 
-export function verify(
+const typeCheck = TypeCompiler.Compile(Token);
+
+export async function verify(
   cookies: Pick<NextRequest["cookies"], "get">,
   scope?: Scope[],
 ) {
@@ -57,11 +65,10 @@ export function verify(
   if (!session) return null;
 
   try {
-    const token = jwt.verify(session.value, env.JWT_SECRET) as Token;
-    if (scope && !hasScopes(token, scope)) {
-      return null;
-    }
-    return token;
+    const { payload } = await jwtVerify(session.value, secret);
+    if (!typeCheck.Check(payload)) return null;
+    if (scope && !hasScopes(payload, scope)) return null;
+    return payload;
   } catch (err) {
     return null;
   }
