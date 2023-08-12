@@ -14,32 +14,24 @@ export const GET = createHandler(readReceipts, async ({ params }) => {
 export const POST = createHandler(
   createReceipts,
   async ({ params, body, token }) => {
-    const receipts = await prisma.$transaction(
-      body.map(({ records, ...rest }) =>
-        prisma.receipt.create({
-          data: {
-            ...rest,
+    const [receipts] = await prisma.$transaction([
+      prisma.receipt.createMany({
+        data: body.map(({ records: _, ...rest }) => ({
+          ...rest,
+          userId: token.id,
+        })),
+      }),
+      prisma.record.createMany({
+        data: body.flatMap(({ id, records }) =>
+          records.map((record, index) => ({
+            ...record,
             eventcode: params.eventcode,
-            userId: token.id,
-            records: {
-              create: records.map(({ itemcode, ...rest }, index) => ({
-                ...rest,
-                index,
-                display: {
-                  connect: {
-                    eventcode_itemcode: {
-                      eventcode: params.eventcode,
-                      itemcode,
-                    },
-                  },
-                },
-              })),
-            },
-          },
-          include: { records: true },
-        }),
-      ),
-    );
+            receiptId: id,
+            index,
+          })),
+        ),
+      }),
+    ]);
 
     return NextResponse.json(receipts, { status: 201 });
   },
