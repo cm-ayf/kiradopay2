@@ -2,10 +2,12 @@
 
 import TabContext from "@mui/lab/TabContext";
 import TabPanel from "@mui/lab/TabPanel";
+import Box from "@mui/material/Box";
 import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
 import { useState } from "react";
 import Export from "./Export";
+import ReloadButton from "./ReloadButton";
 import Summary from "./Summary";
 import Table from "./Table";
 import Layout from "@/components/Layout";
@@ -28,7 +30,7 @@ export default function Receipts({
         title={title}
         back={`/${eventcode}`}
         docs="receipts"
-        top={<Top tab={tab} setTab={setTab} />}
+        top={<Top eventcode={eventcode} tab={tab} setTab={setTab} />}
       >
         <Panels eventcode={eventcode} tab={tab} />
       </Layout>
@@ -36,13 +38,25 @@ export default function Receipts({
   );
 }
 
-function Top({ tab, setTab }: { tab: string; setTab: (tab: string) => void }) {
+function Top({
+  eventcode,
+  tab,
+  setTab,
+}: {
+  eventcode: string;
+  tab: string;
+  setTab: (tab: string) => void;
+}) {
   return (
-    <Tabs value={tab} onChange={(_, value) => setTab(value)}>
-      <Tab label="概要" value="summary" />
-      <Tab label="表" value="table" />
-      <Tab label="出力" value="export" />
-    </Tabs>
+    <Box sx={{ display: "flex", flexDirection: "row" }}>
+      <Tabs value={tab} onChange={(_, value) => setTab(value)}>
+        <Tab label="概要" value="summary" />
+        <Tab label="表" value="table" />
+        <Tab label="出力" value="export" />
+      </Tabs>
+      <Box sx={{ flex: 1 }} />
+      <ReloadButton eventcode={eventcode} variant="contained" sx={{ m: 1 }} />
+    </Box>
   );
 }
 

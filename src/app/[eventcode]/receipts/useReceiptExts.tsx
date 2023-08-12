@@ -8,11 +8,16 @@ export interface ReceiptExt extends Receipt {
 }
 
 export default function useReceiptExts(eventcode: string) {
-  const { data: onServer, mutate: mutateServer } = useReceipts(
-    { eventcode },
-    { refreshInterval: 10000 },
-  );
-  const { data: onBrowser, mutate: mutateBrowser } = useIDBReceipts(eventcode);
+  const {
+    data: onServer,
+    mutate: mutateServer,
+    isValidating: isValidatingServer,
+  } = useReceipts({ eventcode }, { refreshInterval: 10000 });
+  const {
+    data: onBrowser,
+    mutate: mutateBrowser,
+    isValidating: isValidatingBrowser,
+  } = useIDBReceipts(eventcode);
   const receipts = useMemo<ReceiptExt[] | undefined>(
     () =>
       onServer &&
@@ -26,5 +31,9 @@ export default function useReceiptExts(eventcode: string) {
     await Promise.all([mutateServer(), mutateBrowser()]);
   }
 
-  return { receipts, reload };
+  return {
+    receipts,
+    reload,
+    isReloading: isValidatingServer || isValidatingBrowser,
+  };
 }
