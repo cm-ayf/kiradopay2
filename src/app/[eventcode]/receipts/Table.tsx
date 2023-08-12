@@ -1,74 +1,55 @@
-import LoadingButton from "@mui/lab/LoadingButton";
+import LoadingButton, { LoadingButtonProps } from "@mui/lab/LoadingButton";
 import CircularProgress from "@mui/material/CircularProgress";
-import { Box } from "@mui/system";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
-import { useMemo, useState } from "react";
+import {
+  PropsWithChildren,
+  createContext,
+  useContext,
+  useMemo,
+  useState,
+} from "react";
 import useReceiptExts, { ReceiptExt } from "./useReceiptExts";
 import { useAlert } from "@/hooks/Alert";
 import { useWritable } from "@/hooks/UserState";
 import { useIDBDeleteReceipts } from "@/hooks/idb";
 import { useDeleteReceipts, useEvent } from "@/hooks/swr";
 
+const SelectedContext = createContext<{
+  selected: string[];
+  setSelected: (selected: string[]) => void;
+}>({
+  selected: [],
+  setSelected: () => {},
+});
+
+export function SelectedProvider({ children }: PropsWithChildren) {
+  const [selected, setSelected] = useState<string[]>([]);
+  return (
+    <SelectedContext.Provider value={{ selected, setSelected }}>
+      {children}
+    </SelectedContext.Provider>
+  );
+}
+
 export default function Table({ eventcode }: { eventcode: string }) {
   const columns = useColumns(eventcode);
-  const { receipts, reload } = useReceiptExts(eventcode);
-  const { trigger: triggerServer, isMutating: isDeletingServer } =
-    useDeleteReceipts({ eventcode });
-  const { trigger: triggerBrowser, isMutating: isDeletingBrowser } =
-    useIDBDeleteReceipts(eventcode);
-  const { error } = useAlert();
+  const { receipts } = useReceiptExts(eventcode);
   const writable = useWritable();
-  const [selected, setSelected] = useState<string[]>([]);
-
-  async function onClickDelete() {
-    const rowsToDelete = receipts?.filter(({ id }) => selected.includes(id));
-    if (!rowsToDelete?.length) return;
-
-    const serverRows = rowsToDelete.filter(({ onServer }) => onServer);
-    const browserRows = rowsToDelete.filter(({ onServer }) => !onServer);
-
-    try {
-      await Promise.all([
-        serverRows.length && triggerServer(serverRows.map(({ id }) => id)),
-        browserRows.length && triggerBrowser(browserRows),
-      ]);
-      await reload();
-    } catch (e) {
-      error("履歴の削除に失敗しました");
-    }
-  }
+  const { selected, setSelected } = useContext(SelectedContext);
 
   if (!receipts) return <CircularProgress />;
 
   return (
-    <Box
-      sx={{ height: "100%", display: "flex", flexDirection: "column", gap: 1 }}
-    >
-      <Box sx={{ flex: 1 }}>
-        <DataGrid
-          rows={receipts.map(toRow)}
-          columns={columns}
-          checkboxSelection={writable}
-          getRowId={(row) => row.id}
-          rowSelectionModel={selected}
-          onRowSelectionModelChange={(selected) =>
-            setSelected(selected.map(String))
-          }
-        />
-      </Box>
-      {writable && (
-        <Box sx={{ display: "flex", flexDirection: "row", gap: 1 }}>
-          <LoadingButton
-            variant="contained"
-            onClick={onClickDelete}
-            disabled={selected.length === 0}
-            loading={isDeletingServer || isDeletingBrowser}
-          >
-            履歴を削除
-          </LoadingButton>
-        </Box>
-      )}
-    </Box>
+    <DataGrid
+      rows={receipts.map(toRow)}
+      columns={columns}
+      checkboxSelection={writable}
+      getRowId={(row) => row.id}
+      rowSelectionModel={selected}
+      onRowSelectionModelChange={(selected) =>
+        setSelected(selected.map(String))
+      }
+    />
   );
 }
 
@@ -104,4 +85,47 @@ function toRow({ records, createdAt, onServer, ...rest }: ReceiptExt) {
       records.map(({ itemcode, count }) => [itemcode, count]),
     ),
   };
+}
+
+interface DeleteButtonProps extends LoadingButtonProps {
+  eventcode: string;
+}
+
+export function DeleteButton({ eventcode, ...props }: DeleteButtonProps) {
+  const { receipts, reload } = useReceiptExts(eventcode);
+  const { trigger: triggerServer, isMutating: isDeletingServer } =
+    useDeleteReceipts({ eventcode });
+  const { trigger: triggerBrowser, isMutating: isDeletingBrowser } =
+    useIDBDeleteReceipts(eventcode);
+  const { selected } = useContext(SelectedContext);
+  const { error } = useAlert();
+
+  async function onClickDelete() {
+    const rowsToDelete = receipts?.filter(({ id }) => selected.includes(id));
+    if (!rowsToDelete?.length) return;
+
+    const serverRows = rowsToDelete.filter(({ onServer }) => onServer);
+    const browserRows = rowsToDelete.filter(({ onServer }) => !onServer);
+
+    try {
+      await Promise.all([
+        serverRows.length && triggerServer(serverRows.map(({ id }) => id)),
+        browserRows.length && triggerBrowser(browserRows),
+      ]);
+      await reload();
+    } catch (e) {
+      error("履歴の削除に失敗しました");
+    }
+  }
+
+  return (
+    <LoadingButton
+      {...props}
+      onClick={onClickDelete}
+      disabled={selected.length === 0}
+      loading={isDeletingServer || isDeletingBrowser}
+    >
+      履歴を削除
+    </LoadingButton>
+  );
 }

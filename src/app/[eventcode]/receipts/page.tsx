@@ -9,7 +9,7 @@ import { useState } from "react";
 import Export from "./Export";
 import ReloadButton from "./ReloadButton";
 import Summary from "./Summary";
-import Table from "./Table";
+import Table, { DeleteButton, SelectedProvider } from "./Table";
 import Layout from "@/components/Layout";
 import { SyncButton } from "@/components/SyncButton";
 import { DBStateProvider } from "@/hooks/DBState";
@@ -27,14 +27,16 @@ export default function Receipts({
 
   return (
     <DBStateProvider>
-      <Layout
-        title={title}
-        back={`/${eventcode}`}
-        docs="receipts"
-        top={<Top eventcode={eventcode} tab={tab} setTab={setTab} />}
-      >
-        <Panels eventcode={eventcode} tab={tab} />
-      </Layout>
+      <SelectedProvider>
+        <Layout
+          title={title}
+          back={`/${eventcode}`}
+          docs="receipts"
+          top={<Top eventcode={eventcode} tab={tab} setTab={setTab} />}
+        >
+          <Panels eventcode={eventcode} tab={tab} />
+        </Layout>
+      </SelectedProvider>
     </DBStateProvider>
   );
 }
@@ -56,6 +58,9 @@ function Top({
         <Tab label="出力" value="export" />
       </Tabs>
       <Box sx={{ flex: 1 }} />
+      {tab === "table" && (
+        <DeleteButton eventcode={eventcode} variant="contained" sx={{ m: 1 }} />
+      )}
       <SyncButton eventcode={eventcode} variant="contained" sx={{ m: 1 }} />
       <ReloadButton eventcode={eventcode} variant="contained" sx={{ m: 1 }} />
     </Box>
