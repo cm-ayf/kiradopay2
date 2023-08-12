@@ -25,7 +25,8 @@ export function SyncButton({ eventcode, ...props }: SyncButtonProps) {
     async (receipts: Receipt[] | undefined) => {
       if (!receipts) return;
       try {
-        await triggerCreate(receipts);
+        const { count } = await triggerCreate(receipts);
+        if (count !== receipts.length) throw new Error();
         await triggerDelete(receipts);
       } catch (e) {
         error("同期に失敗しました");
