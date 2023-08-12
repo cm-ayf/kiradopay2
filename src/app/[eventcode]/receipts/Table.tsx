@@ -4,7 +4,6 @@ import { Box } from "@mui/system";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
 import { useMemo, useState } from "react";
 import useReceiptExts, { ReceiptExt } from "./useReceiptExts";
-import { SyncButton } from "@/components/SyncButton";
 import { useAlert } from "@/hooks/Alert";
 import { useWritable } from "@/hooks/UserState";
 import { useIDBDeleteReceipts } from "@/hooks/idb";
@@ -67,7 +66,6 @@ export default function Table({ eventcode }: { eventcode: string }) {
           >
             履歴を削除
           </LoadingButton>
-          <SyncButton eventcode={eventcode} variant="contained" />
         </Box>
       )}
     </Box>

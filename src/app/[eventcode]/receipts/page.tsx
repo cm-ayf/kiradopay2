@@ -11,6 +11,7 @@ import ReloadButton from "./ReloadButton";
 import Summary from "./Summary";
 import Table from "./Table";
 import Layout from "@/components/Layout";
+import { SyncButton } from "@/components/SyncButton";
 import { DBStateProvider } from "@/hooks/DBState";
 import { useTitle } from "@/hooks/swr";
 
@@ -55,6 +56,7 @@ function Top({
         <Tab label="出力" value="export" />
       </Tabs>
       <Box sx={{ flex: 1 }} />
+      <SyncButton eventcode={eventcode} variant="contained" sx={{ m: 1 }} />
       <ReloadButton eventcode={eventcode} variant="contained" sx={{ m: 1 }} />
     </Box>
   );
