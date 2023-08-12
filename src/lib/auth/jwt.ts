@@ -3,13 +3,12 @@ import type { RESTGetCurrentUserGuildMemberResult } from "discord-api-types/v10"
 import { jwtVerify, SignJWT } from "jose";
 import { NextRequest } from "next/server";
 import { env } from "../env";
-import { prisma } from "../prisma";
 import { OAuth2Error } from "@/shared/error";
 import { Token, Scope } from "@/types/user";
 
 const secret = new TextEncoder().encode(env.JWT_SECRET);
 
-export async function createSession(accessToken: string, upsert = false) {
+export async function createSession(accessToken: string) {
   try {
     const response = await fetch(
       `https://discord.com/api/users/@me/guilds/${env.DISCORD_GUILD_ID}/member`,
@@ -33,14 +32,6 @@ export async function createSession(accessToken: string, upsert = false) {
         ? "read write"
         : "read"
       : "read write";
-
-    if (upsert) {
-      await prisma.user.upsert({
-        where: { id },
-        create: { id },
-        update: {},
-      });
-    }
 
     return await new SignJWT({ id, username, nick, avatar, scope })
       .setProtectedHeader({ alg: "HS256" })

@@ -14,7 +14,12 @@ export const GET = createHandler(readReceipts, async ({ params }) => {
 export const POST = createHandler(
   createReceipts,
   async ({ params, body, token }) => {
-    const [receipts] = await prisma.$transaction([
+    const [, receipts] = await prisma.$transaction([
+      prisma.user.upsert({
+        where: { id: token.id },
+        create: { id: token.id },
+        update: {},
+      }),
       prisma.receipt.createMany({
         data: body.map(({ records: _, ...rest }) => ({
           ...rest,

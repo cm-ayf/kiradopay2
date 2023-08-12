@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     }
 
     const { access_token, refresh_token } = await exchangeCode(code);
-    const session = await createSession(access_token, true);
+    const session = await createSession(access_token);
     return withCookies(NextResponse.redirect(env.HOST), {
       session,
       access_token,
