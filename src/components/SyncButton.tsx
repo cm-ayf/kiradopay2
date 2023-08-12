@@ -3,7 +3,7 @@ import CloudUpload from "@mui/icons-material/CloudUpload";
 import LoadingButton, { type LoadingButtonProps } from "@mui/lab/LoadingButton";
 import { useCallback, useEffect } from "react";
 import { useAlert } from "@/hooks/Alert";
-import { useIDBDeleteReceipts, useIDBReceipts } from "@/hooks/idb";
+import { useIDBReceipts } from "@/hooks/idb";
 import { useCreateReceipts } from "@/hooks/swr";
 import { Receipt } from "@/types/receipt";
 
@@ -16,8 +16,6 @@ export function SyncButton({ eventcode, ...props }: SyncButtonProps) {
   const { trigger: triggerCreate, isMutating: isCreating } = useCreateReceipts({
     eventcode,
   });
-  const { trigger: triggerDelete, isMutating: isDeleting } =
-    useIDBDeleteReceipts(eventcode);
 
   const { info, error } = useAlert();
 
@@ -27,12 +25,11 @@ export function SyncButton({ eventcode, ...props }: SyncButtonProps) {
       try {
         const { count } = await triggerCreate(receipts);
         if (count !== receipts.length) throw new Error();
-        await triggerDelete(receipts);
       } catch (e) {
         error("同期に失敗しました");
       }
     },
-    [triggerCreate, triggerDelete, error],
+    [triggerCreate, error],
   );
 
   useEffect(() => {
@@ -49,7 +46,7 @@ export function SyncButton({ eventcode, ...props }: SyncButtonProps) {
   return (
     <LoadingButton
       {...props}
-      loading={isCreating || isDeleting}
+      loading={isCreating}
       startIcon={receipts?.length ? <CloudUpload /> : <CloudDone />}
       disabled={!receipts?.length}
       onClick={() => sync(receipts)}
