@@ -1,9 +1,9 @@
-import { TypeCompiler } from "@sinclair/typebox/compiler";
 import type { RESTGetCurrentUserGuildMemberResult } from "discord-api-types/v10";
 import { jwtVerify, SignJWT } from "jose";
 import { NextRequest } from "next/server";
 import { env } from "../env";
 import { OAuth2Error } from "@/shared/error";
+import { typeCheck } from "@/shared/utils";
 import { Token, Scope } from "@/types/user";
 
 const secret = new TextEncoder().encode(env.JWT_SECRET);
@@ -46,8 +46,6 @@ export async function createSession(accessToken: string) {
   }
 }
 
-const typeCheck = TypeCompiler.Compile(Token);
-
 export async function verify(
   cookies: Pick<NextRequest["cookies"], "get">,
   scope?: Scope[],
@@ -57,7 +55,7 @@ export async function verify(
 
   try {
     const { payload } = await jwtVerify(session.value, secret);
-    if (!typeCheck.Check(payload)) return null;
+    if (!typeCheck(Token, payload)) return null;
     if (scope && !hasScopes(payload, scope)) return null;
     return payload;
   } catch (err) {
