@@ -1,4 +1,3 @@
-import { randomUUID } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { generateAuthUrl, withCookies } from "@/lib/auth";
 import { env } from "@/lib/env";
@@ -13,7 +12,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const state = randomUUID();
+    const state = crypto.randomUUID();
     const url = generateAuthUrl(state);
 
     return withCookies(NextResponse.redirect(url), { state });
