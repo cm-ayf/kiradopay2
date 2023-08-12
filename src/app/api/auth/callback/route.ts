@@ -3,6 +3,7 @@ import { createSession, exchangeCode, withCookies } from "@/lib/auth";
 import { env } from "@/lib/env";
 import { OAuth2Error } from "@/shared/error";
 
+export const runtime = "edge";
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
