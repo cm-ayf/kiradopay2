@@ -1,10 +1,10 @@
 import CloudDone from "@mui/icons-material/CloudDone";
 import CloudUpload from "@mui/icons-material/CloudUpload";
 import LoadingButton, { type LoadingButtonProps } from "@mui/lab/LoadingButton";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { useAlert } from "@/hooks/Alert";
 import { useIDBReceipts } from "@/hooks/idb";
-import { useCreateReceipts } from "@/hooks/swr";
+import { useCreateReceipts, useReceipts } from "@/hooks/swr";
 import { Receipt } from "@/types/receipt";
 
 interface SyncButtonProps extends LoadingButtonProps {
@@ -12,10 +12,24 @@ interface SyncButtonProps extends LoadingButtonProps {
 }
 
 export function SyncButton({ eventcode, ...props }: SyncButtonProps) {
-  const { data: receipts } = useIDBReceipts(eventcode);
+  const { data: onBrowser } = useIDBReceipts(eventcode);
+  const { data: onServer } = useReceipts({ eventcode });
   const { trigger: triggerCreate, isMutating: isCreating } = useCreateReceipts({
     eventcode,
   });
+
+  const receipts = useMemo<Receipt[] | undefined>(() => {
+    if (!onBrowser || !onServer) return;
+
+    const map = new Map<string, Receipt>(
+      onBrowser.map((receipt) => [receipt.id, receipt]),
+    );
+    for (const { id } of onServer) {
+      map.delete(id);
+    }
+
+    return Array.from(map.values());
+  }, [onBrowser, onServer]);
 
   const { info, error } = useAlert();
 
