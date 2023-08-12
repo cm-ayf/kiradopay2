@@ -1,5 +1,6 @@
 import { Type } from "@sinclair/typebox";
-import { TypeCompiler } from "@sinclair/typebox/compiler";
+import { ValueErrors } from "@sinclair/typebox/errors";
+import { typeCheck } from "@/shared/utils";
 
 const schema = Type.Object({
   DISCORD_CLIENT_ID: Type.String(),
@@ -9,9 +10,9 @@ const schema = Type.Object({
   DISCORD_GUILD_ID: Type.String(),
   DISCORD_ROLE_ID: Type.Optional(Type.String()),
 });
-const compiled = TypeCompiler.Compile(schema);
-if (!compiled.Check(process.env)) {
-  for (const error of compiled.Errors(process.env)) {
+
+if (!typeCheck(schema, process.env)) {
+  for (const error of ValueErrors.Errors(schema, [], process.env)) {
     console.error(error);
   }
   process.exit(1);

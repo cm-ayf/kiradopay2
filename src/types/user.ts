@@ -6,6 +6,7 @@ export const Token = Type.Object({
   username: Type.String(),
   nick: Type.Union([Type.String(), Type.Null()]),
   avatar: Type.Union([Type.String(), Type.Null()]),
+  iat: Type.Integer(),
   exp: Type.Integer(),
   scope: Type.Optional(Type.String()),
 });

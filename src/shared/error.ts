@@ -1,5 +1,5 @@
 import { Static, Type } from "@sinclair/typebox";
-import { TypeCompiler } from "@sinclair/typebox/compiler";
+import { typeCheck } from "./utils";
 
 const OAuth2ErrorCode = Type.Enum({
   unknown_guild: "unknown_guild",
@@ -10,8 +10,6 @@ const OAuth2ErrorCode = Type.Enum({
 
 type OAuth2ErrorCode = Static<typeof OAuth2ErrorCode>;
 
-const typeCheckCode = TypeCompiler.Compile(OAuth2ErrorCode);
-
 const OAuth2ErrorJson = Type.Object({
   error: Type.Optional(Type.String()),
   error_description: Type.Optional(Type.String()),
@@ -19,8 +17,6 @@ const OAuth2ErrorJson = Type.Object({
 });
 
 type OAuth2ErrorJson = Static<typeof OAuth2ErrorJson>;
-
-const typeCheckJson = TypeCompiler.Compile(OAuth2ErrorJson);
 
 export class OAuth2Error extends Error {
   static fromError(e: unknown) {
@@ -34,7 +30,7 @@ export class OAuth2Error extends Error {
   static fromSearchParams(searchParams: URLSearchParams) {
     const description = searchParams.get("error_description") ?? undefined;
     const code = searchParams.get("code");
-    if (typeCheckCode.Check(code)) {
+    if (typeCheck(OAuth2ErrorCode, code)) {
       return new this(code, description);
     } else {
       return new this("server_error", description);
@@ -42,7 +38,7 @@ export class OAuth2Error extends Error {
   }
 
   static fromJSON(e: unknown) {
-    if (typeCheckJson.Check(e)) {
+    if (typeCheck(OAuth2ErrorJson, e)) {
       return new this(e.code, e.error_description);
     } else {
       return new this("server_error", undefined, { cause: e });

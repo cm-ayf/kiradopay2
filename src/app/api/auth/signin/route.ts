@@ -1,9 +1,9 @@
-import { randomUUID } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { generateAuthUrl, withCookies } from "@/lib/auth";
 import { env } from "@/lib/env";
 import { OAuth2Error } from "@/shared/error";
 
+export const runtime = "edge";
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const state = randomUUID();
+    const state = crypto.randomUUID();
     const url = generateAuthUrl(state);
 
     return withCookies(NextResponse.redirect(url), { state });
