@@ -1,4 +1,3 @@
-import { useMediaQuery } from "@mui/material";
 import Box from "@mui/material/Box";
 import Container from "@mui/material/Container";
 import Tab from "@mui/material/Tab";
@@ -16,10 +15,13 @@ export default function Top({
   tab: string;
   setTab: (tab: string) => void;
 }) {
-  const small = useMediaQuery("(max-width: 600px)");
   return (
     <Container
-      sx={{ display: "flex", flexDirection: small ? "column-reverse" : "row" }}
+      sx={{
+        display: "flex",
+        flexDirection: "row",
+        "@media (max-width: 600px)": { flexDirection: "column-reverse" },
+      }}
     >
       <Tabs tab={tab} setTab={setTab} />
       <Box sx={{ flex: 1 }} />
