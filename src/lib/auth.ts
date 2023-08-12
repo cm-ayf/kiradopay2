@@ -1,8 +1,12 @@
 import { CookieSerializeOptions } from "cookie";
-import DiscordOAuth2, {
-  DiscordHTTPError,
-  DiscordRESTError,
-} from "discord-oauth2";
+import type {
+  RESTOAuth2AuthorizationQuery,
+  RESTPostOAuth2AccessTokenResult,
+  RESTPostOAuth2AccessTokenURLEncodedData,
+  RESTPostOAuth2RefreshTokenResult,
+  RESTPostOAuth2RefreshTokenURLEncodedData,
+  RESTGetCurrentUserGuildMemberResult,
+} from "discord-api-types/v10";
 import jwt from "jsonwebtoken";
 import { NextRequest, NextResponse } from "next/server";
 import { env } from "./env";
@@ -10,105 +14,116 @@ import { prisma } from "./prisma";
 import { OAuth2Error } from "@/shared/error";
 import type { Token, Scope } from "@/types/user";
 
-declare module "discord-oauth2" {
-  // https://discord.com/developers/docs/resources/user#user-object
-  interface User {
-    global_name: string;
-  }
-
-  // https://discord.com/developers/docs/resources/guild#guild-member-object
-  interface Member {
-    avatar: string | null | undefined;
-  }
-}
-
-const clientId = env.DISCORD_CLIENT_ID;
-const clientSecret = env.DISCORD_CLIENT_SECRET;
+const client_id = env.DISCORD_CLIENT_ID;
+const client_secret = env.DISCORD_CLIENT_SECRET;
 const host = new URL(env.HOST);
-
-const client = new DiscordOAuth2({
-  clientId,
-  clientSecret,
-  redirectUri: new URL("/api/auth/callback", host).toString(),
-  credentials: Buffer.from(`${clientId}:${clientSecret}`).toString("base64"),
-});
+const redirect_uri = new URL("/api/auth/callback", env.HOST).toString();
+const basic = btoa(`${client_id}:${client_secret}`);
 
 const scope = ["identify", "guilds.members.read"];
 
 export function generateAuthUrl(state: string) {
-  return client.generateAuthUrl({
-    scope,
+  const url = new URL("https://discord.com/oauth2/authorize");
+
+  const searchParams = new URLSearchParams({
+    client_id,
+    redirect_uri,
+    response_type: "code",
+    scope: scope.join(" "),
     state,
-  });
+  } satisfies RESTOAuth2AuthorizationQuery);
+  url.search = searchParams.toString();
+
+  return url;
 }
 
-function handleTokenRequestError(e: unknown): never {
-  if (
-    e instanceof DiscordHTTPError &&
-    (e.response as any).error === "invalid_grant"
-  ) {
-    throw new OAuth2Error("invalid_credentials", "Invalid grant", {
-      cause: e,
+export async function exchangeCode(
+  code: string,
+): Promise<RESTPostOAuth2AccessTokenResult> {
+  try {
+    const response = await fetch("https://discord.com/api/oauth2/token", {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${basic}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        client_id,
+        client_secret,
+        grant_type: "authorization_code",
+        code,
+        redirect_uri,
+      } satisfies RESTPostOAuth2AccessTokenURLEncodedData),
+      cache: "no-cache",
     });
-  } else {
+
+    if (response.status === 400) {
+      throw new OAuth2Error("invalid_credentials", "Invalid grant");
+    } else if (!response.ok) {
+      throw new OAuth2Error("server_error", "Failed to exchange code");
+    }
+
+    return await response.json();
+  } catch (e) {
+    if (e instanceof OAuth2Error) throw e;
     throw new OAuth2Error("server_error", "Failed to exchange code", {
       cause: e,
     });
   }
 }
 
-export async function exchangeCode(code: string) {
-  return client
-    .tokenRequest({
-      scope,
-      grantType: "authorization_code",
-      code,
-    })
-    .catch(handleTokenRequestError);
-}
-
-export async function refreshTokens(refreshToken: string) {
-  return client
-    .tokenRequest({
-      scope,
-      grantType: "refresh_token",
-      refreshToken,
-    })
-    .catch(handleTokenRequestError);
-}
-
-function handleGetGuildMemberError(e: unknown): never {
-  if (e instanceof DiscordRESTError && e.code === 10004) {
-    throw new OAuth2Error("unknown_guild", "Unknown guild", {
-      cause: e,
+export async function refreshTokens(
+  refresh_token: string,
+): Promise<RESTPostOAuth2RefreshTokenResult> {
+  try {
+    const response = await fetch("https://discord.com/api/oauth2/token", {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${basic}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        client_id,
+        client_secret,
+        grant_type: "refresh_token",
+        refresh_token,
+      } satisfies RESTPostOAuth2RefreshTokenURLEncodedData),
+      cache: "no-cache",
     });
-  } else if (e instanceof DiscordHTTPError && e.res.statusCode === 401) {
-    throw new OAuth2Error("invalid_credentials", "Invalid token", {
-      cause: e,
-    });
-  } else {
-    throw new OAuth2Error("server_error", "Failed to get guild member", {
+
+    if (response.status === 400) {
+      throw new OAuth2Error("invalid_credentials", "Invalid grant");
+    } else if (!response.ok) {
+      throw new OAuth2Error("server_error", "Failed to refresh tokens");
+    }
+
+    return await response.json();
+  } catch (e) {
+    if (e instanceof OAuth2Error) throw e;
+    throw new OAuth2Error("server_error", "Failed to refresh tokens", {
       cause: e,
     });
   }
 }
 
 export async function createSession(accessToken: string, upsert = false) {
-  const {
-    user,
-    roles,
-    nick = null,
-    avatar: memberAvatar,
-  } = await client
-    .getGuildMember(accessToken, env.DISCORD_GUILD_ID)
-    .catch(handleGetGuildMemberError);
-
-  if (!user) {
-    throw new OAuth2Error("server_error", "Failed to get user");
-  }
-
   try {
-    const { id, username, avatar: userAvatar = null } = user;
+    const response = await fetch(
+      `https://discord.com/api/users/@me/guilds/${env.DISCORD_GUILD_ID}/member`,
+      {
+        headers: { Authorization: `Bearer ${accessToken}` },
+        cache: "no-cache",
+      },
+    );
+    if (response.status === 401) {
+      throw new OAuth2Error("invalid_credentials", "Invalid token");
+    } else if (!response.ok) {
+      throw new OAuth2Error("server_error", "Failed to get guild member");
+    }
+
+    const member: RESTGetCurrentUserGuildMemberResult = await response.json();
+    const { user, roles, nick = null, avatar: memberAvatar } = member;
+    const { id, username, avatar: userAvatar = null } = user!;
     const avatar: string | null = memberAvatar ?? userAvatar;
     const exp = Math.floor(Date.now() / 1000) + 60 * 60;
     const scope = env.DISCORD_ROLE_ID
@@ -127,6 +142,7 @@ export async function createSession(accessToken: string, upsert = false) {
 
     return jwt.sign({ id, username, nick, avatar, exp, scope }, env.JWT_SECRET);
   } catch (e) {
+    if (e instanceof OAuth2Error) throw e;
     throw new OAuth2Error("server_error", "create session failed", {
       cause: e,
     });
@@ -134,7 +150,33 @@ export async function createSession(accessToken: string, upsert = false) {
 }
 
 export async function revokeToken(accessToken: string) {
-  return client.revokeToken(accessToken).catch(handleTokenRequestError);
+  try {
+    const response = await fetch(
+      "https://discord.com/api/oauth2/token/revoke",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Basic ${basic}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          token: accessToken,
+          token_type_hint: "access_token",
+        }),
+        cache: "no-cache",
+      },
+    );
+    if (response.status === 400) {
+      throw new OAuth2Error("invalid_credentials", "Invalid token");
+    } else if (!response.ok) {
+      throw new OAuth2Error("server_error", "Failed to revoke token");
+    }
+  } catch (e) {
+    if (e instanceof OAuth2Error) throw e;
+    throw new OAuth2Error("server_error", "Failed to revoke token", {
+      cause: e,
+    });
+  }
 }
 
 export function verify(
