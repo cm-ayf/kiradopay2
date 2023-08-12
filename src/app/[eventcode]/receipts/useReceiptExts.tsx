@@ -21,10 +21,19 @@ export default function useReceiptExts(eventcode: string) {
   const receipts = useMemo<ReceiptExt[] | undefined>(
     () =>
       onServer &&
-      onBrowser && [
-        ...onServer.map((receipt) => ({ ...receipt, onServer: true })),
-        ...onBrowser.map((receipt) => ({ ...receipt, onServer: false })),
-      ],
+      onBrowser &&
+      Array.from(
+        new Map([
+          ...onBrowser.map<[string, ReceiptExt]>((receipt) => [
+            receipt.id,
+            { ...receipt, onServer: false },
+          ]),
+          ...onServer.map<[string, ReceiptExt]>((receipt) => [
+            receipt.id,
+            { ...receipt, onServer: true },
+          ]),
+        ]).values(),
+      ),
     [onServer, onBrowser],
   );
   async function reload() {

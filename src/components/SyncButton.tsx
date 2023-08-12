@@ -1,10 +1,10 @@
 import CloudDone from "@mui/icons-material/CloudDone";
 import CloudUpload from "@mui/icons-material/CloudUpload";
 import LoadingButton, { type LoadingButtonProps } from "@mui/lab/LoadingButton";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { useAlert } from "@/hooks/Alert";
-import { useIDBDeleteReceipts, useIDBReceipts } from "@/hooks/idb";
-import { useCreateReceipts } from "@/hooks/swr";
+import { useIDBReceipts } from "@/hooks/idb";
+import { useCreateReceipts, useReceipts } from "@/hooks/swr";
 import { Receipt } from "@/types/receipt";
 
 interface SyncButtonProps extends LoadingButtonProps {
@@ -12,12 +12,24 @@ interface SyncButtonProps extends LoadingButtonProps {
 }
 
 export function SyncButton({ eventcode, ...props }: SyncButtonProps) {
-  const { data: receipts } = useIDBReceipts(eventcode);
+  const { data: onBrowser } = useIDBReceipts(eventcode);
+  const { data: onServer } = useReceipts({ eventcode });
   const { trigger: triggerCreate, isMutating: isCreating } = useCreateReceipts({
     eventcode,
   });
-  const { trigger: triggerDelete, isMutating: isDeleting } =
-    useIDBDeleteReceipts(eventcode);
+
+  const receipts = useMemo<Receipt[] | undefined>(() => {
+    if (!onBrowser || !onServer) return;
+
+    const map = new Map<string, Receipt>(
+      onBrowser.map((receipt) => [receipt.id, receipt]),
+    );
+    for (const { id } of onServer) {
+      map.delete(id);
+    }
+
+    return Array.from(map.values());
+  }, [onBrowser, onServer]);
 
   const { info, error } = useAlert();
 
@@ -27,12 +39,11 @@ export function SyncButton({ eventcode, ...props }: SyncButtonProps) {
       try {
         const { count } = await triggerCreate(receipts);
         if (count !== receipts.length) throw new Error();
-        await triggerDelete(receipts);
       } catch (e) {
         error("同期に失敗しました");
       }
     },
-    [triggerCreate, triggerDelete, error],
+    [triggerCreate, error],
   );
 
   useEffect(() => {
@@ -49,7 +60,7 @@ export function SyncButton({ eventcode, ...props }: SyncButtonProps) {
   return (
     <LoadingButton
       {...props}
-      loading={isCreating || isDeleting}
+      loading={isCreating}
       startIcon={receipts?.length ? <CloudUpload /> : <CloudDone />}
       disabled={!receipts?.length}
       onClick={() => sync(receipts)}
