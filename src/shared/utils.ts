@@ -1,5 +1,5 @@
 import type { Static, TSchema } from "@sinclair/typebox";
-import { ValueErrors } from "@sinclair/typebox/errors";
+import { Errors } from "@sinclair/typebox/errors";
 
 export function getISODateString(date: string | Date) {
   const [d] = new Date(date).toISOString().split("T");
@@ -11,6 +11,6 @@ export function typeCheck<T extends TSchema>(
   schema: T,
   value: unknown,
 ): value is Static<T> {
-  const errors = ValueErrors.Errors(schema, [], value);
+  const errors = Errors(schema, [], value);
   return !errors.First();
 }
