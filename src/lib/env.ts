@@ -1,5 +1,5 @@
 import { Type } from "@sinclair/typebox";
-import { ValueErrors } from "@sinclair/typebox/errors";
+import { Errors } from "@sinclair/typebox/errors";
 import { typeCheck } from "@/shared/utils";
 
 const schema = Type.Object({
@@ -12,7 +12,7 @@ const schema = Type.Object({
 });
 
 if (!typeCheck(schema, process.env)) {
-  for (const error of ValueErrors.Errors(schema, [], process.env)) {
+  for (const error of Errors(schema, [], process.env)) {
     console.error(error);
   }
   process.exit(1);
