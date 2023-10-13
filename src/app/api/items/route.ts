@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createHandler } from "@/lib/handler";
+import { prisma } from "@/lib/prisma";
 import { createItem, readItems } from "@/types/item";
 
 export const GET = createHandler(readItems, async () => {
