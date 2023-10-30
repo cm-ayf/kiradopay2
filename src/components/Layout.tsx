@@ -22,7 +22,11 @@ export default function Layout({
   return (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
       <Navigation {...navigation} />
-      {top && <Box flex={0}>{top}</Box>}
+      {top && (
+        <Scopes scopes={scopes}>
+          <Box flex={0}>{top}</Box>
+        </Scopes>
+      )}
       <Container
         sx={{
           flex: "auto",
@@ -33,9 +37,18 @@ export default function Layout({
           flexDirection: "column",
         }}
       >
-        <Scopes scopes={scopes}>{children}</Scopes>
+        <Scopes
+          scopes={scopes}
+          fallback="このページを表示する権限がありません。"
+        >
+          {children}
+        </Scopes>
       </Container>
-      {bottom && <Box flex={0}>{bottom}</Box>}
+      {bottom && (
+        <Scopes scopes={scopes}>
+          <Box flex={0}>{bottom}</Box>
+        </Scopes>
+      )}
     </Box>
   );
 }
@@ -43,10 +56,14 @@ export default function Layout({
 function Scopes({
   children,
   scopes: scopesRequired,
-}: PropsWithChildren<{ scopes: Scope[] }>) {
+  fallback,
+}: PropsWithChildren<{
+  scopes: Scope[];
+  fallback?: React.ReactNode;
+}>) {
   const scopes = useScopes();
   if (!scopes) return <CircularProgress />;
   const authorized = scopesRequired.every((scope) => scopes[scope]);
   if (authorized) return <>{children}</>;
-  else return "このページを表示する権限がありません。";
+  else return <>{fallback}</>;
 }
