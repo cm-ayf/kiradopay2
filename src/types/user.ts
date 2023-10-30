@@ -8,7 +8,7 @@ export const Token = Type.Object({
   avatar: Type.Union([Type.String(), Type.Null()]),
   iat: Type.Integer(),
   exp: Type.Integer(),
-  scope: Type.Optional(Type.String()),
+  scope: Type.String(),
 });
 
 export type Token = Static<typeof Token>;

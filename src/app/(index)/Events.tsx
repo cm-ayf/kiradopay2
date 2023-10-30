@@ -11,7 +11,7 @@ import { useState } from "react";
 import EventCard from "@/components/EventCard";
 import EventDialog from "@/components/EventDialog";
 import { useAlert } from "@/hooks/Alert";
-import { useWritable } from "@/hooks/UserState";
+import { useScopes } from "@/hooks/UserState";
 import { RouteError, useCreateEvent, useEvents } from "@/hooks/swr";
 import { CreateEvent } from "@/types/event";
 
@@ -19,7 +19,7 @@ export default function Events() {
   const { data: events } = useEvents();
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const writable = useWritable();
+  const scopes = useScopes();
 
   return (
     <>
@@ -30,7 +30,7 @@ export default function Events() {
         <IconButton
           color="primary"
           onClick={() => setOpen(true)}
-          disabled={!writable}
+          disabled={!scopes?.write}
         >
           <Add />
         </IconButton>
@@ -49,7 +49,7 @@ export default function Events() {
       ) : (
         <CircularProgress />
       )}
-      {writable && (
+      {scopes?.write && (
         <CreateEventDialog open={open} onClose={() => setOpen(false)} />
       )}
     </>

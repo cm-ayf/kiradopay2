@@ -10,7 +10,7 @@ import { useState } from "react";
 import ItemCard from "@/components/ItemCard";
 import ItemDialog from "@/components/ItemDialog";
 import { useAlert } from "@/hooks/Alert";
-import { useWritable } from "@/hooks/UserState";
+import { useScopes } from "@/hooks/UserState";
 import {
   RouteError,
   useCreateItem,
@@ -24,7 +24,7 @@ export default function Items() {
   const { data: items } = useItems();
   const [open, setOpen] = useState(false);
   const [item, setItem] = useState<Item>();
-  const writable = useWritable();
+  const scopes = useScopes();
   return (
     <>
       <Box sx={{ display: "flex", flexDirection: "row", my: 2 }}>
@@ -34,7 +34,7 @@ export default function Items() {
         <IconButton
           color="primary"
           onClick={() => setOpen(true)}
-          disabled={!writable}
+          disabled={!scopes?.write}
         >
           <Add />
         </IconButton>
@@ -46,7 +46,7 @@ export default function Items() {
               <ItemCard
                 key={item.code}
                 item={item}
-                {...(writable ? { onClick: () => setItem(item) } : {})}
+                {...(scopes?.write ? { onClick: () => setItem(item) } : {})}
               />
             </Grid>
           ))}
@@ -54,10 +54,10 @@ export default function Items() {
       ) : (
         <CircularProgress />
       )}
-      {writable && (
+      {scopes?.write && (
         <CreateItemDialog open={open} onClose={() => setOpen(false)} />
       )}
-      {writable && (
+      {scopes?.write && (
         <MutateItemDialog item={item} onClose={() => setItem(undefined)} />
       )}
     </>

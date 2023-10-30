@@ -9,7 +9,7 @@ import { TypeCompiler } from "@sinclair/typebox/compiler";
 import { compressToEncodedURIComponent } from "lz-string";
 import { useEffect, useMemo, useState } from "react";
 import { useAlert } from "@/hooks/Alert";
-import { useWritable } from "@/hooks/UserState";
+import { useScopes } from "@/hooks/UserState";
 import { useEvent, useUpdateEvent } from "@/hooks/swr";
 import { Calculator } from "@/types/common";
 import { Event as EventSchema } from "@/types/event";
@@ -18,7 +18,7 @@ export default function UpdateCalculator({ eventcode }: { eventcode: string }) {
   const { data: event, isLoading } = useEvent({ eventcode });
   const { trigger, isMutating } = useUpdateEvent({ eventcode });
   const { error, success } = useAlert();
-  const writable = useWritable();
+  const scopes = useScopes();
   const defaultCalculator = event?.calculator ?? "";
   const [calculator, setCalculator] = useState(defaultCalculator);
 
@@ -63,7 +63,7 @@ export default function UpdateCalculator({ eventcode }: { eventcode: string }) {
           variant="contained"
           loading={isMutating}
           disabled={
-            !writable ||
+            !scopes?.write ||
             isLoading ||
             calculator === event?.calculator ||
             !calculatorTypeCheck.Check(calculator)
@@ -92,7 +92,7 @@ export default function UpdateCalculator({ eventcode }: { eventcode: string }) {
             const text = e.clipboardData.getData("text/plain");
             setCalculator(dedent(text));
           }}
-          disabled={!writable}
+          disabled={!scopes?.write}
         />
         {"}"}
       </Box>
