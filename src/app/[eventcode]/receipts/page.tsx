@@ -25,6 +25,7 @@ export default function Receipts({
     <DBStateProvider>
       <SelectedProvider>
         <Layout
+          scopes={["read"]}
           title={title}
           back={`/${eventcode}`}
           docs="receipts"

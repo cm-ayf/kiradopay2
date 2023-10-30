@@ -6,7 +6,7 @@ import Layout from "@/components/Layout";
 
 export default function Home() {
   return (
-    <Layout>
+    <Layout scopes={["read"]}>
       <Events />
       <Items />
     </Layout>
