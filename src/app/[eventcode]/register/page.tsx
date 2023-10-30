@@ -24,6 +24,7 @@ export default function Register({
   return (
     <DBStateProvider>
       <Layout
+        scopes={["read", "register"]}
         title={title}
         back={`/${eventcode}`}
         docs="register"

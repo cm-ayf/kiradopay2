@@ -8,7 +8,7 @@ import { useState } from "react";
 import EventCard from "@/components/EventCard";
 import EventDialog from "@/components/EventDialog";
 import { useAlert } from "@/hooks/Alert";
-import { useWritable } from "@/hooks/UserState";
+import { useScopes } from "@/hooks/UserState";
 import {
   RouteError,
   useDeleteEvent,
@@ -20,7 +20,7 @@ import { Event, UpdateEvent } from "@/types/event";
 export default function About({ eventcode }: { eventcode: string }) {
   const { data: event } = useEvent({ eventcode });
   const router = useRouter();
-  const writable = useWritable();
+  const scopes = useScopes();
 
   const [open, setOpen] = useState(false);
 
@@ -30,12 +30,12 @@ export default function About({ eventcode }: { eventcode: string }) {
       <Box sx={{ my: 2, display: "flex", flexDirection: "row", columnGap: 2 }}>
         <EventCard
           event={event}
-          {...(writable ? { onClick: () => setOpen(true) } : {})}
+          {...(scopes?.write ? { onClick: () => setOpen(true) } : {})}
         />
         <Button
           variant="contained"
           onClick={() => router.push(`/${event.code}/register`)}
-          disabled={!writable}
+          disabled={!scopes?.register}
         >
           レジを起動
         </Button>
@@ -46,7 +46,7 @@ export default function About({ eventcode }: { eventcode: string }) {
           購入履歴
         </Button>
       </Box>
-      {writable && (
+      {scopes?.write && (
         <UpdateEventDialog
           event={event}
           open={open}

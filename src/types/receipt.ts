@@ -23,7 +23,7 @@ export type Receipt = Static<typeof Receipt>;
 export const createReceipts = {
   method: "POST",
   path: "/api/events/[eventcode]/receipts",
-  scopes: ["write"],
+  scopes: ["register"],
   params: Type.Object({
     eventcode: Type.String(),
   }),

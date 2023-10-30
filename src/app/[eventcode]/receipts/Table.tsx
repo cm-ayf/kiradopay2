@@ -10,7 +10,7 @@ import {
 } from "react";
 import useReceiptExts, { ReceiptExt } from "./useReceiptExts";
 import { useAlert } from "@/hooks/Alert";
-import { useWritable } from "@/hooks/UserState";
+import { useScopes } from "@/hooks/UserState";
 import { useIDBDeleteReceipts } from "@/hooks/idb";
 import { useDeleteReceipts, useEvent } from "@/hooks/swr";
 
@@ -34,7 +34,7 @@ export function SelectedProvider({ children }: PropsWithChildren) {
 export default function Table({ eventcode }: { eventcode: string }) {
   const columns = useColumns(eventcode);
   const { receipts } = useReceiptExts(eventcode);
-  const writable = useWritable();
+  const scopes = useScopes();
   const { selected, setSelected } = useContext(SelectedContext);
 
   if (!receipts) return <CircularProgress />;
@@ -43,7 +43,7 @@ export default function Table({ eventcode }: { eventcode: string }) {
     <DataGrid
       rows={receipts.map(toRow)}
       columns={columns}
-      checkboxSelection={writable}
+      checkboxSelection={!!scopes?.write}
       getRowId={(row) => row.id}
       rowSelectionModel={selected}
       onRowSelectionModelChange={(selected) =>

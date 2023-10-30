@@ -16,12 +16,12 @@ import Typography from "@mui/material/Typography";
 import { useEffect, useState } from "react";
 import ItemCard from "@/components/ItemCard";
 import { useAlert } from "@/hooks/Alert";
-import { useWritable } from "@/hooks/UserState";
+import { useScopes } from "@/hooks/UserState";
 import { RouteError, useEvent, useItems, useUpdateEvent } from "@/hooks/swr";
 
 export default function Display({ eventcode }: { eventcode: string }) {
   const { data: event } = useEvent({ eventcode });
-  const writable = useWritable();
+  const scopes = useScopes();
   const [open, setOpen] = useState(false);
 
   return (
@@ -34,7 +34,7 @@ export default function Display({ eventcode }: { eventcode: string }) {
           color="primary"
           sx={{ m: "1em" }}
           onClick={() => setOpen(true)}
-          disabled={!writable}
+          disabled={!scopes?.write}
         >
           <Edit />
         </IconButton>
@@ -46,7 +46,7 @@ export default function Display({ eventcode }: { eventcode: string }) {
           </Grid>
         ))}
       </Grid>
-      {writable && (
+      {scopes?.write && (
         <DisplayDialog
           eventcode={eventcode}
           open={open}

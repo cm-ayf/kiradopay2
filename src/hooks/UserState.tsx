@@ -15,7 +15,7 @@ import { SigninErrorMessage } from "@/components/SigninErrorMessage";
 import { SigninMessage } from "@/components/SigninMessage";
 import { RouteError, useRefreshInPlace, useUsersMe } from "@/hooks/swr";
 import { OAuth2Error } from "@/shared/error";
-import type { Token } from "@/types/user";
+import type { Scope, Token } from "@/types/user";
 
 export type UserState =
   | { type: "authorized"; user: Token }
@@ -127,10 +127,15 @@ export function useUserState() {
   return state;
 }
 
-export function useWritable() {
+export function useScopes(): Record<Scope, boolean> | undefined {
   const state = useUserState();
-  if (!state.user?.scope) return false;
-  return state.user.scope.split(" ").includes("write");
+  if (!state.user?.scope) return;
+  const scopes = state.user.scope.split(" ");
+  return {
+    read: scopes.includes("read"),
+    register: scopes.includes("register"),
+    write: scopes.includes("write"),
+  };
 }
 
 export function useWaitUntilAuthorized() {

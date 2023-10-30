@@ -16,7 +16,7 @@ export default function Event({
   const title = useTitle(eventcode);
 
   return (
-    <Layout title={title} back="/">
+    <Layout scopes={["read"]} title={title} back="/">
       <About eventcode={eventcode} />
       <UpdateCalculator eventcode={eventcode} />
       <Display eventcode={eventcode} />
