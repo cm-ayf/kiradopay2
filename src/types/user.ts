@@ -25,4 +25,4 @@ export const refreshInPlace = {
   response: Type.Unknown(),
 } satisfies Route;
 
-export type Scope = "read" | "write";
+export type Scope = "read" | "register" | "write";

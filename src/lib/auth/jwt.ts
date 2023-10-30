@@ -27,11 +27,12 @@ export async function createSession(accessToken: string) {
     const { user, roles, nick = null, avatar: memberAvatar } = member;
     const { id, username, avatar: userAvatar = null } = user!;
     const avatar: string | null = memberAvatar ?? userAvatar;
-    const scope = env.DISCORD_ROLE_ID
-      ? roles.includes(env.DISCORD_ROLE_ID)
-        ? "read write"
-        : "read"
-      : "read write";
+    const scope = (["read", "register", "write"] satisfies Scope[])
+      .filter((scope) => {
+        const roleId = env[`DISCORD_${scope.toUpperCase()}_ROLE_ID`];
+        return !roleId || roles.includes(roleId);
+      })
+      .join(" ");
 
     return await new SignJWT({ id, username, nick, avatar, scope })
       .setProtectedHeader({ alg: "HS256" })
