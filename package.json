@@ -28,7 +28,7 @@
     "@types/uuid": "^9.0.2",
     "cookie": "^0.5.0",
     "csv-stringify": "^6.4.0",
-    "discord-api-types": "^0.37.52",
+    "discord-api-types": "^0.37.62",
     "eslint": "^8.48.0",
     "eslint-config-next": "^13.4.19",
     "idb": "^7.1.1",
