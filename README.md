@@ -1,6 +1,9 @@
 # [Kiradopay 2](https://kiradopay2.vercel.app/)
 
+**Kiradopay2の開発は[Comiacapay](https://github.com/cm-ayf/comiacapay)に引き継がれて停止しました**．
+
 同人誌即売会用のレジアプリです．[Kiradopay](https://github.com/takemar/kiradopay)を原型としています．
+
 
 ## 更新点
 
